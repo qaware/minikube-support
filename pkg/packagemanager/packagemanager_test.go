@@ -12,8 +12,8 @@ func TestGetPackageManager(t *testing.T) {
 		want      PackageManager
 		wantPanic bool
 	}{
-		{"no manager", false, nil, true},
-		{"a manager", true, &DummyManager{}, false},
+		{"no osPackageManager", false, nil, true},
+		{"a osPackageManager", true, &DummyManager{}, false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -24,9 +24,9 @@ func TestGetPackageManager(t *testing.T) {
 			}()
 
 			if tt.init {
-				manager = &DummyManager{}
+				osPackageManager = &DummyManager{}
 			} else {
-				manager = nil
+				osPackageManager = nil
 			}
 			if got := GetPackageManager(); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("GetPackageManager() = %v, want %v", got, tt.want)

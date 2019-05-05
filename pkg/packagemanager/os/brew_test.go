@@ -1,6 +1,6 @@
 // +build darwin
 
-package packagemanager
+package os
 
 import (
 	"testing"

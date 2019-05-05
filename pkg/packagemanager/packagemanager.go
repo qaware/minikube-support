@@ -8,26 +8,32 @@ import (
 // PackageManager is a simple abstraction about the different package managers for the different operating systems.
 // For example on macOS we use brew to mange local 3rd party tools.
 type PackageManager interface {
-	// Get the name of the package manager
+	// Get the name of the package osPackageManager
 	fmt.Stringer
 
-	// Installs the given package with this package manager
+	// Installs the given package with this package osPackageManager
 	Install(pkg string) error
 
-	// Updates the given package with this package manager
+	// Updates the given package with this package osPackageManager
 	Update(pkg string) error
 
-	// Uninstalls the given package with this package manager
+	// Uninstalls the given package with this package osPackageManager
 	Uninstall(pkg string) error
 }
 
-// The singleton package manager instance. It depends on the current operating system.
-var manager PackageManager
+// The singleton package osPackageManager instance. It depends on the current operating system.
+var osPackageManager PackageManager
 
-// Get the os specific package manager.
+// Get the os specific package osPackageManager.
 func GetPackageManager() PackageManager {
-	if manager == nil {
-		logrus.Panicf("Can not retrieve package manager.")
+	if osPackageManager == nil {
+		logrus.Panicf("Can not retrieve package osPackageManager.")
 	}
-	return manager
+	return osPackageManager
+}
+
+func SetOsPackageManager(manager PackageManager) {
+	if manager != nil {
+		osPackageManager = manager
+	}
 }

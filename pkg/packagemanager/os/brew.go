@@ -1,9 +1,10 @@
 // +build darwin
 
-package packagemanager
+package os
 
 import (
 	"fmt"
+	"github.com/chr-fritz/minikube-support/pkg/packagemanager"
 	"github.com/sirupsen/logrus"
 	"os"
 	"os/exec"
@@ -12,12 +13,12 @@ import (
 // Implementation for the brew package manager.
 type brewPackageManager struct{}
 
-func newBrewPackageManager() PackageManager {
+func newBrewPackageManager() packagemanager.PackageManager {
 	return &brewPackageManager{}
 }
 
 func init() {
-	manager = newBrewPackageManager()
+	packagemanager.SetOsPackageManager(newBrewPackageManager())
 }
 
 func (b *brewPackageManager) Install(pkg string) error {
@@ -34,6 +35,10 @@ func (b *brewPackageManager) Uninstall(pkg string) error {
 }
 func (b *brewPackageManager) String() string {
 	return "BrewPackageManager"
+}
+
+func (brewPackageManager) IsOsPackageManager() bool {
+	return true
 }
 
 func runBrewCommand(command string, args ...string) error {
