@@ -3,6 +3,7 @@ package plugins
 import (
 	"fmt"
 	"github.com/chr-fritz/minikube-support/pkg/apis"
+	"github.com/chr-fritz/minikube-support/pkg/plugins/mkcert"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -19,6 +20,7 @@ type runnerFunc func(plugin apis.InstallablePlugin, cmd *cobra.Command, args []s
 // Initializes the plugin registry.
 func init() {
 	installPlugins = newInstallablePluginRegistry()
+	installPlugins.addPlugins(mkcert.CreateMkcertInstallerPlugin())
 }
 
 // Create the install command for all registered plugins.
