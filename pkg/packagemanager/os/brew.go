@@ -5,9 +5,9 @@ package os
 import (
 	"fmt"
 	"github.com/chr-fritz/minikube-support/pkg/packagemanager"
+	"github.com/chr-fritz/minikube-support/pkg/sh"
 	"github.com/sirupsen/logrus"
 	"os"
-	"os/exec"
 )
 
 // Implementation for the brew package manager.
@@ -42,8 +42,8 @@ func (brewPackageManager) IsOsPackageManager() bool {
 }
 
 func runBrewCommand(command string, args ...string) error {
-	cmd := exec.Command("brew", append([]string{command}, args...)...)
-	cmd.Env = os.Environ()
+	cmd := sh.ExecCommand("brew", append([]string{command}, args...)...)
+	cmd.Env = append(cmd.Env, os.Environ()...)
 
 	e := cmd.Run()
 	if e != nil {
