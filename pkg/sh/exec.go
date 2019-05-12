@@ -13,6 +13,6 @@ var ExecCommand = exec.Command
 // This allows to use sudo for commands which internal process stdout and stderr which are not connected to the current tty.
 func InitSudo() error {
 	command := ExecCommand("sudo", "echo", "")
-	command.Env = os.Environ()
+	command.Env = append(command.Env, os.Environ()...)
 	return command.Run()
 }

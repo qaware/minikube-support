@@ -1,0 +1,20 @@
+Status:	
+	machine: minikube
+	pid: 68980
+	route: 10.96.0.0/12 -> 192.168.64.13
+	minikube: Running
+	services: []
+    errors: 
+		minikube: no errors
+		router: no errors
+		loadbalancer emulator: no errors
+Status:	
+	machine: minikube
+	pid: 68980
+	route: 10.96.0.0/12 -> 192.168.64.13
+	minikube: Running
+	services: []
+    errors: 
+		minikube: no errors
+		router: no errors
+		loadbalancer emulator: no errors
