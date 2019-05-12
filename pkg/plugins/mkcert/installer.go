@@ -3,9 +3,9 @@ package mkcert
 import (
 	"github.com/chr-fritz/minikube-support/pkg/apis"
 	"github.com/chr-fritz/minikube-support/pkg/packagemanager"
+	"github.com/chr-fritz/minikube-support/pkg/sh"
 	"github.com/sirupsen/logrus"
 	"os"
-	"os/exec"
 )
 
 type mkCertInstaller struct {
@@ -35,8 +35,8 @@ func (i *mkCertInstaller) Install() {
 }
 
 func (i *mkCertInstaller) Update() {
-	command := exec.Command("mkcert", "-install")
-	command.Env = os.Environ()
+	command := sh.ExecCommand("mkcert", "-install")
+	command.Env = append(command.Env, os.Environ()...)
 	output, e := command.CombinedOutput()
 	if e != nil {
 		logrus.Errorf("Can not install / update the current Root CA. Error: %s\nOutput: %s", e, string(output))
@@ -46,8 +46,8 @@ func (i *mkCertInstaller) Update() {
 }
 
 func (i *mkCertInstaller) Uninstall(purge bool) {
-	command := exec.Command("mkcert", "-uninstall")
-	command.Env = os.Environ()
+	command := sh.ExecCommand("mkcert", "-uninstall")
+	command.Env = append(command.Env, os.Environ()...)
 	output, e := command.CombinedOutput()
 	if e != nil {
 		logrus.Errorf("Can not uninstall the current Root CA. Error: %s\nOutput: %s", e, string(output))
