@@ -65,6 +65,9 @@ func scanForStatusMessages(scanner *bufio.Scanner, monitoringChannel chan *apis.
 func (t *tunnel) Stop() error {
 	return t.command.Process.Signal(syscall.SIGTERM)
 }
+func (t *tunnel) String() string {
+	return tunnelBoxName
+}
 
 func initScanner(closer io.ReadCloser) *bufio.Scanner {
 	scanner := bufio.NewScanner(closer)
