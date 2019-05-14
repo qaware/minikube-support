@@ -2,9 +2,9 @@ package helm
 
 import (
 	"fmt"
+	"github.com/chr-fritz/minikube-support/pkg/sh"
 	"github.com/sirupsen/logrus"
 	"os"
-	"os/exec"
 )
 
 type Manager interface {
@@ -59,7 +59,7 @@ func (m *defaultManager) Uninstall(release string, purge bool) {
 }
 
 func (m *defaultManager) runCommand(command string, args ...string) (string, error) {
-	cmd := exec.Command("helm", append([]string{command}, args...)...)
+	cmd := sh.ExecCommand("helm", append([]string{command}, args...)...)
 	cmd.Env = os.Environ()
 
 	bytes, e := cmd.CombinedOutput()
