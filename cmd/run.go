@@ -12,9 +12,10 @@ import (
 	"os/signal"
 	"strings"
 	"syscall"
+	"time"
 )
 
-var boxConfig = [][]string{{"ingresses", "minikube-tunnel"}, {"ingresses", "dummy", "minikube-tunnel"}}
+var boxConfig = [][]string{{"ingresses", "minikube-tunnel"}}
 
 type RunOptions struct {
 	plugins        []apis.StartStopPlugin
@@ -44,17 +45,9 @@ func NewRunCommand() *cobra.Command {
 }
 
 func (i *RunOptions) Run(cmd *cobra.Command, args []string) {
-	e := i.startPlugins()
-	if e != nil {
-		logrus.Errorf("Unable to start at least one plugin: %s", e)
-		return
-	}
-
+	go i.startPlugins()
+	goterm.Clear()
 	i.handleSignals()
-	go func() {
-		i.messageChannel <- &apis.MonitoringMessage{Box: "ingresses", Message: "http://chr-fritz.de\nhttps://chr-fritz.de"}
-		i.messageChannel <- &apis.MonitoringMessage{Box: "dummy", Message: "http://chr-fritz.de\nhttps://chr-fritz.de"}
-	}()
 
 	for message := range i.messageChannel {
 		if message == apis.TerminatingMessage {
@@ -65,18 +58,16 @@ func (i *RunOptions) Run(cmd *cobra.Command, args []string) {
 	}
 }
 
-func (i *RunOptions) startPlugins() error {
-	var errors *multierror.Error
+func (i *RunOptions) startPlugins() {
 	for _, plugin := range i.plugins {
 		boxName, err := plugin.Start(i.messageChannel)
 		if err != nil {
-			errors = multierror.Append(errors, err)
+			logrus.Errorf("Unable to start plugin %s: %s", plugin, err)
 		} else {
 			i.activePlugins = append(i.activePlugins, boxName)
-			i.lastMessages[boxName] = &apis.MonitoringMessage{Box: boxName}
+			i.messageChannel <- &apis.MonitoringMessage{Box: boxName, Message: "Starting..."}
 		}
 	}
-	return errors.ErrorOrNil()
 }
 
 func (i *RunOptions) handleSignals() {
@@ -99,12 +90,13 @@ func (i *RunOptions) handleSignals() {
 }
 
 func (i *RunOptions) renderBoxes() error {
-	goterm.Clear()
-	goterm.MoveCursor(1, 1)
 	var errors *multierror.Error
+	yOffset := 1
 	vBoxes := len(boxConfig)
-	vBoxHeigh := goterm.Height() / vBoxes
+	vBoxHeight := (goterm.Height() - yOffset) / vBoxes
 
+	goterm.MoveCursor(1, 1)
+	errors = multierror.Append(errors, printHeader(""))
 	for line, boxLineConfig := range boxConfig {
 		hBoxes := len(boxLineConfig)
 		hBoxWidth := goterm.Width() / hBoxes
@@ -115,22 +107,33 @@ func (i *RunOptions) renderBoxes() error {
 				continue
 			}
 
-			box := goterm.NewBox(hBoxWidth, vBoxHeigh, 0)
+			box := goterm.NewBox(hBoxWidth, vBoxHeight, 0)
 
-			_, e := fmt.Fprintf(box, "%s Status:\n%s", message.Box, strings.ReplaceAll(message.Message, "\t", "    "))
-			if e != nil {
-				errors = multierror.Append(errors, e)
-			}
-			_, e = goterm.Print(goterm.MoveTo(box.String(), hBoxWidth*col+1, vBoxHeigh*line+1))
-			if e != nil {
-				errors = multierror.Append(errors, e)
-			}
+			_, e := fmt.Fprintf(box, "%s Status:\n%s", strings.Title(message.Box), strings.ReplaceAll(message.Message, "\t", "    "))
+			errors = multierror.Append(errors, e)
+
+			_, e = goterm.Print(goterm.MoveTo(box.String(), hBoxWidth*col+1, vBoxHeight*line+1+yOffset))
+			errors = multierror.Append(errors, e)
 		}
 	}
 
-	goterm.Flush() // Call it every time at the end of rendering
+	goterm.Flush()
+	return errors.ErrorOrNil()
+}
 
-	return nil
+func printHeader(k8sContext string) error {
+	left := fmt.Sprintf("Kubernetes Kontext: %s", k8sContext)
+	right := time.Now().Format(time.UnixDate)
+
+	spaceLen := goterm.Width() - len(left) - len(right)
+	if spaceLen < 0 {
+		spaceLen = 0
+	}
+
+	space := strings.Repeat(" ", spaceLen)
+
+	_, err := goterm.Print(left, space, right)
+	return err
 }
 
 func init() {
