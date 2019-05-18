@@ -30,20 +30,20 @@ all: test $(GOOS)-build
 check: fmt test
 
 .PHONY: build
-build:
+build: pb
 	CGO_ENABLED=0 GOARCH=amd64 go build $(BUILDFLAGS) -o $(BUILD_DIR)/$(NAME) $(ROOT_PACKAGE)
 
 fmt:
 	@FORMATTED=`$(GO) fmt $(PACKAGE_DIRS)`
 	@([[ ! -z "$(FORMATTED)" ]] && printf "Fixed unformatted files:\n$(FORMATTED)") || true
 
-darwin-build:
+darwin-build: pb
 	CGO_ENABLED=0 GOARCH=amd64 GOOS=darwin go build $(BUILDFLAGS) -o $(BUILD_DIR)/$(NAME)-darwin $(ROOT_PACKAGE)
 
-linux-build:
+linux-build: pb
 	CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build $(BUILDFLAGS) -o $(BUILD_DIR)/$(NAME)-linux $(ROOT_PACKAGE)
 
-windows-build:
+windows-build: pb
 	CGO_ENABLED=0 GOARCH=amd64 GOOS=windows go build $(BUILDFLAGS) -o $(BUILD_DIR)/$(NAME)-windows.exe $(ROOT_PACKAGE)
 
 .PHONY: test
@@ -59,6 +59,10 @@ release: clean test cross
 
 .PHONY: cross
 cross: darwin-build linux-build windows-build
+
+.PHONY: pb
+pb:
+	$(MAKE) -C pb
 
 .PHONY: clean
 clean:

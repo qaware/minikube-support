@@ -15,7 +15,7 @@ import (
 	"time"
 )
 
-var boxConfig = [][]string{{"ingresses", "minikube-tunnel"}}
+var boxConfig = [][]string{{"ingresses", "minikube-tunnel"}, {"coredns-grpc"}}
 
 type RunOptions struct {
 	plugins        []apis.StartStopPlugin

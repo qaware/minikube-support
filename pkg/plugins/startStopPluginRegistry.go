@@ -2,6 +2,7 @@ package plugins
 
 import (
 	"github.com/chr-fritz/minikube-support/pkg/apis"
+	"github.com/chr-fritz/minikube-support/pkg/plugins/coredns"
 	"github.com/chr-fritz/minikube-support/pkg/plugins/minikube"
 	"github.com/sirupsen/logrus"
 )
@@ -17,7 +18,10 @@ type startStopPluginRegistry struct {
 // Initializes the plugin registry.
 func init() {
 	startStopPlugins = newStartStopPluginRegistry()
-	startStopPlugins.addPlugins(minikube.NewTunnel())
+	startStopPlugins.addPlugins(
+		minikube.NewTunnel(),
+		coredns.NewGrpcPlugin(),
+	)
 }
 
 // GetInstallablePlugins returns a list with all registered installable plugins.
