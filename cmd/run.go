@@ -79,11 +79,13 @@ func (i *RunOptions) handleSignals() {
 		logrus.Infof("Got signal %s. Terminating all plugins", sig)
 
 		for _, plugin := range i.plugins {
-			logrus.Debugf("Terminating plugin: %s", plugin)
-			e := plugin.Stop()
-			if e != nil {
-				logrus.Warnf("Unable to terminate plugin %s: %s", plugin, e)
-			}
+			go func() {
+				logrus.Debugf("Terminating plugin: %s", plugin)
+				e := plugin.Stop()
+				if e != nil {
+					logrus.Warnf("Unable to terminate plugin %s: %s", plugin, e)
+				}
+			}()
 		}
 		i.messageChannel <- apis.TerminatingMessage
 	}()
