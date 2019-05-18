@@ -139,5 +139,9 @@ func printHeader(k8sContext string) error {
 }
 
 func init() {
-	rootCmd.AddCommand(NewRunCommand())
+	runCmd := NewRunCommand()
+	rootCmd.AddCommand(runCmd)
+	for _, plugin := range plugins.GetStartStopPlugins() {
+		runCmd.AddCommand(NewRunSingleCommand(plugin))
+	}
 }
