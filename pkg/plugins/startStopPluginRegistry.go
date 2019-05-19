@@ -2,7 +2,6 @@ package plugins
 
 import (
 	"github.com/chr-fritz/minikube-support/pkg/apis"
-	"github.com/chr-fritz/minikube-support/pkg/plugins/coredns"
 	"github.com/chr-fritz/minikube-support/pkg/plugins/minikube"
 	"github.com/sirupsen/logrus"
 )
@@ -20,7 +19,7 @@ func init() {
 	startStopPlugins = newStartStopPluginRegistry()
 	startStopPlugins.addPlugins(
 		minikube.NewTunnel(),
-		coredns.NewGrpcPlugin(),
+		NewCoreDnsIngressPlugin(),
 	)
 }
 

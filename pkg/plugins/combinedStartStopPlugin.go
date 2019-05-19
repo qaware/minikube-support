@@ -6,10 +6,9 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-const CombinedStartStopPluginName = "combined"
-
 // CombinedStartStopPlugin is a simple plugin that combines several plugins together using a combine function.
 type CombinedStartStopPlugin struct {
+	pluginName  string
 	combineFunc CombineFunc
 	plugins     []apis.StartStopPlugin
 }
@@ -18,15 +17,16 @@ type CombinedStartStopPlugin struct {
 type CombineFunc func() ([]apis.StartStopPlugin, error)
 
 // NewCombinedPlugin creates a new plugin that combines some more plugins to one.
-func NewCombinedPlugin(combineFunc CombineFunc) apis.StartStopPlugin {
+func NewCombinedPlugin(pluginName string, combineFunc CombineFunc) apis.StartStopPlugin {
 	return &CombinedStartStopPlugin{
+		pluginName:  pluginName,
 		combineFunc: combineFunc,
 	}
 }
 
 // String returns the plugin name.
-func (*CombinedStartStopPlugin) String() string {
-	return CombinedStartStopPluginName
+func (c *CombinedStartStopPlugin) String() string {
+	return c.pluginName
 }
 
 // Start really combines the plugins together and starts them all.
@@ -48,7 +48,7 @@ func (c *CombinedStartStopPlugin) Start(messageChannel chan *apis.MonitoringMess
 			c.plugins = append(c.plugins, plugin)
 		}
 	}
-	return CombinedStartStopPluginName, nil
+	return c.pluginName, nil
 }
 
 // Stop stops all plugins.

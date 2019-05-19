@@ -48,7 +48,7 @@ func TestCombinedStartStopPlugin_Start(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			c := NewCombinedPlugin(tt.combineFunc)
+			c := NewCombinedPlugin("t", tt.combineFunc)
 			_, err := c.Start(make(chan *apis.MonitoringMessage))
 			if (err != nil) != tt.wantErr {
 				t.Errorf("CombinedStartStopPlugin.Start() error = %v, wantErr %v", err, tt.wantErr)
