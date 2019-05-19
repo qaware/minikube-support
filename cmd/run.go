@@ -17,6 +17,10 @@ import (
 
 var boxConfig = [][]string{{"ingresses", "minikube-tunnel"}, {"coredns-grpc"}}
 
+var terminalWidth = goterm.Width
+var terminalHeight = goterm.Height
+var terminalPrint = goterm.Print
+
 type RunOptions struct {
 	plugins        []apis.StartStopPlugin
 	messageChannel chan *apis.MonitoringMessage
@@ -95,13 +99,13 @@ func (i *RunOptions) renderBoxes() error {
 	var errors *multierror.Error
 	yOffset := 1
 	vBoxes := len(boxConfig)
-	vBoxHeight := (goterm.Height() - yOffset) / vBoxes
+	vBoxHeight := (terminalHeight() - yOffset) / vBoxes
 
 	goterm.MoveCursor(1, 1)
 	errors = multierror.Append(errors, printHeader(""))
 	for line, boxLineConfig := range boxConfig {
 		hBoxes := len(boxLineConfig)
-		hBoxWidth := goterm.Width() / hBoxes
+		hBoxWidth := terminalWidth() / hBoxes
 
 		for col, boxName := range boxLineConfig {
 			message := i.lastMessages[boxName]
@@ -114,7 +118,7 @@ func (i *RunOptions) renderBoxes() error {
 			_, e := fmt.Fprintf(box, "%s Status:\n%s", strings.Title(message.Box), strings.ReplaceAll(message.Message, "\t", "    "))
 			errors = multierror.Append(errors, e)
 
-			_, e = goterm.Print(goterm.MoveTo(box.String(), hBoxWidth*col+1, vBoxHeight*line+1+yOffset))
+			_, e = terminalPrint(goterm.MoveTo(box.String(), hBoxWidth*col+1, vBoxHeight*line+1+yOffset))
 			errors = multierror.Append(errors, e)
 		}
 	}
@@ -127,14 +131,14 @@ func printHeader(k8sContext string) error {
 	left := fmt.Sprintf("Kubernetes Kontext: %s", k8sContext)
 	right := time.Now().Format(time.UnixDate)
 
-	spaceLen := goterm.Width() - len(left) - len(right)
-	if spaceLen < 0 {
-		spaceLen = 0
+	spaceLen := terminalWidth() - len(left) - len(right)
+	if spaceLen < 1 {
+		spaceLen = 1
 	}
 
 	space := strings.Repeat(" ", spaceLen)
 
-	_, err := goterm.Print(left, space, right)
+	_, err := terminalPrint(left, space, right)
 	return err
 }
 

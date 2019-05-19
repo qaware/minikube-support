@@ -7,6 +7,7 @@ import (
 
 type DummyPlugin struct {
 	run          func(chan *apis.MonitoringMessage)
+	name         string
 	failStart    bool
 	failStop     bool
 	installRun   bool
@@ -28,7 +29,10 @@ func (p *DummyPlugin) Uninstall(purge bool) {
 	p.purge = purge
 }
 
-func (*DummyPlugin) String() string {
+func (p *DummyPlugin) String() string {
+	if p.name != "" {
+		return p.name
+	}
 	return "dummy"
 }
 
@@ -36,7 +40,9 @@ func (p *DummyPlugin) Start(m chan *apis.MonitoringMessage) (boxName string, err
 	if p.failStart {
 		return "", fmt.Errorf("fail")
 	}
-	go p.run(m)
+	if p.run != nil {
+		go p.run(m)
+	}
 	return p.String(), nil
 }
 
