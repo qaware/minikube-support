@@ -1,17 +1,21 @@
 package cmd
 
 import (
+	"github.com/chr-fritz/minikube-support/pkg/apis"
 	"github.com/chr-fritz/minikube-support/pkg/plugins"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
 type UninstallOptions struct {
-	purge bool
+	purge   bool
+	plugins []apis.InstallablePlugin
 }
 
 func NewUninstallOptions() *UninstallOptions {
-	return &UninstallOptions{}
+	return &UninstallOptions{
+		plugins: plugins.GetInstallablePlugins(),
+	}
 }
 
 func NewUninstallCommand() *cobra.Command {
@@ -28,7 +32,7 @@ func NewUninstallCommand() *cobra.Command {
 }
 
 func (i *UninstallOptions) Run(cmd *cobra.Command, args []string) {
-	for _, plugin := range plugins.GetInstallablePlugins() {
+	for _, plugin := range i.plugins {
 		logrus.Info("Uninstall plugin:", plugin)
 		plugin.Uninstall(i.purge)
 	}

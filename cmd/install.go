@@ -1,15 +1,20 @@
 package cmd
 
 import (
+	"github.com/chr-fritz/minikube-support/pkg/apis"
 	"github.com/chr-fritz/minikube-support/pkg/plugins"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
-type InstallOptions struct{}
+type InstallOptions struct {
+	plugins []apis.InstallablePlugin
+}
 
 func NewInstallOptions() *InstallOptions {
-	return &InstallOptions{}
+	return &InstallOptions{
+		plugins: plugins.GetInstallablePlugins(),
+	}
 }
 
 func NewInstallCommand() *cobra.Command {
@@ -26,7 +31,7 @@ func NewInstallCommand() *cobra.Command {
 }
 
 func (i *InstallOptions) Run(cmd *cobra.Command, args []string) {
-	for _, plugin := range plugins.GetInstallablePlugins() {
+	for _, plugin := range i.plugins {
 		logrus.Info("Install plugin:", plugin)
 		plugin.Install()
 	}

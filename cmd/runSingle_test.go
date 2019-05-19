@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"fmt"
 	"github.com/sirupsen/logrus"
 	"github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/assert"
@@ -45,30 +44,6 @@ func TestRunSingleOptions_Run(t *testing.T) {
 	}
 }
 
-type DummyPlugin struct {
-	run       func(chan *apis.MonitoringMessage)
-	failStart bool
-	failStop  bool
-}
-
-func (*DummyPlugin) String() string {
-	return "dummy"
-}
-
-func (p *DummyPlugin) Start(m chan *apis.MonitoringMessage) (boxName string, err error) {
-	if p.failStart {
-		return "", fmt.Errorf("fail")
-	}
-	go p.run(m)
-	return p.String(), nil
-}
-
-func (p *DummyPlugin) Stop() error {
-	if p.failStop {
-		return fmt.Errorf("fail")
-	}
-	return nil
-}
 func checkLogEntry(t *testing.T, hook *test.Hook, prefix string) {
 	entry := hook.LastEntry()
 	if entry == nil {
