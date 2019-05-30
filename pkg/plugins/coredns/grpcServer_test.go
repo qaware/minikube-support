@@ -36,6 +36,7 @@ func TestServer_AddA(t *testing.T) {
 		{"to-long domain", "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz", "192.168.1.1", true, false},
 		{"invalid ip 1", "invalid-ip", "192.168.1.1.1", true, false},
 		{"invalid ip 3", "invalid-ip", "abcdefgh.jkl.1.1", true, false},
+		{"ip is ipv6", "invalid-ip", "ff00::1", true, false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -72,6 +73,7 @@ func TestServer_AddAAAA(t *testing.T) {
 		{"invalid ip-1", "invalid-ip", "127.0..0.1", true, false},
 		{"invalid ip-2", "invalid-ip", "abcdef:jkl::", true, false},
 		{"invalid ip-3", "invalid-ip", "fd00::1::1", true, false},
+		{"ip is ipv4", "invalid-ip", "127.0.0.1", true, false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

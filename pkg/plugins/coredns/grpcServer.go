@@ -87,6 +87,9 @@ func (srv *Server) AddA(name string, ipv4 string) error {
 	if ip == nil {
 		return fmt.Errorf("can not parse ip: %s", ipv4)
 	}
+	if !IsIPv4(ip) {
+		return fmt.Errorf("given IP %s is not an IPv4 address", ip)
+	}
 
 	srv.addRR(&dns.A{
 		Hdr: dns.RR_Header{
@@ -110,6 +113,9 @@ func (srv *Server) AddAAAA(name string, ipv6 string) error {
 	ip := net.ParseIP(ipv6)
 	if ip == nil {
 		return fmt.Errorf("can not parse ip: %s", ipv6)
+	}
+	if !IsIPv6(ip) {
+		return fmt.Errorf("given IP %s is not an IPv6 address", ip)
 	}
 
 	srv.addRR(&dns.AAAA{
@@ -192,4 +198,16 @@ func (srv *Server) ListRRs() []dns.RR {
 		}
 	}
 	return rrs
+}
+
+// IsIPv4 checks if the given ip address is an IPv4 address.
+// It returns true if it is a IPv4 address. Otherwise false.
+func IsIPv4(ip net.IP) bool {
+	return ip != nil && ip.To4() != nil
+}
+
+// IsIPv6 checks if the given ip address is an IPv6 address.
+// It returns true if it is a IPv6 address. Otherwise false.
+func IsIPv6(ip net.IP) bool {
+	return !IsIPv4(ip)
 }
