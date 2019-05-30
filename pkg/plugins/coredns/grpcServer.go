@@ -76,19 +76,34 @@ func (srv *Server) Query(ctx context.Context, in *pb.DnsPacket) (*pb.DnsPacket, 
 	return &pb.DnsPacket{Msg: out}, nil
 }
 
+// AddHost adds the given domain name as new resource record. Depending on the given
+// ipAddress either as A record or as AAAA record.
+func (srv *Server) AddHost(name string, ipAddress string) error {
+	ip := net.ParseIP(ipAddress)
+	if ip == nil {
+		return fmt.Errorf("can not parse ip: %s", ipAddress)
+	}
+
+	if IsIPv4(ip) {
+		return srv.AddA(name, ip)
+	} else {
+		return srv.AddAAAA(name, ip)
+	}
+}
+
 // AddA adds a new A resource record for the given domain to the internal database.
 // If there is already an A resource record with the same domain, it overwrites the existing.
-func (srv *Server) AddA(name string, ipv4 string) error {
+func (srv *Server) AddA(name string, ipv4 net.IP) error {
+	if ipv4 == nil {
+		return fmt.Errorf("given ip address is nil")
+	}
+
 	if _, ok := dns.IsDomainName(name); !ok {
 		return fmt.Errorf("%s is not a valid domain name", name)
 	}
 
-	ip := net.ParseIP(ipv4)
-	if ip == nil {
-		return fmt.Errorf("can not parse ip: %s", ipv4)
-	}
-	if !IsIPv4(ip) {
-		return fmt.Errorf("given IP %s is not an IPv4 address", ip)
+	if !IsIPv4(ipv4) {
+		return fmt.Errorf("given IP %s is not an IPv4 address", ipv4)
 	}
 
 	srv.addRR(&dns.A{
@@ -98,24 +113,24 @@ func (srv *Server) AddA(name string, ipv4 string) error {
 			Class:  dns.ClassINET,
 			Ttl:    10,
 		},
-		A: ip,
+		A: ipv4,
 	})
 	return nil
 }
 
 // AddAAAA adds a new AAAA resource record for the given domain to the internal database.
 // If there is already an AAAA resource record with the same domain, it overwrites the existing.
-func (srv *Server) AddAAAA(name string, ipv6 string) error {
+func (srv *Server) AddAAAA(name string, ipv6 net.IP) error {
+	if ipv6 == nil {
+		return fmt.Errorf("given ip address is nil")
+	}
+
 	if _, ok := dns.IsDomainName(name); !ok {
 		return fmt.Errorf("%s is not a valid domain name", name)
 	}
 
-	ip := net.ParseIP(ipv6)
-	if ip == nil {
-		return fmt.Errorf("can not parse ip: %s", ipv6)
-	}
-	if !IsIPv6(ip) {
-		return fmt.Errorf("given IP %s is not an IPv6 address", ip)
+	if !IsIPv6(ipv6) {
+		return fmt.Errorf("given IP %s is not an IPv6 address", ipv6)
 	}
 
 	srv.addRR(&dns.AAAA{
@@ -125,7 +140,7 @@ func (srv *Server) AddAAAA(name string, ipv6 string) error {
 			Class:  dns.ClassINET,
 			Ttl:    10,
 		},
-		AAAA: ip,
+		AAAA: ipv6,
 	})
 	return nil
 }

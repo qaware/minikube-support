@@ -2,6 +2,7 @@ package coredns
 
 import (
 	"github.com/stretchr/testify/assert"
+	"net"
 	"reflect"
 	"testing"
 
@@ -37,7 +38,7 @@ func Test_grpcPlugin_listRRsForUI(t *testing.T) {
 		server:            NewServer(),
 		monitoringChannel: make(chan *apis.MonitoringMessage),
 	}
-	p.server.AddA("localhost", "127.0.0.1")
+	p.server.AddA("localhost", net.ParseIP("127.0.0.1"))
 	go p.listRRsForUI()
 	msg := <-p.monitoringChannel
 	assert.Equal(t, GrpcPluginName, msg.Box)
