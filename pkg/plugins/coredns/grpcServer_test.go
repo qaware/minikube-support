@@ -14,7 +14,7 @@ func TestNewServer(t *testing.T) {
 		name string
 		want *Server
 	}{
-		{"create server", &Server{entries: make(map[dns.Type]map[dns.Name]dns.RR)}},
+		{"create server", &Server{entries: make(map[dns.Type]map[dns.Name][]dns.RR)}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -197,10 +197,11 @@ func TestServer_RemoveResourceRecord(t *testing.T) {
 func TestServer_ListRRs(t *testing.T) {
 	srv := NewServer()
 	srv.AddA("domain", net.ParseIP("127.0.0.1"))
+	srv.AddA("domain", net.ParseIP("127.0.0.2"))
 	srv.AddA("domain1", net.ParseIP("127.0.0.2"))
 	srv.AddAAAA("domain", net.ParseIP("::1"))
 	got := srv.ListRRs()
-	assert.Equal(t, 3, len(got))
+	assert.Equal(t, 4, len(got))
 }
 
 func checkResourceRecord(t *testing.T, srv *Server, domain string, rrType dns.Type, recordFound bool) dns.RR {
@@ -213,9 +214,14 @@ func checkResourceRecord(t *testing.T, srv *Server, domain string, rrType dns.Ty
 		return nil
 	}
 
-	assert.Equal(t, domain, rr.Header().Name)
-	assert.Equal(t, dns.Type(rr.Header().Rrtype), rrType)
-	return rr
+	if len(rr) != 1 {
+		t.Errorf("Expect only one resource record. Got %v", len(rr))
+		return nil
+	}
+
+	assert.Equal(t, domain, rr[0].Header().Name)
+	assert.Equal(t, dns.Type(rr[0].Header().Rrtype), rrType)
+	return rr[0]
 }
 
 func TestServer_GetResourceRecord(t *testing.T) {
@@ -244,8 +250,9 @@ func TestServer_GetResourceRecord(t *testing.T) {
 			if got == nil {
 				return
 			}
-			assert.Equal(t, tt.domain, got.Header().Name)
-			assert.Equal(t, tt.dnsType, dns.Type(got.Header().Rrtype))
+			assert.Equal(t, 1, len(got))
+			assert.Equal(t, tt.domain, got[0].Header().Name)
+			assert.Equal(t, tt.dnsType, dns.Type(got[0].Header().Rrtype))
 		})
 	}
 }

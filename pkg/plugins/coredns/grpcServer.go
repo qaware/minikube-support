@@ -14,14 +14,14 @@ import (
 // Server is a small grpc service that answers to dns queries over grpc from CoreDNS.
 // Please refer to the CoreDNS GRPC Plugin how to configure it to use this as backend.
 type Server struct {
-	entries map[dns.Type]map[dns.Name]dns.RR
+	entries map[dns.Type]map[dns.Name][]dns.RR
 	server  *grpc.Server
 }
 
 // NewServer initializes the grpc core dns service.
 func NewServer() *Server {
 	return &Server{
-		entries: make(map[dns.Type]map[dns.Name]dns.RR),
+		entries: make(map[dns.Type]map[dns.Name][]dns.RR),
 	}
 }
 
@@ -62,7 +62,7 @@ func (srv *Server) Query(ctx context.Context, in *pb.DnsPacket) (*pb.DnsPacket, 
 		rr, e := srv.GetResourceRecord(dns.Name(q.Name), dns.Type(q.Qtype))
 		if e != nil {
 		}
-		r.Answer = append(r.Answer, rr)
+		r.Answer = append(r.Answer, rr...)
 	}
 
 	if len(r.Answer) == 0 {
@@ -92,7 +92,7 @@ func (srv *Server) AddHost(name string, ipAddress string) error {
 }
 
 // AddA adds a new A resource record for the given domain to the internal database.
-// If there is already an A resource record with the same domain, it overwrites the existing.
+// It will not overwrite any existing resource records if there is already one with the same name and type.
 func (srv *Server) AddA(name string, ipv4 net.IP) error {
 	if ipv4 == nil {
 		return fmt.Errorf("given ip address is nil")
@@ -119,7 +119,7 @@ func (srv *Server) AddA(name string, ipv4 net.IP) error {
 }
 
 // AddAAAA adds a new AAAA resource record for the given domain to the internal database.
-// If there is already an AAAA resource record with the same domain, it overwrites the existing.
+// It will not overwrite any existing resource records if there is already one with the same name and type.
 func (srv *Server) AddAAAA(name string, ipv6 net.IP) error {
 	if ipv6 == nil {
 		return fmt.Errorf("given ip address is nil")
@@ -146,7 +146,7 @@ func (srv *Server) AddAAAA(name string, ipv6 net.IP) error {
 }
 
 // AddCNAME adds a new CNAME resource record for the given domain to the internal database.
-// If there is already an CNAME resource record with the same domain, it overwrites the existing.
+// It will not overwrite any existing resource records if there is already one with the same name and type.
 func (srv *Server) AddCNAME(name string, target string) error {
 	if _, ok := dns.IsDomainName(name); !ok {
 		return fmt.Errorf("%s is not a valid domain name", name)
@@ -169,19 +169,19 @@ func (srv *Server) AddCNAME(name string, target string) error {
 }
 
 // addRR adds the given resource record to the internal database.
-// If there is already an resource record with the same domain and type, it overwrites the existing.
+// It will not overwrite any existing resource records if there is already one with the same name and type.
 func (srv *Server) addRR(entry dns.RR) {
 	name := dns.Name(entry.Header().Name)
 	dnsType := dns.Type(entry.Header().Rrtype)
 	if _, ok := srv.entries[dnsType]; !ok {
-		srv.entries[dnsType] = make(map[dns.Name]dns.RR)
+		srv.entries[dnsType] = make(map[dns.Name][]dns.RR)
 	}
-	srv.entries[dnsType][name] = entry
+	srv.entries[dnsType][name] = append(srv.entries[dnsType][name], entry)
 }
 
 // GetResourceRecord tries to find a resource record with the given name and type.
 // It will return an error if no records are found.
-func (srv *Server) GetResourceRecord(name dns.Name, dnsType dns.Type) (dns.RR, error) {
+func (srv *Server) GetResourceRecord(name dns.Name, dnsType dns.Type) ([]dns.RR, error) {
 	typeRRs, ok := srv.entries[dnsType]
 	if !ok {
 		return nil, fmt.Errorf("no resource records of type %s", dnsType)
@@ -209,7 +209,7 @@ func (srv *Server) ListRRs() []dns.RR {
 
 	for _, typeRRs := range srv.entries {
 		for _, rr := range typeRRs {
-			rrs = append(rrs, rr)
+			rrs = append(rrs, rr...)
 		}
 	}
 	return rrs
