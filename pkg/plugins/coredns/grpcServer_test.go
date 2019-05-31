@@ -34,8 +34,8 @@ func TestServer_AddHost(t *testing.T) {
 		recordFound bool
 		wantType    uint16
 	}{
-		{"ok ipv4", "ok", "192.168.1.1", false, true, dns.TypeA},
-		{"ok ipv6", "ok", "::1", false, true, dns.TypeAAAA},
+		{"ok ipv4", "ok.", "192.168.1.1", false, true, dns.TypeA},
+		{"ok ipv6", "ok.", "::1", false, true, dns.TypeAAAA},
 		{"to-long domain", "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz", "192.168.1.1", true, false, dns.TypeA},
 		{"invalid ip 1", "invalid-ip", "192.168.1.1.1", true, false, dns.TypeA},
 		{"invalid ip 2", "invalid-ip", "127.0..0.1", true, false, dns.TypeA},
@@ -68,7 +68,7 @@ func TestServer_AddA(t *testing.T) {
 		wantErr     bool
 		recordFound bool
 	}{
-		{"ok", "ok", "192.168.1.1", false, true},
+		{"ok", "ok.", "192.168.1.1", false, true},
 		{"to-long domain", "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz", "192.168.1.1", true, false},
 		{"invalid ip 1", "invalid-ip", "192.168.1.1.1", true, false},
 		{"invalid ip 3", "invalid-ip", "abcdefgh.jkl.1.1", true, false},
@@ -104,7 +104,7 @@ func TestServer_AddAAAA(t *testing.T) {
 		wantErr     bool
 		recordFound bool
 	}{
-		{"ok", "ok", "::1", false, true},
+		{"ok", "ok.", "::1", false, true},
 		{"to-long domain", "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz", "::1", true, false},
 		{"invalid ip-1", "invalid-ip", "127.0..0.1", true, false},
 		{"invalid ip-2", "invalid-ip", "abcdef:jkl::", true, false},
@@ -140,7 +140,7 @@ func TestServer_AddCNAME(t *testing.T) {
 		wantErr     bool
 		recordFound bool
 	}{
-		{"ok", "ok", "target.example.com.", false, true},
+		{"ok", "ok.", "target.example.com.", false, true},
 		{"to-long domain", "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz", "", true, false},
 		{"no fqdn", "no-fqdn", "no-fqdn", true, false},
 	}
@@ -172,15 +172,15 @@ func TestServer_RemoveResourceRecord(t *testing.T) {
 		dnsType dns.Type
 		hasType bool
 	}{
-		{"remove A but other exists", "domain", dns.Type(dns.TypeA), true},
-		{"remove last AAAA", "domain", dns.Type(dns.TypeAAAA), false},
+		{"remove A but other exists", "domain.", dns.Type(dns.TypeA), true},
+		{"remove last AAAA", "domain.", dns.Type(dns.TypeAAAA), false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			srv := NewServer()
-			srv.AddA("domain", net.ParseIP("127.0.0.1"))
-			srv.AddA("domain1", net.ParseIP("127.0.0.2"))
-			srv.AddAAAA("domain", net.ParseIP("::1"))
+			assert.NoError(t, srv.AddA("domain.", net.ParseIP("127.0.0.1")))
+			assert.NoError(t, srv.AddA("domain1.", net.ParseIP("127.0.0.2")))
+			assert.NoError(t, srv.AddAAAA("domain.", net.ParseIP("::1")))
 			srv.RemoveResourceRecord(dns.Name(tt.domain), tt.dnsType)
 			rrs, ok := srv.entries[tt.dnsType]
 			if ok != tt.hasType {
@@ -196,10 +196,10 @@ func TestServer_RemoveResourceRecord(t *testing.T) {
 
 func TestServer_ListRRs(t *testing.T) {
 	srv := NewServer()
-	srv.AddA("domain", net.ParseIP("127.0.0.1"))
-	srv.AddA("domain", net.ParseIP("127.0.0.2"))
-	srv.AddA("domain1", net.ParseIP("127.0.0.2"))
-	srv.AddAAAA("domain", net.ParseIP("::1"))
+	assert.NoError(t, srv.AddA("domain", net.ParseIP("127.0.0.1")))
+	assert.NoError(t, srv.AddA("domain", net.ParseIP("127.0.0.2")))
+	assert.NoError(t, srv.AddA("domain1", net.ParseIP("127.0.0.2")))
+	assert.NoError(t, srv.AddAAAA("domain", net.ParseIP("::1")))
 	got := srv.ListRRs()
 	assert.Equal(t, 4, len(got))
 }
@@ -231,17 +231,17 @@ func TestServer_GetResourceRecord(t *testing.T) {
 		dnsType dns.Type
 		wantErr bool
 	}{
-		{"A domain", "domain", dns.Type(dns.TypeA), false},
+		{"A domain", "domain.", dns.Type(dns.TypeA), false},
 		{"not found A domain", "not-found", dns.Type(dns.TypeA), true},
-		{"AAAA domain", "domain", dns.Type(dns.TypeAAAA), false},
+		{"AAAA domain", "domain.", dns.Type(dns.TypeAAAA), false},
 		{"not found AAAA domain", "not found", dns.Type(dns.TypeAAAA), true},
 		{"not found CNAME type", "domain", dns.Type(dns.TypeCNAME), true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			srv := NewServer()
-			srv.AddA("domain", net.ParseIP("127.0.0.1"))
-			srv.AddAAAA("domain", net.ParseIP("::1"))
+			assert.NoError(t, srv.AddA("domain.", net.ParseIP("127.0.0.1")))
+			assert.NoError(t, srv.AddAAAA("domain.", net.ParseIP("::1")))
 			got, err := srv.GetResourceRecord(dns.Name(tt.domain), tt.dnsType)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Server.GetResourceRecord() error = %v, wantErr %v", err, tt.wantErr)

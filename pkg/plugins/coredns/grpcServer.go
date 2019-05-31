@@ -108,7 +108,7 @@ func (srv *Server) AddA(name string, ipv4 net.IP) error {
 
 	srv.addRR(&dns.A{
 		Hdr: dns.RR_Header{
-			Name:   name,
+			Name:   normalizeName(name),
 			Rrtype: dns.TypeA,
 			Class:  dns.ClassINET,
 			Ttl:    10,
@@ -135,7 +135,7 @@ func (srv *Server) AddAAAA(name string, ipv6 net.IP) error {
 
 	srv.addRR(&dns.AAAA{
 		Hdr: dns.RR_Header{
-			Name:   name,
+			Name:   normalizeName(name),
 			Rrtype: dns.TypeAAAA,
 			Class:  dns.ClassINET,
 			Ttl:    10,
@@ -158,7 +158,7 @@ func (srv *Server) AddCNAME(name string, target string) error {
 
 	srv.addRR(&dns.CNAME{
 		Hdr: dns.RR_Header{
-			Name:   name,
+			Name:   normalizeName(name),
 			Rrtype: dns.TypeCNAME,
 			Class:  dns.ClassINET,
 			Ttl:    10,
@@ -225,4 +225,12 @@ func IsIPv4(ip net.IP) bool {
 // It returns true if it is a IPv6 address. Otherwise false.
 func IsIPv6(ip net.IP) bool {
 	return !IsIPv4(ip)
+}
+
+func normalizeName(name string) string {
+	if dns.IsFqdn(name) {
+		return name
+	} else {
+		return name + "."
+	}
 }
