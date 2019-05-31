@@ -28,7 +28,7 @@ func NewServer() *Server {
 // Start starts the server by using the given socket to listen on for new dns queries.
 func (srv *Server) Start(socket net.Listener) {
 	srv.server = grpc.NewServer()
-	pb.RegisterDnsServiceServer(srv.server, &Server{})
+	pb.RegisterDnsServiceServer(srv.server, srv)
 
 	go func() {
 		e := srv.server.Serve(socket)
@@ -57,10 +57,11 @@ func (srv *Server) Query(ctx context.Context, in *pb.DnsPacket) (*pb.DnsPacket, 
 	r := new(dns.Msg)
 	r.SetReply(m)
 	r.Authoritative = true
-
 	for _, q := range r.Question {
 		rr, e := srv.GetResourceRecord(dns.Name(q.Name), dns.Type(q.Qtype))
 		if e != nil {
+			logrus.Debugf("Can not handle request %v: %s", q, e)
+			continue
 		}
 		r.Answer = append(r.Answer, rr...)
 	}

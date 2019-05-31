@@ -42,7 +42,7 @@ func (grpcPlugin) String() string {
 // Start starts the server to allow registering new entries and answers queries from CoreDNS.
 func (p *grpcPlugin) Start(monitoringChannel chan *apis.MonitoringMessage) (boxName string, e error) {
 	p.monitoringChannel = monitoringChannel
-	socket, e := net.Listen("tcp", ":8054")
+	socket, e := net.Listen("tcp", ":8053")
 	if e != nil {
 		return "", fmt.Errorf("unable to open socket: %s", e)
 	}
