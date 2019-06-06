@@ -1,6 +1,7 @@
 package ingress
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/chr-fritz/minikube-support/pkg/apis"
 	"github.com/hashicorp/go-multierror"
@@ -14,6 +15,8 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/homedir"
 	"path/filepath"
+	"strings"
+	"text/tabwriter"
 )
 
 // AddResourceRecordFunc is the function signature for adding resource records.
@@ -82,7 +85,7 @@ func (k8s *k8sIngress) Start(messageChannel chan *apis.MonitoringMessage) (strin
 			logrus.Warnf("Can not add entries for ingress: %s", e)
 		}
 	}
-
+	k8s.printInfo()
 	go k8s.watchIngresses(ingressList.ResourceVersion)
 	return pluginName, nil
 }
@@ -123,6 +126,7 @@ func (k8s *k8sIngress) watchIngresses(resourceVersion string) {
 		if e != nil {
 			logrus.Warnf("Can not handle %s event: %s", event.Type, e)
 		}
+		k8s.printInfo()
 	}
 }
 
@@ -259,4 +263,15 @@ func noopAddAlias(domain string, target string) error {
 // noopRemoveHost is a dummy function that just logs the removal of the given domain from the dns backend.
 func noopRemoveHost(domain string) {
 	logrus.Infof("Would remove A or AAAA dns entry for %s.", domain)
+}
+
+func (k8s *k8sIngress) printInfo() {
+	buffer := new(bytes.Buffer)
+	writer := tabwriter.NewWriter(buffer, 0, 0, 1, ' ', tabwriter.Debug)
+	fmt.Fprintf(writer, "Name\tNamespace\tHostname\tTargets\n")
+	for _, ingress := range k8s.currentIngresses {
+		fmt.Fprintf(writer, "%s\t%s\t%s\t%s\n", ingress.name, ingress.namespace, strings.Join(ingress.hostNames, ","), strings.Join(ingress.targetIps, ","))
+	}
+	writer.Flush()
+	k8s.messageChannel <- &apis.MonitoringMessage{pluginName, buffer.String()}
 }
