@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/assert"
 	"reflect"
 	"syscall"
 	"testing"
@@ -10,6 +9,7 @@ import (
 
 	"github.com/chr-fritz/minikube-support/pkg/apis"
 	"github.com/spf13/cobra"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestRunOptions_Run(t *testing.T) {
@@ -106,4 +106,28 @@ func messagesValues(m map[string]*apis.MonitoringMessage) []apis.MonitoringMessa
 		result = append(result, *v)
 	}
 	return result
+}
+
+func Test_calcBoxSize(t *testing.T) {
+	tests := []struct {
+		name      string
+		available int
+		numBoxes  int
+		want      []int
+	}{
+		{"1", 100, 1, []int{100}},
+		{"2", 100, 2, []int{50, 50}},
+		{"3", 100, 3, []int{34, 33, 33}},
+		{"4", 100, 4, []int{25, 25, 25, 25}},
+		{"5", 100, 5, []int{20, 20, 20, 20, 20}},
+		{"6", 100, 6, []int{17, 17, 17, 17, 16, 16}},
+		{"7", 100, 7, []int{15, 15, 14, 14, 14, 14, 14}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := calcBoxSize(tt.available, tt.numBoxes); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("calcBoxSize() = %v, want %v", got, tt.want)
+			}
+		})
+	}
 }

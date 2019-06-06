@@ -17,6 +17,8 @@ import (
 
 var boxConfig = [][]string{{"ingresses", "minikube-tunnel"}, {"coredns-grpc"}}
 
+const BORDER_STRING = "─ │ ┌ ┐ └ ┘"
+
 var terminalWidth = goterm.Width
 var terminalHeight = goterm.Height
 var terminalPrint = goterm.Print
@@ -98,33 +100,53 @@ func (i *RunOptions) handleSignals() {
 func (i *RunOptions) renderBoxes() error {
 	var errors *multierror.Error
 	yOffset := 1
-	vBoxes := len(boxConfig)
-	vBoxHeight := (terminalHeight() - yOffset) / vBoxes
+	vBoxSizes := calcBoxSize(terminalHeight()-yOffset, len(boxConfig))
 
 	goterm.MoveCursor(1, 1)
 	errors = multierror.Append(errors, printHeader(""))
-	for line, boxLineConfig := range boxConfig {
-		hBoxes := len(boxLineConfig)
-		hBoxWidth := terminalWidth() / hBoxes
 
+	nextY := 1 + yOffset
+	for line, boxLineConfig := range boxConfig {
+		hBoxSizes := calcBoxSize(terminalWidth(), len(boxLineConfig))
+		nextX := 1
 		for col, boxName := range boxLineConfig {
 			message := i.lastMessages[boxName]
 			if message == nil {
 				continue
 			}
-
-			box := goterm.NewBox(hBoxWidth, vBoxHeight, 0)
-
+			box := goterm.NewBox(hBoxSizes[col], vBoxSizes[line], 0)
+			box.Border = BORDER_STRING
 			_, e := fmt.Fprintf(box, "%s Status:\n%s", strings.Title(message.Box), strings.ReplaceAll(message.Message, "\t", "    "))
 			errors = multierror.Append(errors, e)
 
-			_, e = terminalPrint(goterm.MoveTo(box.String(), hBoxWidth*col+1, vBoxHeight*line+1+yOffset))
+			_, e = terminalPrint(goterm.MoveTo(box.String(), nextX, nextY))
+
+			nextX += hBoxSizes[col]
 			errors = multierror.Append(errors, e)
 		}
+		nextY += vBoxSizes[line]
 	}
 
 	goterm.Flush()
 	return errors.ErrorOrNil()
+}
+
+func calcBoxSize(available int, numBoxes int) []int {
+	baseSize := available / numBoxes
+	mod := available % numBoxes
+
+	result := make([]int, numBoxes)
+
+	for i := 0; i < numBoxes; i++ {
+		size := baseSize
+		if i < mod {
+			size++
+		}
+
+		result[i] = size
+	}
+
+	return result
 }
 
 func printHeader(k8sContext string) error {
