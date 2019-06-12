@@ -173,8 +173,10 @@ func TestServer_RemoveResourceRecord(t *testing.T) {
 		double  bool
 		hasType bool
 	}{
+		{"remove A but other exists not normalized", "domain", dns.Type(dns.TypeA), false, true},
 		{"remove A but other exists", "domain.", dns.Type(dns.TypeA), false, true},
 		{"remove A but other exists", "domain.", dns.Type(dns.TypeA), true, true},
+		{"remove last AAAA not normalized", "domain", dns.Type(dns.TypeAAAA), false, false},
 		{"remove last AAAA", "domain.", dns.Type(dns.TypeAAAA), false, false},
 		{"remove last AAAA", "domain.", dns.Type(dns.TypeAAAA), true, false},
 	}
@@ -189,7 +191,7 @@ func TestServer_RemoveResourceRecord(t *testing.T) {
 				assert.NoError(t, srv.AddAAAA("domain.", net.ParseIP("::2")))
 			}
 			t.Logf("Found resource records: %s", srv.entries[tt.dnsType])
-			srv.RemoveResourceRecord(dns.Name(tt.domain), tt.dnsType)
+			srv.RemoveResourceRecord(tt.domain, tt.dnsType)
 			rrs, ok := srv.entries[tt.dnsType]
 			t.Logf("Found resource records after deletenein: %s", rrs)
 			if ok != tt.hasType {

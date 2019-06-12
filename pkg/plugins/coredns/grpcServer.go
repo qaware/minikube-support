@@ -196,9 +196,11 @@ func (srv *Server) GetResourceRecord(name dns.Name, dnsType dns.Type) ([]dns.RR,
 }
 
 // RemoveResourceRecord deletes the resource record identified by the name and type from the internal database.
-func (srv *Server) RemoveResourceRecord(name dns.Name, dnsType dns.Type) {
-	delete(srv.entries[dnsType], name)
-	if len(srv.entries[dnsType]) == 0 {
+func (srv *Server) RemoveResourceRecord(name string, dnsType dns.Type) {
+	normalizedName := dns.Name(normalizeName(name))
+	records := srv.entries[dnsType]
+	delete(records, normalizedName)
+	if len(records) == 0 {
 		delete(srv.entries, dnsType)
 	}
 }

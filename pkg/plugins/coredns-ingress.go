@@ -33,9 +33,9 @@ func combineCoreDnsAndIngress() ([]apis.StartStopPlugin, error) {
 				logrus.Errorf("can not determ coredns server backend: %s", e)
 				return
 			}
-			coreDnsBackend.RemoveResourceRecord(dns.Name(domain), dns.Type(dns.TypeA))
-			coreDnsBackend.RemoveResourceRecord(dns.Name(domain), dns.Type(dns.TypeAAAA))
-			coreDnsBackend.RemoveResourceRecord(dns.Name(domain), dns.Type(dns.TypeCNAME))
+			coreDnsBackend.RemoveResourceRecord(domain, dns.Type(dns.TypeA))
+			coreDnsBackend.RemoveResourceRecord(domain, dns.Type(dns.TypeAAAA))
+			coreDnsBackend.RemoveResourceRecord(domain, dns.Type(dns.TypeCNAME))
 		})
 
 	return []apis.StartStopPlugin{coreDns, k8sIngresses}, nil
