@@ -19,5 +19,5 @@ func Execute() {
 }
 
 func init() {
-	rootCmd.AddCommand(NewVersionCommand())
+	rootCmd.AddCommand(NewVersionCommand(), NewCompletionCmd())
 }
