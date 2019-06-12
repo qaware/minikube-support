@@ -39,12 +39,15 @@ func NewRunSingleCommand(plugin apis.StartStopPlugin) *cobra.Command {
 func (i *RunSingleOptions) Run(cmd *cobra.Command, args []string) {
 	signalsChannel := make(chan os.Signal)
 	signal.Notify(signalsChannel, syscall.SIGINT, syscall.SIGTERM)
+	startError := make(chan error)
 
-	_, e := i.plugin.Start(i.messageChannel)
-	if e != nil {
-		logrus.Errorf("Can not start plugin %s: %s", i.plugin, e)
-		return
-	}
+	go func() {
+		_, e := i.plugin.Start(i.messageChannel)
+		if e != nil {
+			startError <- e
+		}
+	}()
+
 	logrus.Infof("Plugin %s successfully started. Waiting for status...", i.plugin)
 	for {
 		select {
@@ -56,6 +59,9 @@ func (i *RunSingleOptions) Run(cmd *cobra.Command, args []string) {
 			if e != nil {
 				logrus.Warnf("Unable to terminate plugin %s: %s", i.plugin, e)
 			}
+			return
+		case e := <-startError:
+			logrus.Errorf("Can not start plugin %s: %s", i.plugin, e)
 			return
 		}
 	}
