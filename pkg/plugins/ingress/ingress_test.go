@@ -5,6 +5,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	v1meta "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"reflect"
+	"sort"
 	"testing"
 
 	"k8s.io/api/extensions/v1beta1"
@@ -260,6 +261,7 @@ func Test_k8sIngress_handleDeletedIngress(t *testing.T) {
 				currentIngresses: make(map[string]ingressEntry),
 			}
 			k8s.handleDeletedIngress(tt.ingress)
+			sort.Strings(removedHosts)
 			if !reflect.DeepEqual(removedHosts, tt.wantRemovedHosts) {
 				t.Errorf("k8sIngress.handleDeletedIngress() removedHosts = %v, wantRemovedHosts %v", removedHosts, tt.wantRemovedHosts)
 			}

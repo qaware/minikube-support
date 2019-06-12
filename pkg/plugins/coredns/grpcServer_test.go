@@ -170,10 +170,13 @@ func TestServer_RemoveResourceRecord(t *testing.T) {
 		name    string
 		domain  string
 		dnsType dns.Type
+		double  bool
 		hasType bool
 	}{
-		{"remove A but other exists", "domain.", dns.Type(dns.TypeA), true},
-		{"remove last AAAA", "domain.", dns.Type(dns.TypeAAAA), false},
+		{"remove A but other exists", "domain.", dns.Type(dns.TypeA), false, true},
+		{"remove A but other exists", "domain.", dns.Type(dns.TypeA), true, true},
+		{"remove last AAAA", "domain.", dns.Type(dns.TypeAAAA), false, false},
+		{"remove last AAAA", "domain.", dns.Type(dns.TypeAAAA), true, false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -181,8 +184,14 @@ func TestServer_RemoveResourceRecord(t *testing.T) {
 			assert.NoError(t, srv.AddA("domain.", net.ParseIP("127.0.0.1")))
 			assert.NoError(t, srv.AddA("domain1.", net.ParseIP("127.0.0.2")))
 			assert.NoError(t, srv.AddAAAA("domain.", net.ParseIP("::1")))
+			if tt.double {
+				assert.NoError(t, srv.AddA("domain.", net.ParseIP("127.0.0.2")))
+				assert.NoError(t, srv.AddAAAA("domain.", net.ParseIP("::2")))
+			}
+			t.Logf("Found resource records: %s", srv.entries[tt.dnsType])
 			srv.RemoveResourceRecord(dns.Name(tt.domain), tt.dnsType)
 			rrs, ok := srv.entries[tt.dnsType]
+			t.Logf("Found resource records after deletenein: %s", rrs)
 			if ok != tt.hasType {
 				t.Errorf("Wrong removal of type array: want %v, done %v", tt.hasType, ok)
 				return
