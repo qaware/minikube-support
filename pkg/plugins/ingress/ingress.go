@@ -268,9 +268,9 @@ func noopRemoveHost(domain string) {
 func (k8s *k8sIngress) printInfo() {
 	buffer := new(bytes.Buffer)
 	writer := tabwriter.NewWriter(buffer, 0, 0, 1, ' ', tabwriter.Debug)
-	fmt.Fprintf(writer, "Name\tNamespace\tHostname\tTargets\n")
+	fmt.Fprintf(writer, "Name\t Namespace\t Hostname\t Targets\n")
 	for _, ingress := range k8s.currentIngresses {
-		fmt.Fprintf(writer, "%s\t%s\t%s\t%s\n", ingress.name, ingress.namespace, strings.Join(ingress.hostNames, ","), strings.Join(ingress.targetIps, ","))
+		fmt.Fprintf(writer, "%s\t %s\t %s\t %s\n", ingress.name, ingress.namespace, strings.Join(ingress.hostNames, ","), strings.Join(ingress.targetIps, ","))
 	}
 	writer.Flush()
 	k8s.messageChannel <- &apis.MonitoringMessage{pluginName, buffer.String()}
