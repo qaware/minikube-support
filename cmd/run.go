@@ -33,7 +33,7 @@ type RunOptions struct {
 func NewRunOptions() *RunOptions {
 	return &RunOptions{
 		messageChannel: make(chan *apis.MonitoringMessage),
-		plugins:        plugins.GetStartStopPlugins(),
+		plugins:        plugins.GetStartStopPluginRegistry().ListPlugins(),
 		lastMessages:   map[string]*apis.MonitoringMessage{},
 	}
 }
@@ -167,7 +167,7 @@ func printHeader(k8sContext string) error {
 func init() {
 	runCmd := NewRunCommand()
 	rootCmd.AddCommand(runCmd)
-	for _, plugin := range plugins.GetStartStopPlugins() {
+	for _, plugin := range plugins.GetStartStopPluginRegistry().ListPlugins() {
 		runCmd.AddCommand(NewRunSingleCommand(plugin))
 	}
 }

@@ -3,8 +3,6 @@ package plugins
 import (
 	"fmt"
 	"github.com/chr-fritz/minikube-support/pkg/apis"
-	"github.com/chr-fritz/minikube-support/pkg/plugins/ingress"
-	"github.com/chr-fritz/minikube-support/pkg/plugins/mkcert"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -16,15 +14,12 @@ var installPlugins *installablePluginRegistry
 type installablePluginRegistry struct {
 	plugins map[string]apis.InstallablePlugin
 }
+
 type runnerFunc func(plugin apis.InstallablePlugin, cmd *cobra.Command, args []string)
 
 // Initializes the plugin registry.
 func init() {
 	installPlugins = newInstallablePluginRegistry()
-	installPlugins.addPlugins(
-		mkcert.CreateMkcertInstallerPlugin(),
-		ingress.NewControllerInstaller(),
-	)
 }
 
 // Create the install command for all registered plugins.
@@ -55,13 +50,9 @@ func CreateUninstallCommands() []*cobra.Command {
 	return createCommands("Uninstall the %s plugin.", runner)
 }
 
-// GetInstallablePlugins returns a list with all registered installable plugins.
-func GetInstallablePlugins() []apis.InstallablePlugin {
-	var values []apis.InstallablePlugin
-	for _, v := range installPlugins.plugins {
-		values = append(values, v)
-	}
-	return values
+// GetInstallablePluginRegistry returns the instance for the InstallablePluginRegistry.
+func GetInstallablePluginRegistry() apis.InstallablePluginRegistry {
+	return installPlugins
 }
 
 // Initializes a new plugin registry.
@@ -72,14 +63,14 @@ func newInstallablePluginRegistry() *installablePluginRegistry {
 }
 
 // Registers some plugins.
-func (r *installablePluginRegistry) addPlugins(plugins ...apis.InstallablePlugin) {
+func (r *installablePluginRegistry) AddPlugins(plugins ...apis.InstallablePlugin) {
 	for _, plugin := range plugins {
-		r.addPlugin(plugin)
+		r.AddPlugin(plugin)
 	}
 }
 
 // Registers a single plugin.
-func (r *installablePluginRegistry) addPlugin(plugin apis.InstallablePlugin) {
+func (r *installablePluginRegistry) AddPlugin(plugin apis.InstallablePlugin) {
 	if plugin == nil {
 		logrus.Panicf("Can not add nil plugin to registry")
 		return
@@ -91,6 +82,24 @@ func (r *installablePluginRegistry) addPlugin(plugin apis.InstallablePlugin) {
 	}
 
 	r.plugins[plugin.String()] = plugin
+}
+
+// ListPlugins returns a list with all registered installable plugins.
+func (r *installablePluginRegistry) ListPlugins() []apis.InstallablePlugin {
+	var values []apis.InstallablePlugin
+	for _, v := range installPlugins.plugins {
+		values = append(values, v)
+	}
+	return values
+}
+
+// FindPlugin finds a single plugin by its name. If not found it returns an error.
+func (r *installablePluginRegistry) FindPlugin(name string) (apis.InstallablePlugin, error) {
+	plugin, ok := r.plugins[name]
+	if !ok {
+		return nil, fmt.Errorf("plugin '%s' not found", name)
+	}
+	return plugin, nil
 }
 
 // Create the commands for all registered plugins with the given description format and runner function.

@@ -1,13 +1,13 @@
 package plugins
 
 import (
+	"fmt"
 	"github.com/chr-fritz/minikube-support/pkg/apis"
-	"github.com/chr-fritz/minikube-support/pkg/plugins/minikube"
 	"github.com/sirupsen/logrus"
 )
 
 // Singleton Plugin Registry
-var startStopPlugins *startStopPluginRegistry
+var startStopPlugins apis.StartStopPluginRegistry
 
 // The plugin registry.
 type startStopPluginRegistry struct {
@@ -17,37 +17,29 @@ type startStopPluginRegistry struct {
 // Initializes the plugin registry.
 func init() {
 	startStopPlugins = newStartStopPluginRegistry()
-	startStopPlugins.addPlugins(
-		minikube.NewTunnel(),
-		NewCoreDnsIngressPlugin(),
-	)
-}
-
-// GetInstallablePlugins returns a list with all registered installable plugins.
-func GetStartStopPlugins() []apis.StartStopPlugin {
-	var values []apis.StartStopPlugin
-	for _, v := range startStopPlugins.plugins {
-		values = append(values, v)
-	}
-	return values
 }
 
 // Initializes a new plugin registry.
-func newStartStopPluginRegistry() *startStopPluginRegistry {
+func newStartStopPluginRegistry() apis.StartStopPluginRegistry {
 	return &startStopPluginRegistry{
 		plugins: map[string]apis.StartStopPlugin{},
 	}
 }
 
+// GetStartStopPluginRegistry returns the current instance of the StartStopPluginRegistry.
+func GetStartStopPluginRegistry() apis.StartStopPluginRegistry {
+	return startStopPlugins
+}
+
 // Registers some plugins.
-func (r *startStopPluginRegistry) addPlugins(plugins ...apis.StartStopPlugin) {
+func (r *startStopPluginRegistry) AddPlugins(plugins ...apis.StartStopPlugin) {
 	for _, plugin := range plugins {
-		r.addPlugin(plugin)
+		r.AddPlugin(plugin)
 	}
 }
 
 // Registers a single plugin.
-func (r *startStopPluginRegistry) addPlugin(plugin apis.StartStopPlugin) {
+func (r *startStopPluginRegistry) AddPlugin(plugin apis.StartStopPlugin) {
 	if plugin == nil {
 		logrus.Panicf("Can not add nil plugin to registry")
 		return
@@ -59,4 +51,22 @@ func (r *startStopPluginRegistry) addPlugin(plugin apis.StartStopPlugin) {
 	}
 
 	r.plugins[plugin.String()] = plugin
+}
+
+// ListPlugins returns a list with all registered installable plugins.
+func (r *startStopPluginRegistry) ListPlugins() []apis.StartStopPlugin {
+	var values []apis.StartStopPlugin
+	for _, v := range r.plugins {
+		values = append(values, v)
+	}
+	return values
+}
+
+// FindPlugin tries to find and return a plugin with the given name. Otherwise it would return an error.
+func (r *startStopPluginRegistry) FindPlugin(name string) (apis.StartStopPlugin, error) {
+	plugin, ok := r.plugins[name]
+	if !ok {
+		return nil, fmt.Errorf("plugin '%s' not found", name)
+	}
+	return plugin, nil
 }

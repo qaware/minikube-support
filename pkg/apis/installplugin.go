@@ -21,3 +21,15 @@ type InstallablePlugin interface {
 	// Should print information about the process.
 	Uninstall(purge bool)
 }
+
+// InstallablePluginRegistry is the registry which collects all InstallablePlugins and provides easy access to them.
+type InstallablePluginRegistry interface {
+	// AddPlugin adds a single plugin to the registry.
+	AddPlugin(plugin InstallablePlugin)
+	// AddPlugins adds the given list of plugins to the registry.
+	AddPlugins(plugins ...InstallablePlugin)
+	// ListPlugins returns a list of all currently registered plugins in the registry.
+	ListPlugins() []InstallablePlugin
+	// FindPlugin tries to find and return a plugin with the given name. Otherwise it would return an error.
+	FindPlugin(name string) (InstallablePlugin, error)
+}

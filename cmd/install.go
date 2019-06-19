@@ -13,7 +13,7 @@ type InstallOptions struct {
 
 func NewInstallOptions() *InstallOptions {
 	return &InstallOptions{
-		plugins: plugins.GetInstallablePlugins(),
+		plugins: plugins.GetInstallablePluginRegistry().ListPlugins(),
 	}
 }
 

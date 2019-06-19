@@ -16,6 +16,18 @@ type StartStopPlugin interface {
 	Stop() error
 }
 
+// StartStopPluginRegistry is the registry which collects all StartStopPlugins and provides easy access to them.
+type StartStopPluginRegistry interface {
+	// AddPlugin adds a single plugin to the registry.
+	AddPlugin(plugin StartStopPlugin)
+	// AddPlugins adds the given list of plugins to the registry.
+	AddPlugins(plugins ...StartStopPlugin)
+	// ListPlugins returns a list of all currently registered plugins in the registry.
+	ListPlugins() []StartStopPlugin
+	// FindPlugin tries to find and return a plugin with the given name. Otherwise it would return an error.
+	FindPlugin(name string) (StartStopPlugin, error)
+}
+
 // The message type for notifying the run cli command about new status and monitoring messages from the plugin.
 type MonitoringMessage struct {
 	Box     string

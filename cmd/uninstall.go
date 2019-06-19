@@ -14,7 +14,7 @@ type UninstallOptions struct {
 
 func NewUninstallOptions() *UninstallOptions {
 	return &UninstallOptions{
-		plugins: plugins.GetInstallablePlugins(),
+		plugins: plugins.GetInstallablePluginRegistry().ListPlugins(),
 	}
 }
 

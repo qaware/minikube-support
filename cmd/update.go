@@ -13,7 +13,7 @@ type UpdateOptions struct {
 
 func NewUpdateOptions() *UpdateOptions {
 	return &UpdateOptions{
-		plugins: plugins.GetInstallablePlugins(),
+		plugins: plugins.GetInstallablePluginRegistry().ListPlugins(),
 	}
 }
 
