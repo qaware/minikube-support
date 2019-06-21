@@ -58,3 +58,6 @@ func (testPlugin) Start(chan *apis.MonitoringMessage) (boxName string, err error
 func (testPlugin) Stop() error {
 	panic("implement me")
 }
+func (testPlugin) IsSingleRunnable() bool {
+	return false
+}

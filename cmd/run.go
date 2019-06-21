@@ -168,6 +168,8 @@ func init() {
 	runCmd := NewRunCommand()
 	rootCmd.AddCommand(runCmd)
 	for _, plugin := range plugins.GetStartStopPluginRegistry().ListPlugins() {
-		runCmd.AddCommand(NewRunSingleCommand(plugin))
+		if plugin.IsSingleRunnable() {
+			runCmd.AddCommand(NewRunSingleCommand(plugin))
+		}
 	}
 }

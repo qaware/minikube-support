@@ -39,6 +39,10 @@ func (grpcPlugin) String() string {
 	return GrpcPluginName
 }
 
+func (grpcPlugin) IsSingleRunnable() bool {
+	return false
+}
+
 // Start starts the server to allow registering new entries and answers queries from CoreDNS.
 func (p *grpcPlugin) Start(monitoringChannel chan *apis.MonitoringMessage) (boxName string, e error) {
 	p.monitoringChannel = monitoringChannel

@@ -52,3 +52,6 @@ func (p *DummyPlugin) Stop() error {
 	}
 	return nil
 }
+func (c *DummyPlugin) IsSingleRunnable() bool {
+	return false
+}

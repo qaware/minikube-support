@@ -14,6 +14,10 @@ func (p *DummyPlugin) Stop() error {
 	return nil
 }
 
+func (c *DummyPlugin) IsSingleRunnable() bool {
+	return false
+}
+
 func Test_startStopPluginRegistry_AddPlugin(t *testing.T) {
 	tests := []struct {
 		name        string

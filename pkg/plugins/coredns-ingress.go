@@ -42,5 +42,5 @@ func combineCoreDnsAndIngress() ([]apis.StartStopPlugin, error) {
 }
 
 func NewCoreDnsIngressPlugin() apis.StartStopPlugin {
-	return NewCombinedPlugin("coredns-ingress", combineCoreDnsAndIngress)
+	return NewCombinedPlugin("coredns-ingress", combineCoreDnsAndIngress, true)
 }

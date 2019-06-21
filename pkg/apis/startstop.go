@@ -14,6 +14,9 @@ type StartStopPlugin interface {
 
 	// Stops the plugin for graceful shutdown.
 	Stop() error
+
+	// IsSingleRunnable determs if this plugin can be started using the "run <plugin>" command.
+	IsSingleRunnable() bool
 }
 
 // StartStopPluginRegistry is the registry which collects all StartStopPlugins and provides easy access to them.

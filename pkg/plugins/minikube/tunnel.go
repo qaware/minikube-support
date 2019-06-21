@@ -23,6 +23,10 @@ func NewTunnel() apis.StartStopPlugin {
 
 const tunnelBoxName = "minikube-tunnel"
 
+func (*tunnel) IsSingleRunnable() bool {
+	return true
+}
+
 func (t *tunnel) Start(monitoringChannel chan *apis.MonitoringMessage) (boxName string, err error) {
 	e := sh.InitSudo()
 	if e != nil {

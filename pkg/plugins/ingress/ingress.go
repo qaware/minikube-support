@@ -59,6 +59,10 @@ func NewK8sIngress(clientConfig string, addHost AddResourceRecordFunc, addAlias 
 	}
 }
 
+func (*k8sIngress) IsSingleRunnable() bool {
+	return true
+}
+
 func (*k8sIngress) String() string {
 	return pluginName
 }

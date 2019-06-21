@@ -8,25 +8,31 @@ import (
 
 // CombinedStartStopPlugin is a simple plugin that combines several plugins together using a combine function.
 type CombinedStartStopPlugin struct {
-	pluginName  string
-	combineFunc CombineFunc
-	plugins     []apis.StartStopPlugin
+	pluginName     string
+	combineFunc    CombineFunc
+	plugins        []apis.StartStopPlugin
+	singleRunnable bool
 }
 
 // CombineFunc combines several plugins and returns them as array.
 type CombineFunc func() ([]apis.StartStopPlugin, error)
 
 // NewCombinedPlugin creates a new plugin that combines some more plugins to one.
-func NewCombinedPlugin(pluginName string, combineFunc CombineFunc) apis.StartStopPlugin {
+func NewCombinedPlugin(pluginName string, combineFunc CombineFunc, singleRunnable bool) apis.StartStopPlugin {
 	return &CombinedStartStopPlugin{
-		pluginName:  pluginName,
-		combineFunc: combineFunc,
+		pluginName:     pluginName,
+		combineFunc:    combineFunc,
+		singleRunnable: singleRunnable,
 	}
 }
 
 // String returns the plugin name.
 func (c *CombinedStartStopPlugin) String() string {
 	return c.pluginName
+}
+
+func (c *CombinedStartStopPlugin) IsSingleRunnable() bool {
+	return c.singleRunnable
 }
 
 // Start really combines the plugins together and starts them all.
