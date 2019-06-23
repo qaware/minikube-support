@@ -59,10 +59,12 @@ func (srv *Server) Query(ctx context.Context, in *pb.DnsPacket) (*pb.DnsPacket, 
 	r.Authoritative = true
 	for _, q := range r.Question {
 		rr, e := srv.GetResourceRecord(dns.Name(q.Name), dns.Type(q.Qtype))
+		logrus.Infof("Request for record %s %s", q.Name, dns.Type(q.Qtype))
 		if e != nil {
 			logrus.Debugf("Can not handle request %v: %s", q, e)
 			continue
 		}
+		logrus.Infof("Found DNS record for %s %s: %s", q.Name, dns.Type(q.Qtype), rr)
 		r.Answer = append(r.Answer, rr...)
 	}
 
@@ -178,6 +180,7 @@ func (srv *Server) addRR(entry dns.RR) {
 		srv.entries[dnsType] = make(map[dns.Name][]dns.RR)
 	}
 	srv.entries[dnsType][name] = append(srv.entries[dnsType][name], entry)
+	logrus.Infof("Resource Record %s added", entry)
 }
 
 // GetResourceRecord tries to find a resource record with the given name and type.

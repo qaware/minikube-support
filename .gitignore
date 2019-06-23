@@ -2,4 +2,5 @@
 bin/
 minikube-support
 pb/*.go
-logs/
+/logs/
+*.log

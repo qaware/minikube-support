@@ -31,6 +31,9 @@ func GetServer(plugin apis.StartStopPlugin) (*Server, error) {
 	if !ok {
 		return nil, fmt.Errorf("try to get server from unknown plugin type %s", plugin)
 	}
+	if p == nil {
+		return nil, fmt.Errorf("no grpcPlugin found")
+	}
 	return p.server, nil
 }
 
