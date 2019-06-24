@@ -3,13 +3,13 @@ package plugins
 import (
 	"fmt"
 	"github.com/chr-fritz/minikube-support/pkg/apis"
+	"github.com/hashicorp/go-multierror"
 	"github.com/sirupsen/logrus"
 )
 
 // CombinedStartStopPlugin is a simple plugin that combines several plugins together using a combine function.
 type CombinedStartStopPlugin struct {
 	pluginName     string
-	combineFunc    CombineFunc
 	plugins        []apis.StartStopPlugin
 	singleRunnable bool
 }
@@ -18,12 +18,16 @@ type CombinedStartStopPlugin struct {
 type CombineFunc func() ([]apis.StartStopPlugin, error)
 
 // NewCombinedPlugin creates a new plugin that combines some more plugins to one.
-func NewCombinedPlugin(pluginName string, combineFunc CombineFunc, singleRunnable bool) apis.StartStopPlugin {
+func NewCombinedPlugin(pluginName string, plugins []apis.StartStopPlugin, singleRunnable bool) (*CombinedStartStopPlugin, error) {
+	if len(plugins) < 2 {
+		return nil, fmt.Errorf("at least two plugins are required to combine them. Only %v given", len(plugins))
+	}
+
 	return &CombinedStartStopPlugin{
 		pluginName:     pluginName,
-		combineFunc:    combineFunc,
+		plugins:        plugins,
 		singleRunnable: singleRunnable,
-	}
+	}, nil
 }
 
 // String returns the plugin name.
@@ -37,24 +41,14 @@ func (c *CombinedStartStopPlugin) IsSingleRunnable() bool {
 
 // Start really combines the plugins together and starts them all.
 func (c *CombinedStartStopPlugin) Start(messageChannel chan *apis.MonitoringMessage) (string, error) {
-	if c.combineFunc == nil {
-		return "", fmt.Errorf("can not start the combined plugin: combine function is nil")
-	}
-
-	plugins, e := c.combineFunc()
-	if e != nil {
-		return "", fmt.Errorf("can not start all combined plugins: %s", e)
-	}
-
-	for _, plugin := range plugins {
+	var errors *multierror.Error
+	for _, plugin := range c.plugins {
 		_, err := plugin.Start(messageChannel)
 		if err != nil {
-			logrus.Errorf("Unable to start plugin %s: %s", plugin, err)
-		} else {
-			c.plugins = append(c.plugins, plugin)
+			errors = multierror.Append(errors, err)
 		}
 	}
-	return c.pluginName, nil
+	return c.pluginName, errors.ErrorOrNil()
 }
 
 // Stop stops all plugins.

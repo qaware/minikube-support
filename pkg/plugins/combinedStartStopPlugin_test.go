@@ -8,61 +8,56 @@ import (
 	"github.com/chr-fritz/minikube-support/pkg/apis"
 )
 
-func TestCombinedStartStopPlugin_Start(t *testing.T) {
+func TestNewCombinedPlugin(t *testing.T) {
 	tests := []struct {
-		name        string
-		combineFunc CombineFunc
-		wantPlugins []string
-		wantErr     bool
+		name    string
+		plugins []apis.StartStopPlugin
+		want    *CombinedStartStopPlugin
+		wantErr bool
 	}{
-		{
-			"ok",
-			func() ([]apis.StartStopPlugin, error) {
-				return []apis.StartStopPlugin{&DummyPlugin{}}, nil
-			},
-			[]string{"dummy"},
-			false,
-		},
-		{
-			"combine func nil",
-			nil,
-			[]string{},
-			true,
-		},
-		{
-			"one ok, other fails",
-			func() ([]apis.StartStopPlugin, error) {
-				return []apis.StartStopPlugin{&DummyPlugin{}, &failingStartStopPlugin{}}, nil
-			},
-			[]string{"dummy"},
-			false,
-		},
-		{
-			"combine func error",
-			func() ([]apis.StartStopPlugin, error) {
-				return nil, fmt.Errorf("fail")
-			},
-			[]string{"dummy"},
-			true,
-		},
+		{"ok", []apis.StartStopPlugin{&DummyPlugin{}, &DummyPlugin{}}, &CombinedStartStopPlugin{"test", []apis.StartStopPlugin{&DummyPlugin{}, &DummyPlugin{}}, true}, false},
+		{"too few plugins", []apis.StartStopPlugin{&DummyPlugin{}}, nil, true},
+		{"no plugins", []apis.StartStopPlugin{}, nil, true},
+		{"nil plugins", nil, nil, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			c := NewCombinedPlugin("t", tt.combineFunc, true)
-			_, err := c.Start(make(chan *apis.MonitoringMessage))
+			got, err := NewCombinedPlugin("test", tt.plugins, true)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("NewCombinedPlugin() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("NewCombinedPlugin() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestCombinedStartStopPlugin_Start(t *testing.T) {
+	tests := []struct {
+		name    string
+		plugins []apis.StartStopPlugin
+		want    string
+		wantErr bool
+	}{
+		{"ok", []apis.StartStopPlugin{&DummyPlugin{}, &DummyPlugin{}}, "test", false},
+		{"one fails", []apis.StartStopPlugin{&DummyPlugin{}, &failingStartStopPlugin{}}, "test", true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := &CombinedStartStopPlugin{
+				pluginName:     "test",
+				plugins:        tt.plugins,
+				singleRunnable: true,
+			}
+			got, err := c.Start(make(chan *apis.MonitoringMessage))
 			if (err != nil) != tt.wantErr {
 				t.Errorf("CombinedStartStopPlugin.Start() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if err != nil {
-				return
-			}
-			var plugins []string
-			for _, p := range c.(*CombinedStartStopPlugin).plugins {
-				plugins = append(plugins, p.String())
-			}
-			if !reflect.DeepEqual(plugins, tt.wantPlugins) {
-				t.Errorf("CombinedStartStopPlugin.Start() = %v, want %v", plugins, tt.wantPlugins)
+			if got != tt.want {
+				t.Errorf("CombinedStartStopPlugin.Start() = %v, want %v", got, tt.want)
 			}
 		})
 	}
