@@ -24,5 +24,6 @@ func init() {
 	plugins.GetStartStopPluginRegistry().AddPlugins(
 		minikube.NewTunnel(),
 		coreDnsIngressPlugin,
+		minikube.NewIpPlugin(manager),
 	)
 }

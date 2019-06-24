@@ -108,6 +108,11 @@ func TestHelperProcess(*testing.T) {
 				_, _ = fmt.Fprintf(os.Stdout, string(bytes))
 			}
 		}
+	case "minikube":
+		cmd, _ := args[0], args[1:]
+		switch cmd {
+		case "ip":
+			_, _ = fmt.Fprintln(os.Stdout, "127.0.0.1")
+		}
 	}
-
 }
