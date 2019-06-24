@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/chr-fritz/minikube-support/pkg/apis"
+	"github.com/chr-fritz/minikube-support/pkg/plugins/coredns"
 	"github.com/hashicorp/go-multierror"
 	"github.com/sirupsen/logrus"
 	"k8s.io/api/core/v1"
@@ -19,17 +20,11 @@ import (
 	"text/tabwriter"
 )
 
-// AddResourceRecordFunc is the function signature for adding resource records.
-// It is used to add A, AAAA and CNAME entries.
-type AddResourceRecordFunc func(string, string) error
-
 type k8sIngress struct {
 	clientConfig   string
 	clientSet      *kubernetes.Clientset
 	messageChannel chan *apis.MonitoringMessage
-	addHost        AddResourceRecordFunc
-	addAlias       AddResourceRecordFunc
-	removeHost     func(string)
+	recordManager  coredns.Manager
 	watch          watch.Interface
 
 	currentIngresses map[string]ingressEntry
@@ -39,22 +34,14 @@ const pluginName = "kubernetes-ingress"
 
 // NewK8sIngress will initialize a new ingress plugin.
 // It allows to configure the functions to add and remove the hosts in the dns backend.
-func NewK8sIngress(clientConfig string, addHost AddResourceRecordFunc, addAlias AddResourceRecordFunc, removeHost func(string)) apis.StartStopPlugin {
-	if addHost == nil {
-		addHost = noopAddHost
-	}
-	if addAlias == nil {
-		addAlias = noopAddAlias
-	}
-	if removeHost == nil {
-		removeHost = noopRemoveHost
+func NewK8sIngress(clientConfig string, recordManager coredns.Manager) apis.StartStopPlugin {
+	if recordManager == nil {
+		recordManager = coredns.NewNoOpManager()
 	}
 
 	return &k8sIngress{
 		clientConfig:     clientConfig,
-		addHost:          addHost,
-		addAlias:         addAlias,
-		removeHost:       removeHost,
+		recordManager:    recordManager,
 		currentIngresses: make(map[string]ingressEntry),
 	}
 }
@@ -166,7 +153,7 @@ func (k8s *k8sIngress) handleUpdatedIngress(ingress v1beta1.Ingress) error {
 	if !ingressEntry.hasTargets() {
 		logrus.Debugf("Ingress %s updated. It is not anymore associated to a loadbalancer. Removing all dns entries.", ingressEntry)
 		for _, host := range oldEntry.hostNames {
-			k8s.removeHost(host)
+			k8s.recordManager.RemoveHost(host)
 		}
 		return nil
 	}
@@ -174,13 +161,13 @@ func (k8s *k8sIngress) handleUpdatedIngress(ingress v1beta1.Ingress) error {
 	var errors *multierror.Error
 	// remove old host entries
 	for _, host := range ingressEntry.getRemovedHostNames(oldEntry) {
-		k8s.removeHost(host)
+		k8s.recordManager.RemoveHost(host)
 	}
 
 	// if targets has changed remove the updated hosts and add the new ones
 	if !ingressEntry.hasSameTargets(oldEntry) {
 		for _, host := range ingressEntry.getUpdatedHostNames(oldEntry) {
-			k8s.removeHost(host)
+			k8s.recordManager.RemoveHost(host)
 			errors = multierror.Append(errors, k8s.addTargets(ingressEntry, host))
 		}
 	}
@@ -197,10 +184,10 @@ func (k8s *k8sIngress) handleUpdatedIngress(ingress v1beta1.Ingress) error {
 func (k8s *k8sIngress) addTargets(entry ingressEntry, host string) *multierror.Error {
 	var errors *multierror.Error
 	for _, ip := range entry.targetIps {
-		errors = multierror.Append(errors, k8s.addHost(host, ip))
+		errors = multierror.Append(errors, k8s.recordManager.AddHost(host, ip))
 	}
 	for _, target := range entry.targetHosts {
-		errors = multierror.Append(errors, k8s.addAlias(host, target))
+		errors = multierror.Append(errors, k8s.recordManager.AddAlias(host, target))
 	}
 	return errors
 }
@@ -211,7 +198,7 @@ func (k8s *k8sIngress) handleDeletedIngress(ingress v1beta1.Ingress) {
 	ingressEntry := convertToIngressEntry(ingress)
 
 	for _, host := range ingressEntry.hostNames {
-		k8s.removeHost(host)
+		k8s.recordManager.RemoveHost(host)
 	}
 	delete(k8s.currentIngresses, ingressEntry.String())
 	logrus.Infof("DNS records for ingress %s successfully removed", ingressEntry)
@@ -250,23 +237,6 @@ func (k8s *k8sIngress) openRestConfig() error {
 	}
 	k8s.clientSet = clientSet
 	return nil
-}
-
-// noopAddhost is a dummy function that just logs the addition of the given domain to the dns backend.
-func noopAddHost(domain string, ip string) error {
-	logrus.Infof("Would add new A or AAAA dns entry for %s to %s.", domain, ip)
-	return nil
-}
-
-// noopAddAlias is a dummy function that just logs the addition of the given domain to the dns backend.
-func noopAddAlias(domain string, target string) error {
-	logrus.Infof("Would add new CNAME dns entry for %s to %s.", domain, target)
-	return nil
-}
-
-// noopRemoveHost is a dummy function that just logs the removal of the given domain from the dns backend.
-func noopRemoveHost(domain string) {
-	logrus.Infof("Would remove A or AAAA dns entry for %s.", domain)
 }
 
 func (k8s *k8sIngress) printInfo() {

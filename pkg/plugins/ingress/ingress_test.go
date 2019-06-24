@@ -26,29 +26,19 @@ func Test_k8sIngress_handleAddedIngress(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			addedHosts := []string{}
-			addedAlias := []string{}
+			manager := newTestManager(t)
 			k8s := &k8sIngress{
-				addHost: func(host string, ip string) error {
-					addedHosts = append(addedHosts, host)
-					assert.NotEmpty(t, ip)
-					return nil
-				},
-				addAlias: func(host string, target string) error {
-					addedAlias = append(addedAlias, host)
-					assert.NotEmpty(t, target)
-					return nil
-				},
+				recordManager:    manager,
 				currentIngresses: make(map[string]ingressEntry),
 			}
 			if err := k8s.handleAddedIngress(tt.ingress); (err != nil) != tt.wantErr {
 				t.Errorf("k8sIngress.handleAddedIngress() error = %v, wantErr %v", err, tt.wantErr)
 			}
-			if !reflect.DeepEqual(addedHosts, tt.wantAddHosts) {
-				t.Errorf("k8sIngress.handleAddedIngress() addedHosts = %v, wantAddedHosts %v", addedHosts, tt.wantAddHosts)
+			if !reflect.DeepEqual(manager.addedHosts, tt.wantAddHosts) {
+				t.Errorf("k8sIngress.handleAddedIngress() addedHosts = %v, wantAddedHosts %v", manager.addedHosts, tt.wantAddHosts)
 			}
-			if !reflect.DeepEqual(addedAlias, tt.wantAddAlias) {
-				t.Errorf("k8sIngress.handleAddedIngress() wantAddAlias = %v, wantAddAlias %v", addedAlias, tt.wantAddAlias)
+			if !reflect.DeepEqual(manager.addedAlias, tt.wantAddAlias) {
+				t.Errorf("k8sIngress.handleAddedIngress() wantAddAlias = %v, wantAddAlias %v", manager.addedAlias, tt.wantAddAlias)
 			}
 		})
 	}
@@ -211,34 +201,22 @@ func Test_k8sIngress_handleUpdatedIngress(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			addedHosts := []string{}
-			addedAlias := []string{}
-			removedHosts := []string{}
+			manager := newTestManager(t)
 			k8s := &k8sIngress{
-				addHost: func(host string, ip string) error {
-					addedHosts = append(addedHosts, host)
-					assert.NotEmpty(t, ip)
-					return nil
-				},
-				addAlias: func(host string, ip string) error {
-					addedAlias = append(addedAlias, host)
-					assert.NotEmpty(t, ip)
-					return nil
-				},
-				removeHost:       func(host string) { removedHosts = append(removedHosts, host) },
+				recordManager:    manager,
 				currentIngresses: tt.currentIngresses,
 			}
 			if err := k8s.handleUpdatedIngress(tt.ingress); (err != nil) != tt.wantErr {
 				t.Errorf("k8sIngress.handleUpdatedIngress() error = %v, wantErr %v", err, tt.wantErr)
 			}
-			if !reflect.DeepEqual(addedHosts, tt.wantAddHosts) {
-				t.Errorf("k8sIngress.handleUpdatedIngress() addedHosts = %v, wantAddedHosts %v", addedHosts, tt.wantAddHosts)
+			if !reflect.DeepEqual(manager.addedHosts, tt.wantAddHosts) {
+				t.Errorf("k8sIngress.handleUpdatedIngress() addedHosts = %v, wantAddedHosts %v", manager.addedHosts, tt.wantAddHosts)
 			}
-			if !reflect.DeepEqual(addedAlias, tt.wantAddAlias) {
-				t.Errorf("k8sIngress.handleUpdatedIngress() wantAddAlias = %v, wantAddAlias %v", addedAlias, tt.wantAddAlias)
+			if !reflect.DeepEqual(manager.addedAlias, tt.wantAddAlias) {
+				t.Errorf("k8sIngress.handleUpdatedIngress() wantAddAlias = %v, wantAddAlias %v", manager.addedAlias, tt.wantAddAlias)
 			}
-			if !reflect.DeepEqual(removedHosts, tt.wantRemovedHosts) {
-				t.Errorf("k8sIngress.handleUpdatedIngress() removedHosts = %v, wantRemovedHosts %v", removedHosts, tt.wantRemovedHosts)
+			if !reflect.DeepEqual(manager.removedHosts, tt.wantRemovedHosts) {
+				t.Errorf("k8sIngress.handleUpdatedIngress() removedHosts = %v, wantRemovedHosts %v", manager.removedHosts, tt.wantRemovedHosts)
 			}
 		})
 	}
@@ -255,15 +233,15 @@ func Test_k8sIngress_handleDeletedIngress(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			removedHosts := []string{}
+			manager := newTestManager(t)
 			k8s := &k8sIngress{
-				removeHost:       func(host string) { removedHosts = append(removedHosts, host) },
+				recordManager:    manager,
 				currentIngresses: make(map[string]ingressEntry),
 			}
 			k8s.handleDeletedIngress(tt.ingress)
-			sort.Strings(removedHosts)
-			if !reflect.DeepEqual(removedHosts, tt.wantRemovedHosts) {
-				t.Errorf("k8sIngress.handleDeletedIngress() removedHosts = %v, wantRemovedHosts %v", removedHosts, tt.wantRemovedHosts)
+			sort.Strings(manager.removedHosts)
+			if !reflect.DeepEqual(manager.removedHosts, tt.wantRemovedHosts) {
+				t.Errorf("k8sIngress.handleDeletedIngress() removedHosts = %v, wantRemovedHosts %v", manager.removedHosts, tt.wantRemovedHosts)
 			}
 		})
 	}
@@ -277,4 +255,31 @@ func createDummyIngress(name string, ns string, targetIp string, targetHost stri
 		},
 		Status: v1beta1.IngressStatus{LoadBalancer: v1.LoadBalancerStatus{Ingress: []v1.LoadBalancerIngress{{IP: targetIp}, {Hostname: targetHost}}}},
 	}
+}
+
+type testManager struct {
+	t            *testing.T
+	addedHosts   []string
+	addedAlias   []string
+	removedHosts []string
+}
+
+func newTestManager(t *testing.T) *testManager {
+	return &testManager{t, make([]string, 0), make([]string, 0), make([]string, 0)}
+}
+
+func (m *testManager) AddHost(hostName string, ip string) error {
+	m.addedHosts = append(m.addedHosts, hostName)
+	assert.NotEmpty(m.t, ip)
+	return nil
+}
+
+func (m *testManager) AddAlias(hostName string, target string) error {
+	m.addedAlias = append(m.addedAlias, hostName)
+	assert.NotEmpty(m.t, target)
+	return nil
+}
+
+func (m *testManager) RemoveHost(hostName string) {
+	m.removedHosts = append(m.removedHosts, hostName)
 }

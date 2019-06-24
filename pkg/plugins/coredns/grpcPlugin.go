@@ -34,6 +34,9 @@ func GetServer(plugin apis.StartStopPlugin) (*Server, error) {
 	if p == nil {
 		return nil, fmt.Errorf("no grpcPlugin found")
 	}
+	if p.server == nil {
+		return nil, fmt.Errorf("grpcServer not initialized")
+	}
 	return p.server, nil
 }
 
