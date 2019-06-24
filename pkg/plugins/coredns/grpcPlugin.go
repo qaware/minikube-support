@@ -12,12 +12,12 @@ import (
 const GrpcPluginName = "coredns-grpc"
 
 type grpcPlugin struct {
-	server            *Server
+	server            *server
 	monitoringChannel chan *apis.MonitoringMessage
 	terminationChan   chan bool
 }
 
-// NewGrpcPlugin initializes a new StartStopPlugin that will controls the lifecycle of the Server instance.
+// NewGrpcPlugin initializes a new StartStopPlugin that will controls the lifecycle of the server instance.
 func NewGrpcPlugin() apis.StartStopPlugin {
 	return &grpcPlugin{
 		terminationChan: make(chan bool),
@@ -26,7 +26,7 @@ func NewGrpcPlugin() apis.StartStopPlugin {
 
 // GetServer returns the backend grpc server if it is the grpcPlugin.
 // Otherwise it returns an error.
-func GetServer(plugin apis.StartStopPlugin) (*Server, error) {
+func GetServer(plugin apis.StartStopPlugin) (*server, error) {
 	p, ok := plugin.(*grpcPlugin)
 	if !ok {
 		return nil, fmt.Errorf("try to get server from unknown plugin type %s", plugin)
@@ -80,7 +80,7 @@ func (p *grpcPlugin) listRRsForUI() {
 	}
 }
 
-// Stop terminates the Server instance.
+// Stop terminates the server instance.
 func (p *grpcPlugin) Stop() error {
 	p.terminationChan <- true
 	p.server.Stop()

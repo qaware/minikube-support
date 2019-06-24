@@ -11,22 +11,22 @@ import (
 	"time"
 )
 
-// Server is a small grpc service that answers to dns queries over grpc from CoreDNS.
+// server is a small grpc service that answers to dns queries over grpc from CoreDNS.
 // Please refer to the CoreDNS GRPC Plugin how to configure it to use this as backend.
-type Server struct {
+type server struct {
 	entries map[dns.Type]map[dns.Name][]dns.RR
 	server  *grpc.Server
 }
 
 // NewServer initializes the grpc core dns service.
-func NewServer() *Server {
-	return &Server{
+func NewServer() *server {
+	return &server{
 		entries: make(map[dns.Type]map[dns.Name][]dns.RR),
 	}
 }
 
 // Start starts the server by using the given socket to listen on for new dns queries.
-func (srv *Server) Start(socket net.Listener) {
+func (srv *server) Start(socket net.Listener) {
 	srv.server = grpc.NewServer()
 	pb.RegisterDnsServiceServer(srv.server, srv)
 
@@ -40,7 +40,7 @@ func (srv *Server) Start(socket net.Listener) {
 
 // Stop tries to stop the server gracefully.
 // It enforces the server to stop if the server can not be stopped gracefully within 5 seconds.
-func (srv *Server) Stop() {
+func (srv *server) Stop() {
 	defer srv.server.Stop()
 	go srv.server.GracefulStop()
 	time.Sleep(5 * time.Second)
@@ -49,7 +49,7 @@ func (srv *Server) Stop() {
 // Query answers to dns queries received via grpc from CoreDNS.
 // See also https://coredns.io/plugins/grpc/ for information about the configuration
 // of CoreDNS to use this as backend.
-func (srv *Server) Query(ctx context.Context, in *pb.DnsPacket) (*pb.DnsPacket, error) {
+func (srv *server) Query(ctx context.Context, in *pb.DnsPacket) (*pb.DnsPacket, error) {
 	m := new(dns.Msg)
 	if err := m.Unpack(in.Msg); err != nil {
 		return nil, fmt.Errorf("failed to unpack msg: %v", err)
@@ -81,7 +81,7 @@ func (srv *Server) Query(ctx context.Context, in *pb.DnsPacket) (*pb.DnsPacket, 
 
 // AddHost adds the given domain name as new resource record. Depending on the given
 // ipAddress either as A record or as AAAA record.
-func (srv *Server) AddHost(name string, ipAddress string) error {
+func (srv *server) AddHost(name string, ipAddress string) error {
 	ip := net.ParseIP(ipAddress)
 	if ip == nil {
 		return fmt.Errorf("can not parse ip: %s", ipAddress)
@@ -96,7 +96,7 @@ func (srv *Server) AddHost(name string, ipAddress string) error {
 
 // AddA adds a new A resource record for the given domain to the internal database.
 // It will not overwrite any existing resource records if there is already one with the same name and type.
-func (srv *Server) AddA(name string, ipv4 net.IP) error {
+func (srv *server) AddA(name string, ipv4 net.IP) error {
 	if ipv4 == nil {
 		return fmt.Errorf("given ip address is nil")
 	}
@@ -123,7 +123,7 @@ func (srv *Server) AddA(name string, ipv4 net.IP) error {
 
 // AddAAAA adds a new AAAA resource record for the given domain to the internal database.
 // It will not overwrite any existing resource records if there is already one with the same name and type.
-func (srv *Server) AddAAAA(name string, ipv6 net.IP) error {
+func (srv *server) AddAAAA(name string, ipv6 net.IP) error {
 	if ipv6 == nil {
 		return fmt.Errorf("given ip address is nil")
 	}
@@ -150,7 +150,7 @@ func (srv *Server) AddAAAA(name string, ipv6 net.IP) error {
 
 // AddCNAME adds a new CNAME resource record for the given domain to the internal database.
 // It will not overwrite any existing resource records if there is already one with the same name and type.
-func (srv *Server) AddCNAME(name string, target string) error {
+func (srv *server) AddCNAME(name string, target string) error {
 	if _, ok := dns.IsDomainName(name); !ok {
 		return fmt.Errorf("%s is not a valid domain name", name)
 	}
@@ -173,7 +173,7 @@ func (srv *Server) AddCNAME(name string, target string) error {
 
 // addRR adds the given resource record to the internal database.
 // It will not overwrite any existing resource records if there is already one with the same name and type.
-func (srv *Server) addRR(entry dns.RR) {
+func (srv *server) addRR(entry dns.RR) {
 	name := dns.Name(entry.Header().Name)
 	dnsType := dns.Type(entry.Header().Rrtype)
 	if _, ok := srv.entries[dnsType]; !ok {
@@ -185,7 +185,7 @@ func (srv *Server) addRR(entry dns.RR) {
 
 // GetResourceRecord tries to find a resource record with the given name and type.
 // It will return an error if no records are found.
-func (srv *Server) GetResourceRecord(name dns.Name, dnsType dns.Type) ([]dns.RR, error) {
+func (srv *server) GetResourceRecord(name dns.Name, dnsType dns.Type) ([]dns.RR, error) {
 	typeRRs, ok := srv.entries[dnsType]
 	if !ok {
 		return nil, fmt.Errorf("no resource records of type %s", dnsType)
@@ -199,7 +199,7 @@ func (srv *Server) GetResourceRecord(name dns.Name, dnsType dns.Type) ([]dns.RR,
 }
 
 // RemoveResourceRecord deletes the resource record identified by the name and type from the internal database.
-func (srv *Server) RemoveResourceRecord(name string, dnsType dns.Type) {
+func (srv *server) RemoveResourceRecord(name string, dnsType dns.Type) {
 	normalizedName := dns.Name(normalizeName(name))
 	records := srv.entries[dnsType]
 	delete(records, normalizedName)
@@ -210,7 +210,7 @@ func (srv *Server) RemoveResourceRecord(name string, dnsType dns.Type) {
 
 // ListRRs returns a list of all currently stored resource records.
 // The returned list can be empty if no records are stored.
-func (srv *Server) ListRRs() []dns.RR {
+func (srv *server) ListRRs() []dns.RR {
 	var rrs []dns.RR
 
 	for _, typeRRs := range srv.entries {

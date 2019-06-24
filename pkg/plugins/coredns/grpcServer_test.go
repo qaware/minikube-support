@@ -12,9 +12,9 @@ import (
 func TestNewServer(t *testing.T) {
 	tests := []struct {
 		name string
-		want *Server
+		want *server
 	}{
-		{"create server", &Server{entries: make(map[dns.Type]map[dns.Name][]dns.RR)}},
+		{"create server", &server{entries: make(map[dns.Type]map[dns.Name][]dns.RR)}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -47,7 +47,7 @@ func TestServer_AddHost(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			srv := NewServer()
 			if err := srv.AddHost(tt.domain, tt.ipAddress); (err != nil) != tt.wantErr {
-				t.Errorf("Server.AddHost() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("server.AddHost() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			rr := checkResourceRecord(t, srv, tt.domain, dns.Type(tt.wantType), tt.recordFound)
@@ -78,7 +78,7 @@ func TestServer_AddA(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			srv := NewServer()
 			if err := srv.AddA(tt.domain, net.ParseIP(tt.ipv4)); (err != nil) != tt.wantErr {
-				t.Errorf("Server.AddA() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("server.AddA() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			rr := checkResourceRecord(t, srv, tt.domain, dns.Type(dns.TypeA), tt.recordFound)
@@ -115,7 +115,7 @@ func TestServer_AddAAAA(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			srv := NewServer()
 			if err := srv.AddAAAA(tt.domain, net.ParseIP(tt.ipv6)); (err != nil) != tt.wantErr {
-				t.Errorf("Server.AddAAAA() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("server.AddAAAA() error = %v, wantErr %v", err, tt.wantErr)
 			}
 
 			rr := checkResourceRecord(t, srv, tt.domain, dns.Type(dns.TypeAAAA), tt.recordFound)
@@ -148,7 +148,7 @@ func TestServer_AddCNAME(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			srv := NewServer()
 			if err := srv.AddCNAME(tt.domain, tt.target); (err != nil) != tt.wantErr {
-				t.Errorf("Server.AddCNAME() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("server.AddCNAME() error = %v, wantErr %v", err, tt.wantErr)
 			}
 
 			rr := checkResourceRecord(t, srv, tt.domain, dns.Type(dns.TypeCNAME), tt.recordFound)
@@ -215,7 +215,7 @@ func TestServer_ListRRs(t *testing.T) {
 	assert.Equal(t, 4, len(got))
 }
 
-func checkResourceRecord(t *testing.T, srv *Server, domain string, rrType dns.Type, recordFound bool) dns.RR {
+func checkResourceRecord(t *testing.T, srv *server, domain string, rrType dns.Type, recordFound bool) dns.RR {
 	rr, e := srv.GetResourceRecord(dns.Name(domain), rrType)
 	if (e != nil) == recordFound {
 		t.Errorf("No %s resource record found for %s: %s", rrType, domain, e)
@@ -255,7 +255,7 @@ func TestServer_GetResourceRecord(t *testing.T) {
 			assert.NoError(t, srv.AddAAAA("domain.", net.ParseIP("::1")))
 			got, err := srv.GetResourceRecord(dns.Name(tt.domain), tt.dnsType)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("Server.GetResourceRecord() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("server.GetResourceRecord() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if got == nil {

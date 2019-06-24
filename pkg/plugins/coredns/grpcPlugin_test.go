@@ -13,7 +13,7 @@ func TestGetServer(t *testing.T) {
 	tests := []struct {
 		name    string
 		plugin  apis.StartStopPlugin
-		want    *Server
+		want    *server
 		wantErr bool
 	}{
 		{"ok", &grpcPlugin{server: NewServer()}, NewServer(), false},

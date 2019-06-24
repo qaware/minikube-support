@@ -78,7 +78,7 @@ func TestGrpcPlugin(t *testing.T) {
 	}
 }
 
-func initClientServer(t *testing.T) (apis.StartStopPlugin, *Server, *grpc.ClientConn, error) {
+func initClientServer(t *testing.T) (apis.StartStopPlugin, *server, *grpc.ClientConn, error) {
 	plugin := NewGrpcPlugin()
 	channel := make(chan *apis.MonitoringMessage, 100)
 	_, e := plugin.Start(channel)
