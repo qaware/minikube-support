@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"github.com/chr-fritz/minikube-support/pkg/apis"
+	"github.com/chr-fritz/minikube-support/pkg/kubernetes"
 	"github.com/chr-fritz/minikube-support/pkg/plugins"
 	"github.com/chr-fritz/minikube-support/pkg/plugins/coredns"
 	"github.com/chr-fritz/minikube-support/pkg/plugins/ingress"
@@ -11,6 +12,8 @@ import (
 
 // Initializes all active plugins and register them in the two (installable and start stop) plugin registries.
 func init() {
+	handler := kubernetes.NewContextHandler("", "")
+
 	plugins.GetInstallablePluginRegistry().AddPlugins(
 		mkcert.CreateMkcertInstallerPlugin(),
 		ingress.NewControllerInstaller(),
@@ -18,7 +21,7 @@ func init() {
 
 	coreDns := coredns.NewGrpcPlugin()
 	manager, _ := coredns.NewManager(coreDns)
-	k8sIngresses := ingress.NewK8sIngress("", manager)
+	k8sIngresses := ingress.NewK8sIngress(handler, manager)
 	coreDnsIngressPlugin, _ := plugins.NewCombinedPlugin("coredns-ingress", []apis.StartStopPlugin{coreDns, k8sIngresses}, true)
 
 	plugins.GetStartStopPluginRegistry().AddPlugins(

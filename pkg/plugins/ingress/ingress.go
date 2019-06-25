@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/chr-fritz/minikube-support/pkg/apis"
+	"github.com/chr-fritz/minikube-support/pkg/kubernetes"
 	"github.com/chr-fritz/minikube-support/pkg/plugins/coredns"
 	"github.com/hashicorp/go-multierror"
 	"github.com/sirupsen/logrus"
@@ -11,18 +12,12 @@ import (
 	"k8s.io/api/extensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/watch"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/clientcmd"
-	"k8s.io/client-go/util/homedir"
-	"path/filepath"
 	"strings"
 	"text/tabwriter"
 )
 
 type k8sIngress struct {
-	clientConfig   string
-	clientSet      *kubernetes.Clientset
+	ctxHandler     kubernetes.ContextHandler
 	messageChannel chan *apis.MonitoringMessage
 	recordManager  coredns.Manager
 	watch          watch.Interface
@@ -34,13 +29,13 @@ const pluginName = "kubernetes-ingress"
 
 // NewK8sIngress will initialize a new ingress plugin.
 // It allows to configure the functions to add and remove the hosts in the dns backend.
-func NewK8sIngress(clientConfig string, recordManager coredns.Manager) apis.StartStopPlugin {
+func NewK8sIngress(contextHandler kubernetes.ContextHandler, recordManager coredns.Manager) apis.StartStopPlugin {
 	if recordManager == nil {
 		recordManager = coredns.NewNoOpManager()
 	}
 
 	return &k8sIngress{
-		clientConfig:     clientConfig,
+		ctxHandler:       contextHandler,
 		recordManager:    recordManager,
 		currentIngresses: make(map[string]ingressEntry),
 	}
@@ -57,12 +52,13 @@ func (*k8sIngress) String() string {
 // Start starts the ingress plugin. It will automatically add all current ingresses.
 func (k8s *k8sIngress) Start(messageChannel chan *apis.MonitoringMessage) (string, error) {
 	k8s.messageChannel = messageChannel
-	e := k8s.openRestConfig()
+
+	clientSet, e := k8s.ctxHandler.GetClientSet()
 	if e != nil {
-		return "", fmt.Errorf("config error: %s", e)
+		return "", fmt.Errorf("can not get clientSet: %s", e)
 	}
 
-	ingresses := k8s.clientSet.
+	ingresses := clientSet.
 		ExtensionsV1beta1().
 		Ingresses(v1.NamespaceAll)
 	ingressList, e := ingresses.List(metav1.ListOptions{})
@@ -91,7 +87,13 @@ func (k8s *k8sIngress) Stop() error {
 // watchIngresses watches for all changes of ingresses in the connected kubernetes cluster.
 // It will add, update or remove the ingresses directly after it get notified about changes.
 func (k8s *k8sIngress) watchIngresses(resourceVersion string) {
-	ingresses := k8s.clientSet.
+	clientSet, e := k8s.ctxHandler.GetClientSet()
+	if e != nil {
+		logrus.Errorf("can not get clientSet: %s", e)
+		return
+	}
+
+	ingresses := clientSet.
 		ExtensionsV1beta1().
 		Ingresses(v1.NamespaceAll)
 
@@ -202,41 +204,6 @@ func (k8s *k8sIngress) handleDeletedIngress(ingress v1beta1.Ingress) {
 	}
 	delete(k8s.currentIngresses, ingressEntry.String())
 	logrus.Infof("DNS records for ingress %s successfully removed", ingressEntry)
-}
-
-// openRestConfig opens the kubernetes configuration and creates a client set that can
-// be used to connect to an kubernetes cluster.
-func (k8s *k8sIngress) openRestConfig() error {
-	var e error
-	var config *rest.Config
-	if k8s.clientConfig == "" {
-		config, e = rest.InClusterConfig()
-
-		// if not run in cluster try to use default from user home
-		if e == rest.ErrNotInCluster {
-			homeDir := homedir.HomeDir()
-			configPath := filepath.Join(homeDir, ".kube", "config")
-			config, e = clientcmd.BuildConfigFromFlags("", configPath)
-		}
-
-		// Neither in cluster config nor user home config exists.
-		if e != nil {
-			return fmt.Errorf("can not determ config: %s", e)
-		}
-	} else {
-		// Use config from given file name.
-		config, e = clientcmd.BuildConfigFromFlags("", k8s.clientConfig)
-		if e != nil {
-			return fmt.Errorf("can not read config from file %s: %s", k8s.clientConfig, e)
-		}
-	}
-
-	clientSet, e := kubernetes.NewForConfig(config)
-	if e != nil {
-		return fmt.Errorf("unable to create clientSet: %s", e)
-	}
-	k8s.clientSet = clientSet
-	return nil
 }
 
 func (k8s *k8sIngress) printInfo() {
