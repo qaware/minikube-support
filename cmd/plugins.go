@@ -12,7 +12,7 @@ import (
 
 // Initializes all active plugins and register them in the two (installable and start stop) plugin registries.
 func init() {
-	handler := kubernetes.NewContextHandler("", "")
+	handler := kubernetes.NewContextHandler(&rootCmdOptions.kubeConfig, &rootCmdOptions.contextName)
 
 	plugins.GetInstallablePluginRegistry().AddPlugins(
 		mkcert.CreateMkcertInstallerPlugin(),

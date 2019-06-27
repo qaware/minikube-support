@@ -6,9 +6,30 @@ import (
 	"os"
 )
 
-var rootCmd = &cobra.Command{
-	Use:   "minikube-support",
-	Short: "The minikube-support tools helps to integrate minikube better into your local os.",
+// RootCommandOptions stores the the values for global command flags like the kubeconfig and context name.
+type RootCommandOptions struct {
+	kubeConfig  string
+	contextName string
+}
+
+var rootCmd *cobra.Command
+
+var rootCmdOptions *RootCommandOptions
+
+// NewRootCmd initializes the root cobra command including all the flags on root level.
+func NewRootCmd() (*cobra.Command, *RootCommandOptions) {
+	cmd := &cobra.Command{
+		Use:   "minikube-support",
+		Short: "The minikube-support tools helps to integrate minikube better into your local os.",
+	}
+
+	options := &RootCommandOptions{}
+
+	flags := cmd.PersistentFlags()
+	flags.StringVar(&options.kubeConfig, "kubeconfig", "", "Path to the kubeconfig file to use for CLI requests.")
+	flags.StringVar(&options.contextName, "context", "", "The name of the kubeconfig context to use")
+
+	return cmd, options
 }
 
 func Execute() {
@@ -19,5 +40,6 @@ func Execute() {
 }
 
 func init() {
+	rootCmd, rootCmdOptions = NewRootCmd()
 	rootCmd.AddCommand(NewVersionCommand(), NewCompletionCmd())
 }

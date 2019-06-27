@@ -27,7 +27,8 @@ func Test_contextHandler_GetClientSet(t *testing.T) {
 				_ = os.Setenv("HOME", tt.homeDir)
 			}
 
-			h := NewContextHandler(tt.configFile, "")
+			context := ""
+			h := NewContextHandler(&tt.configFile, &context)
 			got, err := h.GetClientSet()
 			if (err != nil) != tt.wantErr {
 				t.Errorf("contextHandler.GetClientSet() error = %v, wantErr %v", err, tt.wantErr)

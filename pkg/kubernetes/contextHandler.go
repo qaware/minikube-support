@@ -26,12 +26,12 @@ type ContextHandler interface {
 type contextHandler struct {
 	clientSet      *kubernetes.Clientset
 	clientSetMutex sync.Mutex
-	configFile     string
-	contextName    string
+	configFile     *string
+	contextName    *string
 }
 
 // NewContextHandler creates a new ContextHandler instance for the given config file and context name.
-func NewContextHandler(configFile string, contextName string) ContextHandler {
+func NewContextHandler(configFile *string, contextName *string) ContextHandler {
 	return &contextHandler{configFile: configFile, contextName: contextName, clientSetMutex: sync.Mutex{}}
 }
 
@@ -50,11 +50,11 @@ func (h *contextHandler) GetClientSet() (*kubernetes.Clientset, error) {
 }
 
 func (h *contextHandler) GetConfigFile() string {
-	return h.configFile
+	return *h.configFile
 }
 
 func (h *contextHandler) GetContextName() string {
-	return h.contextName
+	return *h.contextName
 }
 
 // openRestConfig opens the kubernetes configuration and creates a client set that can
@@ -62,14 +62,17 @@ func (h *contextHandler) GetContextName() string {
 func (h *contextHandler) openRestConfig() error {
 	var e error
 	var config *rest.Config
-	if h.configFile == "" {
+	configFile := *h.configFile
+	contextName := *h.contextName
+
+	if configFile == "" {
 		config, e = rest.InClusterConfig()
 
 		// if not run in cluster try to use default from user home
 		if e == rest.ErrNotInCluster {
 			homeDir := homedir.HomeDir()
 			configPath := filepath.Join(homeDir, ".kube", "config")
-			config, e = loadConfig(configPath, h.contextName)
+			config, e = loadConfig(configPath, contextName)
 		}
 
 		// Neither in cluster config nor user home config exists.
@@ -78,9 +81,9 @@ func (h *contextHandler) openRestConfig() error {
 		}
 	} else {
 		// Use config from given file name.
-		config, e = loadConfig(h.configFile, h.contextName)
+		config, e = loadConfig(configFile, contextName)
 		if e != nil {
-			return fmt.Errorf("can not read config from file %s: %s", h.configFile, e)
+			return fmt.Errorf("can not read config from file %s: %s", configFile, e)
 		}
 	}
 
