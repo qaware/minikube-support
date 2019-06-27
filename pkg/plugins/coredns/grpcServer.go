@@ -156,7 +156,8 @@ func (srv *server) AddCNAME(name string, target string) error {
 	}
 
 	if !dns.IsFqdn(target) {
-		return fmt.Errorf("%s is not a full qualified domain name", target)
+		logrus.Warnf("%s is not a full qualified domain name", target)
+		target = normalizeName(target)
 	}
 
 	srv.addRR(&dns.CNAME{

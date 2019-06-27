@@ -139,10 +139,11 @@ func TestServer_AddCNAME(t *testing.T) {
 		target      string
 		wantErr     bool
 		recordFound bool
+		wantTarget  string
 	}{
-		{"ok", "ok.", "target.example.com.", false, true},
-		{"to-long domain", "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz", "", true, false},
-		{"no fqdn", "no-fqdn", "no-fqdn", true, false},
+		{"ok", "ok.", "target.example.com.", false, true, "target.example.com."},
+		{"to-long domain", "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz", "", true, false, ""},
+		{"no fqdn", "no-fqdn.", "no-fqdn", false, true, "no-fqdn."},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -157,10 +158,10 @@ func TestServer_AddCNAME(t *testing.T) {
 			}
 			a, ok := rr.(*dns.CNAME)
 			if !ok {
-				t.Errorf("Found resource record is not a A record: got %s", reflect.TypeOf(rr))
+				t.Errorf("Found resource record is not a CNAME record: got %s", reflect.TypeOf(rr))
 				return
 			}
-			assert.Equal(t, tt.target, a.Target)
+			assert.Equal(t, tt.wantTarget, a.Target)
 		})
 	}
 }
