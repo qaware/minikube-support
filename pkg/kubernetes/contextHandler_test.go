@@ -21,11 +21,24 @@ func Test_contextHandler_GetClientSet(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			//Unset Kubernetes environmental variables (HOST/PORT) to have the same testing behaviour in and outside of the cluster
+			//  and "HOME" environmental variable
+			//	-> restore after testing completed
 			oldHome := os.Getenv("HOME")
-			defer func() { _ = os.Setenv("HOME", oldHome) }()
+			oldK8sServiceHost := os.Getenv("KUBERNETES_SERVICE_HOST")
+			oldK8sServicePort := os.Getenv("KUBERNETES_SERVICE_PORT")
+
+			defer func() {
+				_ = os.Setenv("HOME", oldHome)
+				_ = os.Setenv("KUBERNETES_SERVICE_HOST", oldK8sServiceHost)
+				_ = os.Setenv("KUBERNETES_SERVICE_PORT", oldK8sServicePort)
+			}()
+
 			if tt.homeDir != "" {
 				_ = os.Setenv("HOME", tt.homeDir)
 			}
+			_ = os.Unsetenv("KUBERNETES_SERVICE_HOST")
+			_ = os.Unsetenv("KUBERNETES_SERVICE_PORT")
 
 			context := ""
 			h := NewContextHandler(&tt.configFile, &context)
