@@ -33,3 +33,7 @@ func (i *controllerInstaller) Update() {
 func (i *controllerInstaller) Uninstall(purge bool) {
 	i.manager.Uninstall(i.releaseName, purge)
 }
+
+func (*controllerInstaller) Phase() apis.Phase {
+	return apis.CLUSTER_TOOLS_INSTALL
+}

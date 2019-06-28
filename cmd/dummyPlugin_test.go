@@ -14,6 +14,7 @@ type DummyPlugin struct {
 	updateRun    bool
 	uninstallRun bool
 	purge        bool
+	phase        apis.Phase
 }
 
 func (p *DummyPlugin) Install() {
@@ -52,6 +53,9 @@ func (p *DummyPlugin) Stop() error {
 	}
 	return nil
 }
-func (c *DummyPlugin) IsSingleRunnable() bool {
+func (p *DummyPlugin) IsSingleRunnable() bool {
 	return false
+}
+func (p *DummyPlugin) Phase() apis.Phase {
+	return p.phase
 }

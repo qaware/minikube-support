@@ -20,7 +20,20 @@ type InstallablePlugin interface {
 	// Uninstall the tools.
 	// Should print information about the process.
 	Uninstall(purge bool)
+
+	Phase() Phase
 }
+
+type Phase int
+
+const (
+	LOCAL_TOOLS_INSTALL   Phase = 0
+	LOCAL_TOOLS_CONFIG    Phase = 5
+	CLUSTER_INIT          Phase = 10
+	CLUSTER_CONFIG        Phase = 15
+	CLUSTER_TOOLS_INSTALL Phase = 20
+	CLUSTER_TOOLS_CONFIG  Phase = 25
+)
 
 // InstallablePluginRegistry is the registry which collects all InstallablePlugins and provides easy access to them.
 type InstallablePluginRegistry interface {

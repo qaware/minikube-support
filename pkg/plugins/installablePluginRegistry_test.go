@@ -74,6 +74,7 @@ func initTestRegistry() *DummyPlugin {
 
 type DummyPlugin struct {
 	executedFunction string
+	phase            apis.Phase
 }
 
 func (p *DummyPlugin) String() string {
@@ -90,6 +91,10 @@ func (p *DummyPlugin) Update() {
 
 func (p *DummyPlugin) Uninstall(purge bool) {
 	p.executedFunction = fmt.Sprintf("uninstall %v", purge)
+}
+
+func (p *DummyPlugin) Phase() apis.Phase {
+	return p.phase
 }
 
 func Test_installablePluginRegistry_AddPlugin(t *testing.T) {
@@ -142,6 +147,28 @@ func Test_installablePluginRegistry_FindPlugin(t *testing.T) {
 			}
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("installablePluginRegistry.FindPlugin() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_installablePluginRegistry_ListPlugins(t *testing.T) {
+	tests := []struct {
+		name    string
+		plugins map[string]apis.InstallablePlugin
+		want    []apis.InstallablePlugin
+	}{
+		{"one plugin", map[string]apis.InstallablePlugin{"dummy1": &DummyPlugin{phase: 1}}, []apis.InstallablePlugin{&DummyPlugin{phase: 1}}},
+		{"two different phase", map[string]apis.InstallablePlugin{"dummy1": &DummyPlugin{phase: 2}, "dummy2": &DummyPlugin{phase: 1}}, []apis.InstallablePlugin{&DummyPlugin{phase: 1}, &DummyPlugin{phase: 2}}},
+		{"three different phase", map[string]apis.InstallablePlugin{"dummy1": &DummyPlugin{phase: 2}, "dummy2": &DummyPlugin{phase: 1}, "dummy3": &DummyPlugin{phase: 1}}, []apis.InstallablePlugin{&DummyPlugin{phase: 1}, &DummyPlugin{phase: 1}, &DummyPlugin{phase: 2}}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &installablePluginRegistry{
+				plugins: tt.plugins,
+			}
+			if got := r.ListPlugins(); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("installablePluginRegistry.ListPlugins() = %v, want %v", got, tt.want)
 			}
 		})
 	}

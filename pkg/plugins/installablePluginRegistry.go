@@ -5,6 +5,7 @@ import (
 	"github.com/chr-fritz/minikube-support/pkg/apis"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"sort"
 )
 
 // Singleton Plugin Registry
@@ -87,9 +88,12 @@ func (r *installablePluginRegistry) AddPlugin(plugin apis.InstallablePlugin) {
 // ListPlugins returns a list with all registered installable plugins.
 func (r *installablePluginRegistry) ListPlugins() []apis.InstallablePlugin {
 	var values []apis.InstallablePlugin
-	for _, v := range installPlugins.plugins {
+	for _, v := range r.plugins {
 		values = append(values, v)
 	}
+	sort.Slice(values, func(i, j int) bool {
+		return values[i].Phase() < values[j].Phase()
+	})
 	return values
 }
 

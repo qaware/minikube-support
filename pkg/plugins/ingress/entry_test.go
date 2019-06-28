@@ -58,7 +58,7 @@ func Test_convertToIngressEntry(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := convertToIngressEntry(tt.ingress); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("convertToIngressEntry() = %v, want %v", got, tt.want)
+				t.Errorf("convertToIngressEntry() = '%v', want '%v'", got, tt.want)
 			}
 		})
 	}

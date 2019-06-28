@@ -69,3 +69,7 @@ func (i *mkCertInstaller) Uninstall(purge bool) {
 		}
 	}
 }
+
+func (*mkCertInstaller) Phase() apis.Phase {
+	return apis.LOCAL_TOOLS_INSTALL
+}
