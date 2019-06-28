@@ -98,7 +98,7 @@ func (m *defaultManager) checkTiller() error {
 }
 
 func (m *defaultManager) initTiller() error {
-	output, e := m.runCommand("init")
+	output, e := m.runCommand("init", "--wait")
 
 	if e != nil {
 		return fmt.Errorf("can not initialize tiller: %s", output)

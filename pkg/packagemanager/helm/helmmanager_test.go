@@ -30,7 +30,7 @@ func Test_defaultManager_Init(t *testing.T) {
 			m := &defaultManager{}
 			testutils.TestProcessResponses = []testutils.TestProcessResponse{
 				{Command: "helm", Args: []string{"version", "-s"}, ResponseStatus: tt.versionStatus, Stdout: tt.versionMsg},
-				{Command: "helm", Args: []string{"init"}, ResponseStatus: tt.initStatus},
+				{Command: "helm", Args: []string{"init", "--wait"}, ResponseStatus: tt.initStatus},
 			}
 			if err := m.Init(); (err != nil) != tt.wantErr {
 				t.Errorf("defaultManager.Init() error = %v, wantErr %v", err, tt.wantErr)
