@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/chr-fritz/minikube-support/pkg/plugins"
 	"github.com/spf13/cobra"
 	"os"
 )
@@ -40,6 +41,22 @@ func Execute() {
 }
 
 func init() {
+	// initialize basic commands
 	rootCmd, rootCmdOptions = NewRootCmd()
 	rootCmd.AddCommand(NewVersionCommand(), NewCompletionCmd())
+
+	// initializes plugins
+	initPlugins(rootCmdOptions)
+
+	// initialize install, update and uninstall
+	rootCmd.AddCommand(NewInstallCommand(), NewUpdateCommand(), NewUninstallCommand())
+
+	// initializes run commands
+	runCmd := NewRunCommand()
+	rootCmd.AddCommand(runCmd)
+	for _, plugin := range plugins.GetStartStopPluginRegistry().ListPlugins() {
+		if plugin.IsSingleRunnable() {
+			runCmd.AddCommand(NewRunSingleCommand(plugin))
+		}
+	}
 }

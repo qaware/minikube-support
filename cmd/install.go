@@ -36,7 +36,3 @@ func (i *InstallOptions) Run(cmd *cobra.Command, args []string) {
 		plugin.Install()
 	}
 }
-
-func init() {
-	rootCmd.AddCommand(NewInstallCommand())
-}

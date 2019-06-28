@@ -37,7 +37,3 @@ func (i *UninstallOptions) Run(cmd *cobra.Command, args []string) {
 		plugin.Uninstall(i.purge)
 	}
 }
-
-func init() {
-	rootCmd.AddCommand(NewUninstallCommand())
-}

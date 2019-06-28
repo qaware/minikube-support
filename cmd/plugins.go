@@ -11,18 +11,18 @@ import (
 )
 
 // Initializes all active plugins and register them in the two (installable and start stop) plugin registries.
-func init() {
-	handler := kubernetes.NewContextHandler(&rootCmdOptions.kubeConfig, &rootCmdOptions.contextName)
-
-	plugins.GetInstallablePluginRegistry().AddPlugins(
-		mkcert.CreateMkcertInstallerPlugin(),
-		ingress.NewControllerInstaller(),
-	)
+func initPlugins(rootOptions *RootCommandOptions) {
+	handler := kubernetes.NewContextHandler(&rootOptions.kubeConfig, &rootOptions.contextName)
 
 	coreDns := coredns.NewGrpcPlugin()
 	manager, _ := coredns.NewManager(coreDns)
 	k8sIngresses := ingress.NewK8sIngress(handler, manager)
 	coreDnsIngressPlugin, _ := plugins.NewCombinedPlugin("coredns-ingress", []apis.StartStopPlugin{coreDns, k8sIngresses}, true)
+
+	plugins.GetInstallablePluginRegistry().AddPlugins(
+		mkcert.CreateMkcertInstallerPlugin(),
+		ingress.NewControllerInstaller(),
+	)
 
 	plugins.GetStartStopPluginRegistry().AddPlugins(
 		minikube.NewTunnel(),

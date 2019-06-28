@@ -36,7 +36,3 @@ func (i *UpdateOptions) Run(cmd *cobra.Command, args []string) {
 		plugin.Update()
 	}
 }
-
-func init() {
-	rootCmd.AddCommand(NewUpdateCommand())
-}

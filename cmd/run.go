@@ -163,13 +163,3 @@ func printHeader(k8sContext string) error {
 	_, err := terminalPrint(left, space, right)
 	return err
 }
-
-func init() {
-	runCmd := NewRunCommand()
-	rootCmd.AddCommand(runCmd)
-	for _, plugin := range plugins.GetStartStopPluginRegistry().ListPlugins() {
-		if plugin.IsSingleRunnable() {
-			runCmd.AddCommand(NewRunSingleCommand(plugin))
-		}
-	}
-}
