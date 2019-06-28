@@ -34,8 +34,7 @@ func (m *defaultManager) Install(chart string, release string, namespace string,
 	var args = []string{
 		"--install", "--force",
 		"--namespace", namespace,
-		"--name", release,
-		chart,
+		release, chart,
 	}
 	flatValues, e := utils.Flatten(values)
 	if e != nil {
