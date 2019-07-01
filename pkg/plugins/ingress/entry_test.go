@@ -42,14 +42,14 @@ func Test_convertToIngressEntry(t *testing.T) {
 				ObjectMeta: v1meta.ObjectMeta{Name: "test", Namespace: "test-ns"},
 				Spec: v1beta1.IngressSpec{
 					Rules: []v1beta1.IngressRule{{Host: "1"}},
-					TLS:   []v1beta1.IngressTLS{{Hosts: []string{"2"}}},
+					TLS:   []v1beta1.IngressTLS{{Hosts: []string{"1"}}},
 				},
 				Status: v1beta1.IngressStatus{LoadBalancer: v1.LoadBalancerStatus{Ingress: []v1.LoadBalancerIngress{{IP: "ip", Hostname: "host"}}}},
 			},
 			ingressEntry{
 				name:        "test",
 				namespace:   "test-ns",
-				hostNames:   []string{"1", "2"},
+				hostNames:   []string{"1"},
 				targetIps:   []string{"ip"},
 				targetHosts: []string{"host"},
 			},
