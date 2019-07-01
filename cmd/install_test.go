@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"github.com/chr-fritz/minikube-support/pkg/apis"
+	"github.com/chr-fritz/minikube-support/pkg/plugins"
 	"github.com/stretchr/testify/assert"
 	"testing"
 
@@ -10,8 +10,10 @@ import (
 
 func TestInstallOptions_Run(t *testing.T) {
 	plugin := &DummyPlugin{}
+	registry := plugins.NewInstallablePluginRegistry()
+	registry.AddPlugin(plugin)
 	i := InstallOptions{
-		plugins: []apis.InstallablePlugin{plugin},
+		registry: registry,
 	}
 	i.Run(&cobra.Command{}, []string{})
 	assert.True(t, plugin.installRun)

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/buger/goterm"
 	"github.com/chr-fritz/minikube-support/pkg/apis"
-	"github.com/chr-fritz/minikube-support/pkg/plugins"
 	"github.com/hashicorp/go-multierror"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -30,16 +29,16 @@ type RunOptions struct {
 	lastMessages   map[string]*apis.MonitoringMessage
 }
 
-func NewRunOptions() *RunOptions {
+func NewRunOptions(registry apis.StartStopPluginRegistry) *RunOptions {
 	return &RunOptions{
 		messageChannel: make(chan *apis.MonitoringMessage),
-		plugins:        plugins.GetStartStopPluginRegistry().ListPlugins(),
+		plugins:        registry.ListPlugins(),
 		lastMessages:   map[string]*apis.MonitoringMessage{},
 	}
 }
 
-func NewRunCommand() *cobra.Command {
-	options := NewRunOptions()
+func NewRunCommand(registry apis.StartStopPluginRegistry) *cobra.Command {
+	options := NewRunOptions(registry)
 
 	command := &cobra.Command{
 		Use:   "run",

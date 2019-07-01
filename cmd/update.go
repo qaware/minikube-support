@@ -2,36 +2,35 @@ package cmd
 
 import (
 	"github.com/chr-fritz/minikube-support/pkg/apis"
-	"github.com/chr-fritz/minikube-support/pkg/plugins"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
 type UpdateOptions struct {
-	plugins []apis.InstallablePlugin
+	registry apis.InstallablePluginRegistry
 }
 
-func NewUpdateOptions() *UpdateOptions {
+func NewUpdateOptions(registry apis.InstallablePluginRegistry) *UpdateOptions {
 	return &UpdateOptions{
-		plugins: plugins.GetInstallablePluginRegistry().ListPlugins(),
+		registry: registry,
 	}
 }
 
-func NewUpdateCommand() *cobra.Command {
-	options := NewUpdateOptions()
+func NewUpdateCommand(registry apis.InstallablePluginRegistry) *cobra.Command {
+	options := NewUpdateOptions(registry)
 
 	command := &cobra.Command{
 		Use:   "update",
 		Short: "Updates all or one of the available plugins.",
 		Run:   options.Run,
 	}
-	command.AddCommand(plugins.CreateUpdateCommands()...)
+	command.AddCommand(CreateUpdateCommands(options.registry)...)
 	return command
 
 }
 
 func (i *UpdateOptions) Run(cmd *cobra.Command, args []string) {
-	for _, plugin := range i.plugins {
+	for _, plugin := range i.registry.ListPlugins() {
 		logrus.Info("Update plugin:", plugin)
 		plugin.Update()
 	}

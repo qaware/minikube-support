@@ -42,7 +42,22 @@ type InstallablePluginRegistry interface {
 	// AddPlugins adds the given list of plugins to the registry.
 	AddPlugins(plugins ...InstallablePlugin)
 	// ListPlugins returns a list of all currently registered plugins in the registry.
-	ListPlugins() []InstallablePlugin
+	ListPlugins() InstallablePluginList
 	// FindPlugin tries to find and return a plugin with the given name. Otherwise it would return an error.
 	FindPlugin(name string) (InstallablePlugin, error)
+}
+
+// InstallablePluginList is a simple slice which can be sorted by the install Phase.
+type InstallablePluginList []InstallablePlugin
+
+func (l InstallablePluginList) Len() int {
+	return len(l)
+}
+
+func (l InstallablePluginList) Less(i, j int) bool {
+	return l[i].Phase() < l[j].Phase()
+}
+
+func (l InstallablePluginList) Swap(i, j int) {
+	l[i], l[j] = l[j], l[i]
 }

@@ -6,29 +6,16 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// Singleton Plugin Registry
-var startStopPlugins apis.StartStopPluginRegistry
-
 // The plugin registry.
 type startStopPluginRegistry struct {
 	plugins map[string]apis.StartStopPlugin
 }
 
-// Initializes the plugin registry.
-func init() {
-	startStopPlugins = newStartStopPluginRegistry()
-}
-
 // Initializes a new plugin registry.
-func newStartStopPluginRegistry() apis.StartStopPluginRegistry {
+func NewStartStopPluginRegistry() apis.StartStopPluginRegistry {
 	return &startStopPluginRegistry{
 		plugins: map[string]apis.StartStopPlugin{},
 	}
-}
-
-// GetStartStopPluginRegistry returns the current instance of the StartStopPluginRegistry.
-func GetStartStopPluginRegistry() apis.StartStopPluginRegistry {
-	return startStopPlugins
 }
 
 // Registers some plugins.

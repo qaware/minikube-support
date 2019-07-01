@@ -2,24 +2,24 @@ package cmd
 
 import (
 	"github.com/chr-fritz/minikube-support/pkg/apis"
-	"github.com/chr-fritz/minikube-support/pkg/plugins"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"sort"
 )
 
 type UninstallOptions struct {
-	purge   bool
-	plugins []apis.InstallablePlugin
+	purge    bool
+	registry apis.InstallablePluginRegistry
 }
 
-func NewUninstallOptions() *UninstallOptions {
+func NewUninstallOptions(registry apis.InstallablePluginRegistry) *UninstallOptions {
 	return &UninstallOptions{
-		plugins: plugins.GetInstallablePluginRegistry().ListPlugins(),
+		registry: registry,
 	}
 }
 
-func NewUninstallCommand() *cobra.Command {
-	options := NewUninstallOptions()
+func NewUninstallCommand(registry apis.InstallablePluginRegistry) *cobra.Command {
+	options := NewUninstallOptions(registry)
 
 	command := &cobra.Command{
 		Use:   "uninstall",
@@ -27,12 +27,15 @@ func NewUninstallCommand() *cobra.Command {
 		Run:   options.Run,
 	}
 	command.PersistentFlags().BoolVarP(&options.purge, "purge", "p", false, "Remove also any local installed tools regarding this plugin.")
-	command.AddCommand(plugins.CreateUninstallCommands()...)
+	command.AddCommand(createUninstallCommands(options.registry)...)
 	return command
 }
 
 func (i *UninstallOptions) Run(cmd *cobra.Command, args []string) {
-	for _, plugin := range i.plugins {
+	plugins := i.registry.ListPlugins()
+	sort.Sort(sort.Reverse(plugins))
+
+	for _, plugin := range plugins {
 		logrus.Info("Uninstall plugin:", plugin)
 		plugin.Uninstall(i.purge)
 	}
