@@ -17,7 +17,7 @@ func newBrewPackageManager() packagemanager.PackageManager {
 	return &brewPackageManager{}
 }
 
-func init() {
+func InitOsPackageManager() {
 	packagemanager.SetOsPackageManager(newBrewPackageManager())
 }
 
