@@ -2,10 +2,12 @@ package kubernetes
 
 import (
 	"fmt"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/homedir"
+
 	"path/filepath"
 	"sync"
 )
@@ -16,6 +18,9 @@ type ContextHandler interface {
 	// GetClientSet gets the kubernetes client set for the defined config file and context.
 	GetClientSet() (*kubernetes.Clientset, error)
 
+	// GetDynamicClient gets the kubernetes dynamic client to access unknown custom resources.
+	GetDynamicClient() (dynamic.Interface, error)
+
 	// GetConfigFile gets the path to the configuration file.
 	GetConfigFile() string
 
@@ -25,6 +30,7 @@ type ContextHandler interface {
 
 type contextHandler struct {
 	clientSet      *kubernetes.Clientset
+	dynamicClient  dynamic.Interface
 	clientSetMutex sync.Mutex
 	configFile     *string
 	contextName    *string
@@ -47,6 +53,20 @@ func (h *contextHandler) GetClientSet() (*kubernetes.Clientset, error) {
 	}
 
 	return h.clientSet, nil
+}
+
+func (h *contextHandler) GetDynamicClient() (dynamic.Interface, error) {
+	h.clientSetMutex.Lock()
+	defer h.clientSetMutex.Unlock()
+
+	if h.dynamicClient == nil {
+		e := h.openRestConfig()
+		if e != nil {
+			return nil, e
+		}
+	}
+
+	return h.dynamicClient, nil
 }
 
 func (h *contextHandler) GetConfigFile() string {
@@ -92,6 +112,12 @@ func (h *contextHandler) openRestConfig() error {
 		return fmt.Errorf("unable to create clientSet: %s", e)
 	}
 	h.clientSet = clientSet
+
+	dynamicClient, e := dynamic.NewForConfig(config)
+	if e != nil {
+		return fmt.Errorf("unable to create dynamic client: %s", e)
+	}
+	h.dynamicClient = dynamicClient
 	return nil
 }
 
