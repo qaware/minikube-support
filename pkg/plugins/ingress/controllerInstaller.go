@@ -12,8 +12,8 @@ type controllerInstaller struct {
 	values      map[string]interface{}
 }
 
-func NewControllerInstaller() apis.InstallablePlugin {
-	return &controllerInstaller{manager: helm.NewHelmManager(), releaseName: "nginx-ingress", values: map[string]interface{}{}}
+func NewControllerInstaller(manager helm.Manager) apis.InstallablePlugin {
+	return &controllerInstaller{manager: manager, releaseName: "nginx-ingress", values: map[string]interface{}{}}
 }
 
 func (*controllerInstaller) String() string {
