@@ -16,3 +16,10 @@ func InitSudo() error {
 	command.Env = append(command.Env, os.Environ()...)
 	return command.Run()
 }
+
+func RunCmd(command string, args ...string) (string, error) {
+	cmd := ExecCommand(command, args...)
+	cmd.Env = append(cmd.Env, os.Environ()...)
+	bytes, e := cmd.CombinedOutput()
+	return string(bytes), e
+}

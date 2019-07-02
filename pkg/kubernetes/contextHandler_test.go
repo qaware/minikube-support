@@ -1,7 +1,10 @@
 package kubernetes
 
 import (
+	"github.com/chr-fritz/minikube-support/pkg/sh"
+	"github.com/chr-fritz/minikube-support/pkg/testutils"
 	"os"
+	"os/exec"
 	"testing"
 )
 
@@ -95,4 +98,49 @@ func Test_contextHandler_GetDynamicClient(t *testing.T) {
 			}
 		})
 	}
+}
+
+func Test_contextHandler_Kubectl(t *testing.T) {
+	sh.ExecCommand = testutils.FakeExecCommand
+	defer func() { sh.ExecCommand = exec.Command }()
+	tests := []struct {
+		name           string
+		command        string
+		configFile     string
+		contextName    string
+		expectedArgs   []string
+		responseStatus int
+		response       string
+		want           string
+		wantErr        bool
+	}{
+		{"ok", "apply", "", "", []string{"apply"}, 0, "ok", "ok", false},
+		{"config file", "apply", "kubeconfig", "", []string{"apply", "--kubeconfig", "kubeconfig"}, 0, "ok", "ok", false},
+		{"context", "apply", "", "context", []string{"apply", "--context", "context"}, 0, "ok", "ok", false},
+		{"error", "apply", "", "", []string{"apply"}, -1, "", "", true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			h := &contextHandler{
+				configFile:  &tt.configFile,
+				contextName: &tt.contextName,
+			}
+			testutils.TestProcessResponses = []testutils.TestProcessResponse{
+				{Command: "kubectl", Args: tt.expectedArgs, ResponseStatus: tt.responseStatus, Stdout: tt.response},
+			}
+
+			got, err := h.Kubectl(tt.command)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("contextHandler.Kubectl() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got != tt.want {
+				t.Errorf("contextHandler.Kubectl() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestHelperProcess(t *testing.T) {
+	testutils.StandardHelperProcess(t)
 }

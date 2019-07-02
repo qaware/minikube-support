@@ -2,12 +2,12 @@ package kubernetes
 
 import (
 	"fmt"
+	"github.com/chr-fritz/minikube-support/pkg/sh"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/homedir"
-
 	"path/filepath"
 	"sync"
 )
@@ -26,6 +26,9 @@ type ContextHandler interface {
 
 	// GetContextName get the name of the context to use.
 	GetContextName() string
+
+	// Kubectl executes the given command with the given arguments in the configured cluster.
+	Kubectl(command string, args ...string) (string, error)
 }
 
 type contextHandler struct {
@@ -70,11 +73,35 @@ func (h *contextHandler) GetDynamicClient() (dynamic.Interface, error) {
 }
 
 func (h *contextHandler) GetConfigFile() string {
-	return *h.configFile
+	if h.configFile != nil {
+		return *h.configFile
+	}
+	return ""
 }
 
 func (h *contextHandler) GetContextName() string {
-	return *h.contextName
+	if h.contextName != nil {
+		return *h.contextName
+	}
+	return ""
+}
+
+func (h *contextHandler) Kubectl(command string, args ...string) (string, error) {
+	prefix := append([]string{command})
+	if h.GetContextName() != "" {
+		prefix = append(prefix, "--context", h.GetContextName())
+	}
+	if h.GetConfigFile() != "" {
+		prefix = append(prefix, "--kubeconfig", h.GetConfigFile())
+	}
+
+	args = append(prefix, args...)
+
+	output, e := sh.RunCmd("kubectl", args...)
+	if e != nil {
+		return output, fmt.Errorf("run kubectl %s was not successful: (%s) %s", command, e, output)
+	}
+	return output, nil
 }
 
 // openRestConfig opens the kubernetes configuration and creates a client set that can
