@@ -7,6 +7,7 @@ import (
 	"github.com/kballard/go-shellquote"
 	"github.com/sirupsen/logrus"
 	"os"
+	"sync"
 )
 
 type Manager interface {
@@ -16,21 +17,43 @@ type Manager interface {
 }
 
 type defaultManager struct {
+	initialized bool
+	mutex       sync.Mutex
 }
 
 func NewHelmManager() Manager {
-	return &defaultManager{}
+	return &defaultManager{
+		mutex: sync.Mutex{},
+	}
 }
 
 func (m *defaultManager) Init() error {
-	e := m.checkTiller()
-	if e == nil {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+	if m.initialized {
 		return nil
 	}
-	return m.initTiller()
+	e := m.checkTiller()
+	if e == nil {
+		m.initialized = true
+		return nil
+	}
+
+	if e = m.initTiller(); e != nil {
+		return e
+	}
+	m.initialized = true
+	return nil
 }
 
 func (m *defaultManager) Install(chart string, release string, namespace string, values map[string]interface{}) {
+	if !m.initialized {
+		if e := m.Init(); e != nil {
+			logrus.Errorf("Can not install helm chart: %s", e)
+			return
+		}
+	}
+
 	var args = []string{
 		"--install", "--force",
 		"--namespace", namespace,
@@ -58,6 +81,13 @@ func (m *defaultManager) Install(chart string, release string, namespace string,
 }
 
 func (m *defaultManager) Uninstall(release string, purge bool) {
+	if !m.initialized {
+		if e := m.Init(); e != nil {
+			logrus.Errorf("Can not uninstall helm chart: %s", e)
+			return
+		}
+	}
+
 	var e error
 	var response string
 

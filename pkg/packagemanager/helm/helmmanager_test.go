@@ -16,18 +16,20 @@ func Test_defaultManager_Init(t *testing.T) {
 	defer func() { sh.ExecCommand = exec.Command }()
 	tests := []struct {
 		name          string
+		initialized   bool
 		versionStatus int
 		versionMsg    string
 		initStatus    int
 		wantErr       bool
 	}{
-		{"installed", 0, "", 0, false},
-		{"notInstalled", -1, "Error: could not find a ready tiller pod", 0, false},
-		{"installFailure", -1, "Error: could not find a ready tiller pod", -1, true},
+		{"installed", false, 0, "", 0, false},
+		{"initialized", true, 0, "", 0, false},
+		{"notInstalled", false, -1, "Error: could not find a ready tiller pod", 0, false},
+		{"installFailure", false, -1, "Error: could not find a ready tiller pod", -1, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			m := &defaultManager{}
+			m := &defaultManager{initialized: tt.initialized}
 			testutils.TestProcessResponses = []testutils.TestProcessResponse{
 				{Command: "helm", Args: []string{"version", "-s"}, ResponseStatus: tt.versionStatus, Stdout: tt.versionMsg},
 				{Command: "helm", Args: []string{"init", "--wait"}, ResponseStatus: tt.initStatus},
@@ -48,6 +50,7 @@ func Test_defaultManager_Install(t *testing.T) {
 		release        string
 		namespace      string
 		values         map[string]interface{}
+		initialized    bool
 		expectedArgs   []string
 		response       string
 		responseStatus int
@@ -59,6 +62,18 @@ func Test_defaultManager_Install(t *testing.T) {
 			"test",
 			"test",
 			map[string]interface{}{},
+			true,
+			[]string{"upgrade", "--install", "--force", "--namespace", "test", "test", "dummy/test"},
+			"ok installed",
+			0,
+			logrus.InfoLevel,
+		}, {
+			"success uninitialized",
+			"dummy/test",
+			"test",
+			"test",
+			map[string]interface{}{},
+			false,
 			[]string{"upgrade", "--install", "--force", "--namespace", "test", "test", "dummy/test"},
 			"ok installed",
 			0,
@@ -69,6 +84,7 @@ func Test_defaultManager_Install(t *testing.T) {
 			"test",
 			"test",
 			map[string]interface{}{"v1": []map[string]interface{}{{"h": 2, "b": "def"}}},
+			true,
 			[]string{"upgrade", "--install", "--force", "--namespace", "test", "test", "dummy/test", "--set", "v1[0].h='2'", "--set", "v1[0].b='def'"},
 			"ok installed",
 			0,
@@ -79,6 +95,7 @@ func Test_defaultManager_Install(t *testing.T) {
 			"",
 			"test",
 			map[string]interface{}{},
+			true,
 			[]string{"upgrade", "--install", "--force", "--namespace", "test", "", ""},
 			"no release and name given",
 			1,
@@ -87,10 +104,13 @@ func Test_defaultManager_Install(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			m := &defaultManager{}
+			m := &defaultManager{
+				initialized: tt.initialized,
+			}
 
 			testutils.TestProcessResponses = []testutils.TestProcessResponse{
 				{Command: "helm", Args: tt.expectedArgs, ResponseStatus: tt.responseStatus, Stdout: tt.response},
+				{Command: "helm", Args: []string{"version", "-s"}, ResponseStatus: 0, Stdout: ""},
 			}
 
 			m.Install(tt.chart, tt.release, tt.namespace, tt.values)
@@ -110,6 +130,7 @@ func Test_defaultManager_Uninstall(t *testing.T) {
 		name           string
 		release        string
 		purge          bool
+		initialized    bool
 		expectedArgs   []string
 		response       string
 		responseStatus int
@@ -119,6 +140,16 @@ func Test_defaultManager_Uninstall(t *testing.T) {
 			"success no purge",
 			"test",
 			false,
+			true,
+			[]string{"delete", "test"},
+			"ok removed",
+			0,
+			logrus.InfoLevel,
+		}, {
+			"success no purge uninitialized",
+			"test",
+			false,
+			false,
 			[]string{"delete", "test"},
 			"ok removed",
 			0,
@@ -126,6 +157,7 @@ func Test_defaultManager_Uninstall(t *testing.T) {
 		}, {
 			"success purge",
 			"test",
+			true,
 			true,
 			[]string{"delete", "--purge", "test"},
 			"ok removed",
@@ -135,6 +167,7 @@ func Test_defaultManager_Uninstall(t *testing.T) {
 			"not found",
 			"test",
 			false,
+			true,
 			[]string{"delete", "test"},
 			"not found",
 			1,
@@ -143,9 +176,12 @@ func Test_defaultManager_Uninstall(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			m := &defaultManager{}
+			m := &defaultManager{
+				initialized: tt.initialized,
+			}
 			testutils.TestProcessResponses = []testutils.TestProcessResponse{
 				{Command: "helm", Args: tt.expectedArgs, ResponseStatus: tt.responseStatus, Stdout: tt.response},
+				{Command: "helm", Args: []string{"version", "-s"}, ResponseStatus: 0, Stdout: ""},
 			}
 			m.Uninstall(tt.release, tt.purge)
 			lastEntry := global.LastEntry()
