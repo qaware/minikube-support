@@ -13,7 +13,12 @@ type controllerInstaller struct {
 }
 
 func NewControllerInstaller(manager helm.Manager) apis.InstallablePlugin {
-	return &controllerInstaller{manager: manager, releaseName: "nginx-ingress", values: map[string]interface{}{}}
+	return &controllerInstaller{
+		manager:     manager,
+		releaseName: "nginx-ingress",
+		values:      map[string]interface{}{},
+		namespace:   "mks",
+	}
 }
 
 func (*controllerInstaller) String() string {
