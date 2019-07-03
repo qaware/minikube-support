@@ -12,6 +12,8 @@ import (
 
 type Manager interface {
 	Init() error
+	AddRepository(name string, url string) error
+	UpdateRepository() error
 	Install(chart string, release string, namespace string, values map[string]interface{})
 	Uninstall(release string, purge bool)
 }
@@ -103,6 +105,35 @@ func (m *defaultManager) Uninstall(release string, purge bool) {
 	}
 	logrus.Infof("Helm release %s successfully deleted.", release)
 	logrus.Debug(response)
+}
+
+func (m *defaultManager) AddRepository(name string, url string) error {
+	if !m.initialized {
+		if e := m.Init(); e != nil {
+			return e
+		}
+	}
+
+	_, e := m.runCommand("repo", "add", name, url)
+
+	if e != nil {
+		return e
+	}
+	return nil
+}
+
+func (m *defaultManager) UpdateRepository() error {
+	if !m.initialized {
+		if e := m.Init(); e != nil {
+			return e
+		}
+	}
+	_, e := m.runCommand("repo", "update")
+
+	if e != nil {
+		return e
+	}
+	return nil
 }
 
 func (m *defaultManager) runCommand(command string, args ...string) (string, error) {

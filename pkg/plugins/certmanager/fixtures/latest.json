@@ -1,0 +1,15 @@
+{
+  "url": "https://api.github.com/repos/jetstack/cert-manager/releases/18066439",
+  "assets_url": "https://api.github.com/repos/jetstack/cert-manager/releases/18066439/assets",
+  "upload_url": "https://uploads.github.com/repos/jetstack/cert-manager/releases/18066439/assets{?name,label}",
+  "html_url": "https://github.com/jetstack/cert-manager/releases/tag/v0.8.1",
+  "node_id": "MDc6UmVsZWFzZTE4MDY2NDM5",
+  "tag_name": "v0.8.1",
+  "target_commitish": "release-0.8",
+  "name": "v0.8.1",
+  "draft": false,
+  "prerelease": false,
+  "created_at": "2019-06-18T13:45:05Z",
+  "published_at": "2019-06-18T14:51:30Z",
+  "body": "## Changelog since v0.8.0\r\n\r\n* cert-manager-webhook secret exists in cert-manager ns (#1753, @kevinawoo)\r\n* Fix indentation on ACME setup examples (#1785, @lachlancooper)\r\n* Fix ECDSA certificate issuance with ACME issuer (#1757, @munnerz)\r\n* Fix panic in HTTP01 solver if ingress field is not specified (#1758, @munnerz)\r\n* Fix solver selection logic to return the selected solver rather than always returning the last one (#1717, @dobesv)\r\n* Fix logic to select the solver that has the most labels (#1715, @dobesv)"
+}
