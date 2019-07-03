@@ -84,7 +84,7 @@ func (m *certManager) Update() {
 	m.values["ingressShim.defaultIssuerKind"] = "ClusterIssuer"
 	m.values["webhook.enabled"] = false
 
-	m.manager.Install("jetstack/cert-manager", "cert-manager", m.namespace, m.values)
+	m.manager.Install("jetstack/cert-manager", releaseName, m.namespace, m.values, true)
 
 	var errors *multierror.Error
 	errors = multierror.Append(errors, m.applyCertSecret())

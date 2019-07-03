@@ -32,7 +32,7 @@ func (i *controllerInstaller) Install() {
 func (i *controllerInstaller) Update() {
 	i.values["controller.publishService.enabled"] = "true"
 
-	i.manager.Install("stable/nginx-ingress", i.releaseName, i.namespace, i.values)
+	i.manager.Install("stable/nginx-ingress", i.releaseName, i.namespace, i.values, false)
 }
 
 func (i *controllerInstaller) Uninstall(purge bool) {

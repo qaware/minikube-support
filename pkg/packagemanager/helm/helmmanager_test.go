@@ -113,7 +113,7 @@ func Test_defaultManager_Install(t *testing.T) {
 				{Command: "helm", Args: []string{"version", "-s"}, ResponseStatus: 0, Stdout: ""},
 			}
 
-			m.Install(tt.chart, tt.release, tt.namespace, tt.values)
+			m.Install(tt.chart, tt.release, tt.namespace, tt.values, false)
 
 			lastEntry := global.LastEntry()
 			if lastEntry.Level != tt.lastEntryLevel {

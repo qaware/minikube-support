@@ -14,7 +14,7 @@ type Manager interface {
 	Init() error
 	AddRepository(name string, url string) error
 	UpdateRepository() error
-	Install(chart string, release string, namespace string, values map[string]interface{})
+	Install(chart string, release string, namespace string, values map[string]interface{}, wait bool)
 	Uninstall(release string, purge bool)
 }
 
@@ -48,7 +48,7 @@ func (m *defaultManager) Init() error {
 	return nil
 }
 
-func (m *defaultManager) Install(chart string, release string, namespace string, values map[string]interface{}) {
+func (m *defaultManager) Install(chart string, release string, namespace string, values map[string]interface{}, wait bool) {
 	if !m.initialized {
 		if e := m.Init(); e != nil {
 			logrus.Errorf("Can not install helm chart: %s", e)
@@ -61,6 +61,10 @@ func (m *defaultManager) Install(chart string, release string, namespace string,
 		"--namespace", namespace,
 		release, chart,
 	}
+	if wait {
+		args = append(args, "--wait")
+	}
+
 	flatValues, e := utils.Flatten(values)
 	if e != nil {
 		logrus.Warnf("Can not flatten values map; Abort to install chart: %s", e)
