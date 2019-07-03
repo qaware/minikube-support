@@ -42,13 +42,12 @@ func (i *ip) Stop() error {
 
 // addVmIp tries to get the current minikube ip and adds a new resource entry "vm.minikube" to this ip.
 func (i *ip) addVmIp() {
-	cmd := sh.ExecCommand("minikube", "ip")
-	bytes, e := cmd.Output()
+	ip, e := sh.RunCmd("minikube", "ip")
 	if e != nil {
 		logrus.Errorf("can not determ minikube ip: %s", e)
 		return
 	}
-	ip := string(bytes)
+
 	ip = strings.Trim(ip, "\n\r \t")
 	e = i.dnsBackendManager.AddHost("vm.minikube", ip)
 	if e != nil {

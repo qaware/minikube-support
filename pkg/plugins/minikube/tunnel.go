@@ -8,6 +8,7 @@ import (
 	"github.com/chr-fritz/minikube-support/pkg/sh"
 	"github.com/sirupsen/logrus"
 	"io"
+	"os"
 	"os/exec"
 	"syscall"
 )
@@ -34,6 +35,7 @@ func (t *tunnel) Start(monitoringChannel chan *apis.MonitoringMessage) (boxName 
 	}
 
 	t.command = sh.ExecCommand("sudo", "minikube", "tunnel")
+	t.command.Env = append(t.command.Env, os.Environ()...)
 	stdoutPipe, e := t.command.StdoutPipe()
 	if e != nil {
 		return "", fmt.Errorf("can not open stdout: %s", e)

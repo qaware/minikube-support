@@ -18,6 +18,7 @@ func Test_ip_addVmIp(t *testing.T) {
 	}
 	i.addVmIp()
 
+	assert.Len(t, manager.addedHosts, 1)
 	assert.Equal(t, "vm.minikube", manager.addedHosts[0])
 }
 
