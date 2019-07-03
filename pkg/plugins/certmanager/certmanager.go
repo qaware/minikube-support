@@ -11,6 +11,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"io/ioutil"
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -29,8 +30,11 @@ type certManager struct {
 	server         string
 }
 
-const PLUGIN_NAME = "certManager"
+const PluginName = "certManager"
 const issuerName = "ca-issuer"
+const releaseName = "cert-manager"
+
+var groupVersion = schema.GroupVersion{Group: "certmanager.k8s.io", Version: "v1alpha1"}
 
 func NewCertManager(manager helm.Manager, handler kubernetes.ContextHandler) (apis.InstallablePlugin, error) {
 	clientset, e := handler.GetClientSet()
@@ -49,7 +53,7 @@ func NewCertManager(manager helm.Manager, handler kubernetes.ContextHandler) (ap
 }
 
 func (m *certManager) String() string {
-	return PLUGIN_NAME
+	return PluginName
 }
 
 func (m *certManager) Install() {
@@ -86,17 +90,40 @@ func (m *certManager) Update() {
 
 	m.manager.Install("jetstack/cert-manager", releaseName, m.namespace, m.values, true)
 
-	var errors *multierror.Error
-	errors = multierror.Append(errors, m.applyCertSecret())
-	errors = multierror.Append(errors, m.applyClusterIssuer())
+	var err *multierror.Error
+	err = multierror.Append(err, m.applyCertSecret())
+	err = multierror.Append(err, m.applyClusterIssuer())
 
-	if errors.Len() > 0 {
-		logrus.Errorf("Can not apply the additional cert manager objects: %s", errors.Error())
+	if err.Len() > 0 {
+		logrus.Errorf("Can not apply the additional cert manager objects: %s", err.Error())
 	}
 }
 
 func (m *certManager) Uninstall(purge bool) {
-	panic("implement me")
+	var err *multierror.Error
+	client, e := m.contextHandler.GetDynamicClient()
+	if e != nil {
+		logrus.Errorf("unable to get dynamic client: %s", e)
+		return
+	}
+
+	m.manager.Uninstall(releaseName, purge)
+
+	e = m.clientSet.
+		CoreV1().
+		Secrets(m.namespace).
+		Delete(issuerName, &metav1.DeleteOptions{})
+	err = multierror.Append(err, e)
+
+	e = client.Resource(groupVersion.WithResource("clusterissuers")).
+		Delete(issuerName, &metav1.DeleteOptions{})
+	err = multierror.Append(err, e)
+
+	if err.Len() > 0 {
+		logrus.Errorf("Unable to uninstall the certManager plugin: %s", e)
+	} else {
+		logrus.Info("CertManager plugin successfully uninstalled.")
+	}
 }
 
 func (m *certManager) Phase() apis.Phase {
@@ -158,9 +185,9 @@ func (m *certManager) applyCertSecret() error {
 	}
 
 	_, e = secretInterface.Get(issuerName, metav1.GetOptions{})
-	if e != nil {
+	if errors.IsNotFound(e) {
 		_, e = secretInterface.Create(secret)
-	} else {
+	} else if e == nil {
 		_, e = secretInterface.Update(secret)
 	}
 
@@ -175,24 +202,25 @@ func (m *certManager) applyClusterIssuer() error {
 	if e != nil {
 		return e
 	}
-	groupVersion := schema.GroupVersion{Group: "certmanager.k8s.io", Version: "v1alpha1"}
 
 	issuer := &unstructured.Unstructured{}
 	issuer.SetUnstructuredContent(map[string]interface{}{"spec": map[string]interface{}{"ca": map[string]interface{}{"secretName": issuerName}}})
 	issuer.SetGroupVersionKind(groupVersion.WithKind("ClusterIssuer"))
 	issuer.SetName(issuerName)
+	issuer.SetNamespace(m.namespace)
 
 	clusterIssuerInterface := client.Resource(groupVersion.WithResource("clusterissuers"))
-	_, e = clusterIssuerInterface.Get(issuerName, metav1.GetOptions{})
-	if e != nil {
+	old, e := clusterIssuerInterface.Get(issuerName, metav1.GetOptions{})
+	if errors.IsNotFound(e) {
 		_, e = clusterIssuerInterface.Create(issuer, metav1.CreateOptions{})
-	} else {
+	} else if e == nil {
+		resourceVersion := old.GetResourceVersion()
+		issuer.SetResourceVersion(resourceVersion)
 		_, e = clusterIssuerInterface.Update(issuer, metav1.UpdateOptions{})
 	}
+
 	if e != nil {
 		return fmt.Errorf("applying the cluster issuer failed: %s", e)
 	}
 	return nil
 }
-
-// k8s.io/apimachinery/pkg/api/errors.StatusError -> ErrStatus -> StatusReason=NotFound
