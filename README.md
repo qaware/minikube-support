@@ -26,6 +26,8 @@ Simply run:
 minikube-support run
 ```
 
+![minikube-support run](run.png)
+
 It also allows to run every tool separate:
 ```bash
 minikube-support run [TOOL]
@@ -59,6 +61,8 @@ minikube-support update [TOOL]
 # Uninstalling a single tool:
 minikube-support remove [TOOL]
 ```
+
+![minikube-support install](install_all.png)
 
 # Contributing
 
