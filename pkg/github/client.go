@@ -3,25 +3,30 @@ package github
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"time"
 )
 
 type Client interface {
 	GetLatestReleaseTag(org string, repository string) (string, error)
-	DownloadReleaseAsset(org string, repository string, tag string, assetName string) ([]byte, error)
+	DownloadReleaseAsset(org string, repository string, tag string, assetName string) (io.ReadCloser, error)
 }
 
 type client struct {
 	apiHost string
+	host    string
 	client  *http.Client
 }
 
 func NewClient(apiToken string) Client {
-	httpClient := &http.Client{Timeout: 2 * time.Second}
-	httpClient.Transport = newAuthTransport(apiToken)
+	httpClient := &http.Client{Timeout: 10 * time.Second}
+	if apiToken != "" {
+		httpClient.Transport = newAuthTransport(apiToken)
+	}
 	return &client{
 		apiHost: "https://api.github.com",
+		host:    "https://github.com",
 		client:  httpClient,
 	}
 }
@@ -51,8 +56,13 @@ func (c *client) GetLatestReleaseTag(org string, repository string) (string, err
 	return v, nil
 }
 
-func (c *client) DownloadReleaseAsset(org string, repository string, tag string, assetName string) ([]byte, error) {
-	panic("implement me")
+func (c *client) DownloadReleaseAsset(org string, repository string, tag string, assetName string) (io.ReadCloser, error) {
+	resp, e := c.client.Get(fmt.Sprintf("%s/%s/%s/releases/download/%s/%s", c.host, org, repository, tag, assetName))
+	if e != nil {
+		return nil, fmt.Errorf("can not download asset %s for %s/%s of release %s: %s", assetName, org, repository, tag, e)
+	}
+
+	return resp.Body, nil
 }
 
 type transport struct {
