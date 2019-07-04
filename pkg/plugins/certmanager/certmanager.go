@@ -1,9 +1,9 @@
 package certmanager
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/chr-fritz/minikube-support/pkg/apis"
+	"github.com/chr-fritz/minikube-support/pkg/github"
 	"github.com/chr-fritz/minikube-support/pkg/kubernetes"
 	"github.com/chr-fritz/minikube-support/pkg/packagemanager/helm"
 	"github.com/chr-fritz/minikube-support/pkg/sh"
@@ -16,15 +16,14 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	kubernetes2 "k8s.io/client-go/kubernetes"
-	"net/http"
 	"strings"
-	"time"
 )
 
 type certManager struct {
 	manager        helm.Manager
 	contextHandler kubernetes.ContextHandler
 	clientSet      *kubernetes2.Clientset
+	ghClient       github.Client
 	namespace      string
 	values         map[string]interface{}
 	server         string
@@ -45,7 +44,7 @@ func NewCertManager(manager helm.Manager, handler kubernetes.ContextHandler) (ap
 	return &certManager{
 		manager:        manager,
 		contextHandler: handler,
-		server:         "https://api.github.com",
+		ghClient:       github.NewClient(""),
 		values:         map[string]interface{}{},
 		clientSet:      clientset,
 		namespace:      "mks",
@@ -65,7 +64,7 @@ func (m *certManager) Install() {
 }
 
 func (m *certManager) Update() {
-	version, e := m.getLatestVersion()
+	version, e := m.ghClient.GetLatestReleaseTag("jetstack", "cert-manager")
 	if e != nil {
 		logrus.Errorf("Unable to detect latest certmanager version: %s", e)
 		return
@@ -128,32 +127,6 @@ func (m *certManager) Uninstall(purge bool) {
 
 func (m *certManager) Phase() apis.Phase {
 	return apis.CLUSTER_TOOLS_INSTALL
-}
-
-func (m *certManager) getLatestVersion() (string, error) {
-	client := http.Client{Timeout: 2 * time.Second}
-	resp, e := client.Get(m.server + "/repos/jetstack/cert-manager/releases/latest")
-	if e != nil {
-		return "", fmt.Errorf("can not get latest version for certManager: %s", e)
-	}
-
-	data := make(map[string]interface{})
-	decoder := json.NewDecoder(resp.Body)
-
-	err := decoder.Decode(&data)
-	if err != nil {
-		return "", err
-	}
-
-	version, ok := data["tag_name"]
-	if !ok {
-		return "", fmt.Errorf("version field not found")
-	}
-	v, ok := version.(string)
-	if !ok {
-		return "", fmt.Errorf("version is not a string")
-	}
-	return v, nil
 }
 
 func (m *certManager) applyCertSecret() error {

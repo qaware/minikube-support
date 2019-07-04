@@ -1,4 +1,4 @@
-package certmanager
+package github
 
 import (
 	"github.com/stretchr/testify/assert"
@@ -8,7 +8,7 @@ import (
 	"testing"
 )
 
-func Test_certManager_getLatestVersion(t *testing.T) {
+func Test_client_GetLatestReleaseTag(t *testing.T) {
 	tests := []struct {
 		name            string
 		responseStatus  int
@@ -31,15 +31,19 @@ func Test_certManager_getLatestVersion(t *testing.T) {
 				assert.NoError(t, e)
 			}))
 			defer func() { testServer.Close() }()
-			m := &certManager{server: testServer.URL}
 
-			got, err := m.getLatestVersion()
+			c := &client{
+				apiHost: testServer.URL,
+				client:  testServer.Client(),
+			}
+
+			got, err := c.GetLatestReleaseTag("dummy", "test")
 			if (err != nil) != tt.wantErr {
-				t.Errorf("certManager.getLatestVersion() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("client.GetLatestReleaseTag() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if got != tt.want {
-				t.Errorf("certManager.getLatestVersion() = %v, want %v", got, tt.want)
+				t.Errorf("client.GetLatestReleaseTag() = %v, want %v", got, tt.want)
 			}
 		})
 	}
