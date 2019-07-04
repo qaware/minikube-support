@@ -1,0 +1,64 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test
+  namespace: test
+spec:
+  selector:
+    matchLabels:
+      app: test
+
+  template:
+    metadata:
+      labels:
+        app: test
+
+    spec:
+      containers:
+        - name: test
+          image: nginx:1.17
+          resources:
+            limits:
+              memory: "128Mi"
+              cpu: "500m"
+          ports:
+            - containerPort: 80
+              name: http
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: test
+  namespace: test
+spec:
+  selector:
+    app: test
+  ports:
+    - port: 80
+      targetPort: 80
+---
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: test
+  namespace: test
+  labels:
+    contact: test
+  annotations:
+    kubernetes.io/tls-acme: "true"
+spec:
+  backend:
+    serviceName: test
+    servicePort: 80
+  rules:
+    - host: test.minikube
+  tls:
+    - secretName: test-tls
+      hosts:
+        - test.minikube
