@@ -17,6 +17,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	kubernetes2 "k8s.io/client-go/kubernetes"
 	"strings"
+	"time"
 )
 
 type certManager struct {
@@ -90,6 +91,7 @@ func (m *certManager) Update() {
 	m.manager.Install("jetstack/cert-manager", releaseName, m.namespace, m.values, true)
 
 	var err *multierror.Error
+	time.Sleep(20 * time.Second)
 	err = multierror.Append(err, m.applyCertSecret())
 	err = multierror.Append(err, m.applyClusterIssuer())
 
