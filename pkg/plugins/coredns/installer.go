@@ -102,10 +102,10 @@ func (i *installer) downloadCoreDns() error {
 				return fmt.Errorf("can not write file %s: %s", name, e)
 			}
 
-			e = file.Chown(header.Uid, header.Gid)
-			if e != nil {
-				return fmt.Errorf("can not set uid, gid for file %s: %e", name, e)
-			}
+			//e = file.Chown(header.Uid, header.Gid)
+			//if e != nil {
+			//	return fmt.Errorf("can not set uid, gid for file %s: %e", name, e)
+			//}
 
 			_, e = io.Copy(file, tarReader)
 			if e != nil {
