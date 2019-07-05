@@ -49,6 +49,7 @@ func Test_defaultManager_Install(t *testing.T) {
 		chart          string
 		release        string
 		namespace      string
+		wait           bool
 		values         map[string]interface{}
 		initialized    bool
 		expectedArgs   []string
@@ -61,9 +62,22 @@ func Test_defaultManager_Install(t *testing.T) {
 			"dummy/test",
 			"test",
 			"test",
+			false,
 			map[string]interface{}{},
 			true,
 			[]string{"upgrade", "--install", "--force", "--namespace", "test", "test", "dummy/test"},
+			"ok installed",
+			0,
+			logrus.InfoLevel,
+		}, {
+			"wait for success",
+			"dummy/test",
+			"test",
+			"test",
+			true,
+			map[string]interface{}{},
+			true,
+			[]string{"upgrade", "--install", "--force", "--namespace", "test", "test", "dummy/test", "--wait"},
 			"ok installed",
 			0,
 			logrus.InfoLevel,
@@ -72,6 +86,7 @@ func Test_defaultManager_Install(t *testing.T) {
 			"dummy/test",
 			"test",
 			"test",
+			false,
 			map[string]interface{}{},
 			false,
 			[]string{"upgrade", "--install", "--force", "--namespace", "test", "test", "dummy/test"},
@@ -83,9 +98,10 @@ func Test_defaultManager_Install(t *testing.T) {
 			"dummy/test",
 			"test",
 			"test",
+			false,
 			map[string]interface{}{"v1": []map[string]interface{}{{"h": 2, "b": "def"}}},
 			true,
-			[]string{"upgrade", "--install", "--force", "--namespace", "test", "test", "dummy/test", "--set", "v1[0].h='2'", "--set", "v1[0].b='def'"},
+			[]string{"upgrade", "--install", "--force", "--namespace", "test", "test", "dummy/test", "--set", "v1\\[0].h=2", "--set", "v1\\[0].b=def"},
 			"ok installed",
 			0,
 			logrus.InfoLevel,
@@ -94,6 +110,7 @@ func Test_defaultManager_Install(t *testing.T) {
 			"",
 			"",
 			"test",
+			false,
 			map[string]interface{}{},
 			true,
 			[]string{"upgrade", "--install", "--force", "--namespace", "test", "", ""},
@@ -113,7 +130,7 @@ func Test_defaultManager_Install(t *testing.T) {
 				{Command: "helm", Args: []string{"version", "-s"}, ResponseStatus: 0, Stdout: ""},
 			}
 
-			m.Install(tt.chart, tt.release, tt.namespace, tt.values, false)
+			m.Install(tt.chart, tt.release, tt.namespace, tt.values, tt.wait)
 
 			lastEntry := global.LastEntry()
 			if lastEntry.Level != tt.lastEntryLevel {

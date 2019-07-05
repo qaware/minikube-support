@@ -72,8 +72,8 @@ func (m *defaultManager) Install(chart string, release string, namespace string,
 	}
 
 	for k, v := range flatValues {
-		val := shellquote.Join(fmt.Sprint(v))
-		args = append(args, "--set", fmt.Sprintf("%s='%s'", k, val))
+		val := shellquote.Join(fmt.Sprintf("%s=%s", k, v))
+		args = append(args, "--set", val)
 	}
 
 	response, e := m.runCommand("upgrade", args...)
