@@ -1,4 +1,4 @@
-module github.com/chr-fritz/minikube-support
+module github.com/qaware/minikube-support
 
 go 1.12
 

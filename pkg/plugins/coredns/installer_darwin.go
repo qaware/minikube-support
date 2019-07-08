@@ -2,8 +2,8 @@ package coredns
 
 import (
 	"fmt"
-	"github.com/chr-fritz/minikube-support/pkg/sh"
 	"github.com/kballard/go-shellquote"
+	"github.com/qaware/minikube-support/pkg/sh"
 	"os"
 )
 

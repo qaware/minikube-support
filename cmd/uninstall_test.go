@@ -3,7 +3,7 @@ package cmd
 import (
 	"testing"
 
-	"github.com/chr-fritz/minikube-support/pkg/plugins"
+	"github.com/qaware/minikube-support/pkg/plugins"
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
 )

@@ -1,9 +1,9 @@
 package mkcert
 
 import (
-	"github.com/chr-fritz/minikube-support/pkg/apis"
-	"github.com/chr-fritz/minikube-support/pkg/packagemanager"
-	"github.com/chr-fritz/minikube-support/pkg/sh"
+	"github.com/qaware/minikube-support/pkg/apis"
+	"github.com/qaware/minikube-support/pkg/packagemanager"
+	"github.com/qaware/minikube-support/pkg/sh"
 	"github.com/sirupsen/logrus"
 	"os"
 )

@@ -3,8 +3,8 @@ package cmd
 import (
 	"fmt"
 	"github.com/buger/goterm"
-	"github.com/chr-fritz/minikube-support/pkg/apis"
 	"github.com/hashicorp/go-multierror"
+	"github.com/qaware/minikube-support/pkg/apis"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"os"

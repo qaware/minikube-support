@@ -1,8 +1,8 @@
 package ingress
 
 import (
-	"github.com/chr-fritz/minikube-support/pkg/apis"
-	"github.com/chr-fritz/minikube-support/pkg/packagemanager/helm"
+	"github.com/qaware/minikube-support/pkg/apis"
+	"github.com/qaware/minikube-support/pkg/packagemanager/helm"
 )
 
 type controllerInstaller struct {

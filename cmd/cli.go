@@ -2,9 +2,9 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/chr-fritz/minikube-support/pkg/apis"
-	packageManagerOs "github.com/chr-fritz/minikube-support/pkg/packagemanager/os"
-	"github.com/chr-fritz/minikube-support/pkg/plugins"
+	"github.com/qaware/minikube-support/pkg/apis"
+	packageManagerOs "github.com/qaware/minikube-support/pkg/packagemanager/os"
+	"github.com/qaware/minikube-support/pkg/plugins"
 	"github.com/spf13/cobra"
 	"os"
 )

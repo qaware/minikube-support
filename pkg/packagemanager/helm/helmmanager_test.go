@@ -1,8 +1,8 @@
 package helm
 
 import (
-	"github.com/chr-fritz/minikube-support/pkg/sh"
-	"github.com/chr-fritz/minikube-support/pkg/testutils"
+	"github.com/qaware/minikube-support/pkg/sh"
+	"github.com/qaware/minikube-support/pkg/testutils"
 	"github.com/sirupsen/logrus"
 	"github.com/sirupsen/logrus/hooks/test"
 	"os/exec"

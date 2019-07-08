@@ -1,6 +1,6 @@
 NAME := minikube-support
 ORG := chr-fritz
-ROOT_PACKAGE := github.com/chr-fritz/minikube-support
+ROOT_PACKAGE := github.com/qaware/minikube-support
 #VERSION := $(shell jx-release-version)
 VERSION := 0.1.0-SNAPSHOT
 

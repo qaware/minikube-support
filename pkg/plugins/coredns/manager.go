@@ -2,8 +2,8 @@ package coredns
 
 import (
 	"fmt"
-	"github.com/chr-fritz/minikube-support/pkg/apis"
 	"github.com/miekg/dns"
+	"github.com/qaware/minikube-support/pkg/apis"
 	"github.com/sirupsen/logrus"
 )
 

@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/chr-fritz/minikube-support/pkg/apis"
+	"github.com/qaware/minikube-support/pkg/apis"
 )
 
 type DummyPlugin struct {

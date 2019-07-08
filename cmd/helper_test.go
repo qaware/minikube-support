@@ -1,8 +1,8 @@
 package cmd
 
 import (
-	"github.com/chr-fritz/minikube-support/pkg/apis"
-	"github.com/chr-fritz/minikube-support/pkg/plugins"
+	"github.com/qaware/minikube-support/pkg/apis"
+	"github.com/qaware/minikube-support/pkg/plugins"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/stretchr/testify/assert"

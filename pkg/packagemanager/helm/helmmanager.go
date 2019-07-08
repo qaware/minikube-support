@@ -2,9 +2,9 @@ package helm
 
 import (
 	"fmt"
-	"github.com/chr-fritz/minikube-support/pkg/sh"
-	"github.com/chr-fritz/minikube-support/pkg/utils"
 	"github.com/kballard/go-shellquote"
+	"github.com/qaware/minikube-support/pkg/sh"
+	"github.com/qaware/minikube-support/pkg/utils"
 	"github.com/sirupsen/logrus"
 	"os"
 	"sync"

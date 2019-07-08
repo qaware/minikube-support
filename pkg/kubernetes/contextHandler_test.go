@@ -1,8 +1,8 @@
 package kubernetes
 
 import (
-	"github.com/chr-fritz/minikube-support/pkg/sh"
-	"github.com/chr-fritz/minikube-support/pkg/testutils"
+	"github.com/qaware/minikube-support/pkg/sh"
+	"github.com/qaware/minikube-support/pkg/testutils"
 	"os"
 	"os/exec"
 	"testing"

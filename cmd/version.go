@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/chr-fritz/minikube-support/version"
+	"github.com/qaware/minikube-support/version"
 	"github.com/spf13/cobra"
 )
 

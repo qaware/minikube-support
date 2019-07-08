@@ -1,6 +1,6 @@
 package main
 
-import "github.com/chr-fritz/minikube-support/cmd"
+import "github.com/qaware/minikube-support/cmd"
 
 func main() {
 	cmd.Execute()

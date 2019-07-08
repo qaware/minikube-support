@@ -3,8 +3,8 @@ package coredns
 import (
 	"context"
 	"fmt"
-	"github.com/chr-fritz/minikube-support/pb"
 	"github.com/miekg/dns"
+	"github.com/qaware/minikube-support/pb"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"net"

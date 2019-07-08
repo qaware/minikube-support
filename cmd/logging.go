@@ -1,8 +1,8 @@
 package cmd
 
 import (
-	"github.com/chr-fritz/minikube-support/pkg/logging"
 	"github.com/golang/glog"
+	"github.com/qaware/minikube-support/pkg/logging"
 	"github.com/spf13/cobra"
 )
 

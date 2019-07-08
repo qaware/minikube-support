@@ -76,7 +76,7 @@ minikube-support remove [TOOL]
 
 # License
 
-Minikube-Support is released under the MIT license. See [LICENSE](https://github.com/chr-fritz/minikube-support/blob/master/LICENSE)
+Minikube-Support is released under the MIT license. See [LICENSE](https://github.com/qaware/minikube-support/blob/master/LICENSE)
 
 # Maintainer
 

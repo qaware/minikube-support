@@ -2,8 +2,8 @@ package plugins
 
 import (
 	"fmt"
-	"github.com/chr-fritz/minikube-support/pkg/apis"
 	"github.com/hashicorp/go-multierror"
+	"github.com/qaware/minikube-support/pkg/apis"
 	"github.com/sirupsen/logrus"
 )
 

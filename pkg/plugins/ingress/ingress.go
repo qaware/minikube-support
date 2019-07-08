@@ -3,10 +3,10 @@ package ingress
 import (
 	"bytes"
 	"fmt"
-	"github.com/chr-fritz/minikube-support/pkg/apis"
-	"github.com/chr-fritz/minikube-support/pkg/kubernetes"
-	"github.com/chr-fritz/minikube-support/pkg/plugins/coredns"
 	"github.com/hashicorp/go-multierror"
+	"github.com/qaware/minikube-support/pkg/apis"
+	"github.com/qaware/minikube-support/pkg/kubernetes"
+	"github.com/qaware/minikube-support/pkg/plugins/coredns"
 	"github.com/sirupsen/logrus"
 	"k8s.io/api/core/v1"
 	"k8s.io/api/extensions/v1beta1"

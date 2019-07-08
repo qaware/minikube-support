@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"github.com/chr-fritz/minikube-support/pkg/plugins"
+	"github.com/qaware/minikube-support/pkg/plugins"
 	"github.com/stretchr/testify/assert"
 	"testing"
 

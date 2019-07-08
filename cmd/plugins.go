@@ -1,16 +1,16 @@
 package cmd
 
 import (
-	"github.com/chr-fritz/minikube-support/pkg/apis"
-	"github.com/chr-fritz/minikube-support/pkg/kubernetes"
-	"github.com/chr-fritz/minikube-support/pkg/packagemanager/helm"
-	"github.com/chr-fritz/minikube-support/pkg/plugins"
-	"github.com/chr-fritz/minikube-support/pkg/plugins/certmanager"
-	"github.com/chr-fritz/minikube-support/pkg/plugins/coredns"
-	"github.com/chr-fritz/minikube-support/pkg/plugins/ingress"
-	"github.com/chr-fritz/minikube-support/pkg/plugins/minikube"
-	"github.com/chr-fritz/minikube-support/pkg/plugins/mkcert"
 	"github.com/hashicorp/go-multierror"
+	"github.com/qaware/minikube-support/pkg/apis"
+	"github.com/qaware/minikube-support/pkg/kubernetes"
+	"github.com/qaware/minikube-support/pkg/packagemanager/helm"
+	"github.com/qaware/minikube-support/pkg/plugins"
+	"github.com/qaware/minikube-support/pkg/plugins/certmanager"
+	"github.com/qaware/minikube-support/pkg/plugins/coredns"
+	"github.com/qaware/minikube-support/pkg/plugins/ingress"
+	"github.com/qaware/minikube-support/pkg/plugins/minikube"
+	"github.com/qaware/minikube-support/pkg/plugins/mkcert"
 )
 
 // Initializes all active plugins and register them in the two (installable and start stop) plugin registries.

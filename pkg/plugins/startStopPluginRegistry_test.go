@@ -1,7 +1,7 @@
 package plugins
 
 import (
-	"github.com/chr-fritz/minikube-support/pkg/apis"
+	"github.com/qaware/minikube-support/pkg/apis"
 	"reflect"
 	"testing"
 )

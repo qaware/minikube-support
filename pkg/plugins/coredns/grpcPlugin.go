@@ -3,8 +3,8 @@ package coredns
 import (
 	"bytes"
 	"fmt"
-	"github.com/chr-fritz/minikube-support/pkg/apis"
-	"github.com/chr-fritz/minikube-support/pkg/utils"
+	"github.com/qaware/minikube-support/pkg/apis"
+	"github.com/qaware/minikube-support/pkg/utils"
 	"net"
 	"time"
 )

@@ -2,12 +2,12 @@ package certmanager
 
 import (
 	"fmt"
-	"github.com/chr-fritz/minikube-support/pkg/apis"
-	"github.com/chr-fritz/minikube-support/pkg/github"
-	"github.com/chr-fritz/minikube-support/pkg/kubernetes"
-	"github.com/chr-fritz/minikube-support/pkg/packagemanager/helm"
-	"github.com/chr-fritz/minikube-support/pkg/sh"
 	"github.com/hashicorp/go-multierror"
+	"github.com/qaware/minikube-support/pkg/apis"
+	"github.com/qaware/minikube-support/pkg/github"
+	"github.com/qaware/minikube-support/pkg/kubernetes"
+	"github.com/qaware/minikube-support/pkg/packagemanager/helm"
+	"github.com/qaware/minikube-support/pkg/sh"
 	"github.com/sirupsen/logrus"
 	"io/ioutil"
 	v1 "k8s.io/api/core/v1"

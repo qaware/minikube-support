@@ -3,9 +3,9 @@ package coredns
 import (
 	"context"
 	"fmt"
-	"github.com/chr-fritz/minikube-support/pb"
-	"github.com/chr-fritz/minikube-support/pkg/apis"
 	"github.com/miekg/dns"
+	"github.com/qaware/minikube-support/pb"
+	"github.com/qaware/minikube-support/pkg/apis"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
 	"reflect"

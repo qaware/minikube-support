@@ -2,7 +2,7 @@ package kubernetes
 
 import (
 	"fmt"
-	"github.com/chr-fritz/minikube-support/pkg/sh"
+	"github.com/qaware/minikube-support/pkg/sh"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"

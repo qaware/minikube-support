@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/chr-fritz/minikube-support/pkg/apis"
+	"github.com/qaware/minikube-support/pkg/apis"
 )
 
 func TestGetServer(t *testing.T) {
