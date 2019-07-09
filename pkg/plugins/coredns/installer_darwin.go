@@ -5,7 +5,9 @@ import (
 	"github.com/kballard/go-shellquote"
 	"github.com/qaware/minikube-support/pkg/sh"
 	"github.com/sirupsen/logrus"
+	"io/ioutil"
 	"os"
+	"path"
 )
 
 const launchctlConfig = "/Library/LaunchDaemons/de.chrfritz.minikube-support.coredns.plist"
@@ -47,6 +49,24 @@ func (i *installer) uninstallSpecific() error {
 		return fmt.Errorf("can not remove coredns minikube resolver config: %s", e)
 	}
 	return nil
+}
+
+func (i *installer) writeConfig() error {
+	config := `
+. {
+    reload
+    health :8054
+    bind 127.0.0.1 
+    bind ::1
+    log
+
+    grpc minikube 127.0.0.1:8053
+}
+192.168.64.1:53  {
+    forward . /etc/resolv.conf
+}
+`
+	return ioutil.WriteFile(path.Join(i.prefix, "etc", "corefile"), []byte(config), 0644)
 }
 
 func (i *installer) writeLaunchCtlConfig() error {

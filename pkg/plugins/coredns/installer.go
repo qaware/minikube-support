@@ -9,7 +9,6 @@ import (
 	"github.com/qaware/minikube-support/pkg/github"
 	"github.com/sirupsen/logrus"
 	"io"
-	"io/ioutil"
 	"os"
 	"path"
 	"runtime"
@@ -115,25 +114,3 @@ func (i *installer) downloadCoreDns() error {
 	}
 	return nil
 }
-
-func (i *installer) writeConfig() error {
-	config := `
-. {
-    reload
-    health :8054
-    bind 127.0.0.1 
-    bind ::1
-    log
-
-    grpc minikube 127.0.0.1:8053
-}
-`
-	return ioutil.WriteFile(path.Join(i.prefix, "etc", "corefile"), []byte(config), 0644)
-}
-
-// CONFIG_FILE=$HOME/Development/chr-fritz/dev-tools/config/coredns/coredns.conf
-//PREFIX=/opt/coredns
-//PID_FILE=$PREFIX/var/run/coredns.run
-//VERSION=1.5.0
-//DOWNLOAD_LOCATION=https://github.com/coredns/coredns/releases/download/v${VERSION}/coredns_${VERSION}_darwin_amd64.tgz
-//KUBE_CONFIG=$HOME/.kube/config
