@@ -2,6 +2,9 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/qaware/minikube-support/pkg/sh"
+	"github.com/qaware/minikube-support/pkg/testutils"
+	"os/exec"
 	"reflect"
 	"syscall"
 	"testing"
@@ -13,6 +16,9 @@ import (
 )
 
 func TestRunOptions_Run(t *testing.T) {
+	sh.ExecCommand = testutils.FakeExecCommand
+	defer func() { sh.ExecCommand = exec.Command }()
+
 	tests := []struct {
 		name          string
 		plugins       []apis.StartStopPlugin
@@ -25,13 +31,14 @@ func TestRunOptions_Run(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			testutils.TestProcessResponses = []testutils.TestProcessResponse{{Command: "sudo", Args: []string{"echo"}, ResponseStatus: 0}}
 			options := &RunOptions{
 				plugins:        tt.plugins,
 				messageChannel: make(chan *apis.MonitoringMessage),
 				lastMessages:   map[string]*apis.MonitoringMessage{},
 			}
 			go options.Run(&cobra.Command{}, []string{})
-			time.Sleep(10 * time.Millisecond)
+			time.Sleep(50 * time.Millisecond)
 			syscall.Kill(syscall.Getpid(), syscall.SIGINT)
 
 			if !reflect.DeepEqual(tt.activePlugins, options.activePlugins) {
@@ -130,4 +137,8 @@ func Test_calcBoxSize(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestHelperProcess(t *testing.T) {
+	testutils.StandardHelperProcess(t)
 }
