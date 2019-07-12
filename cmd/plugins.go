@@ -9,12 +9,15 @@ import (
 	"github.com/qaware/minikube-support/pkg/plugins/certmanager"
 	"github.com/qaware/minikube-support/pkg/plugins/coredns"
 	"github.com/qaware/minikube-support/pkg/plugins/ingress"
+	"github.com/qaware/minikube-support/pkg/plugins/logs"
 	"github.com/qaware/minikube-support/pkg/plugins/minikube"
 	"github.com/qaware/minikube-support/pkg/plugins/mkcert"
+	"github.com/sirupsen/logrus"
 )
 
 // Initializes all active plugins and register them in the two (installable and start stop) plugin registries.
 func initPlugins(options *RootCommandOptions) {
+	logPlugin := logs.NewLogsPlugin(logrus.StandardLogger())
 	var errors *multierror.Error
 
 	handler := kubernetes.NewContextHandler(&options.kubeConfig, &options.contextName)
@@ -36,6 +39,7 @@ func initPlugins(options *RootCommandOptions) {
 	)
 
 	options.startStopPluginRegistry.AddPlugins(
+		logPlugin,
 		minikube.NewTunnel(),
 		coreDnsIngressPlugin,
 		minikube.NewIpPlugin(manager),

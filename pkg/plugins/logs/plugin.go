@@ -8,7 +8,8 @@ import (
 	"time"
 )
 
-type logHook struct {
+// plugin is the internal structure for the logs plugin.
+type plugin struct {
 	msgChannel chan *apis.MonitoringMessage
 	buffer     *buffer
 	writer     *writer
@@ -23,9 +24,10 @@ var formatter = &logrus.TextFormatter{
 	FullTimestamp: true,
 }
 
-func NewLogHook(logger *logrus.Logger) apis.StartStopPlugin {
+// NewLogsPlugin initializes the logs plugin for the run view.
+func NewLogsPlugin(logger *logrus.Logger) apis.StartStopPlugin {
 	buffer := newBuffer()
-	hook := &logHook{
+	hook := &plugin{
 		end:    make(chan bool),
 		writer: &writer{buffer: buffer},
 		buffer: buffer,
@@ -35,23 +37,24 @@ func NewLogHook(logger *logrus.Logger) apis.StartStopPlugin {
 	return hook
 }
 
-func (*logHook) String() string {
+func (*plugin) String() string {
 	return pluginName
 }
 
-func (*logHook) IsSingleRunnable() bool {
+func (*plugin) IsSingleRunnable() bool {
 	return false
 }
 
-func (l *logHook) Start(messageChannel chan *apis.MonitoringMessage) (boxName string, err error) {
+func (l *plugin) Start(messageChannel chan *apis.MonitoringMessage) (boxName string, err error) {
 	l.logger.SetOutput(l.writer)
 	l.logger.SetFormatter(formatter)
 	l.msgChannel = messageChannel
-	go utils.Ticker(l.messageTicker, l.end, 1*time.Second)
+	go utils.Ticker(l.messageTicker, l.end, 500*time.Microsecond)
 	return pluginName, nil
 }
 
-func (l *logHook) messageTicker() {
+// messageTicker produces the the current output for the logs plugin view
+func (l *plugin) messageTicker() {
 	payloads := l.buffer.GetEntries()
 
 	message := ""
@@ -68,7 +71,7 @@ func (l *logHook) messageTicker() {
 	l.msgChannel <- &apis.MonitoringMessage{Box: pluginName, Message: message}
 }
 
-func (l *logHook) Stop() error {
+func (l *plugin) Stop() error {
 	l.end <- true
 	return nil
 }
