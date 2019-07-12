@@ -5,6 +5,7 @@ import (
 	"github.com/buger/goterm"
 	"github.com/hashicorp/go-multierror"
 	"github.com/qaware/minikube-support/pkg/apis"
+	"github.com/qaware/minikube-support/pkg/sh"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"os"
@@ -50,6 +51,10 @@ func NewRunCommand(registry apis.StartStopPluginRegistry) *cobra.Command {
 }
 
 func (i *RunOptions) Run(cmd *cobra.Command, args []string) {
+	if e := sh.InitSudo(); e != nil {
+		logrus.Errorf("`minikube-support run` requires sudo for some plugins. Initialize sudo failed: %s", e)
+	}
+
 	go i.startPlugins()
 	goterm.Clear()
 	i.handleSignals()
