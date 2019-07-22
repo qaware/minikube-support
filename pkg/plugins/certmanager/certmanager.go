@@ -16,6 +16,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	kubernetes2 "k8s.io/client-go/kubernetes"
+	"path"
 	"strings"
 	"time"
 )
@@ -138,11 +139,11 @@ func (m *certManager) applyCertSecret() error {
 	}
 	caRoot = strings.Trim(caRoot, "\r\n \t")
 
-	crt, e := ioutil.ReadFile(caRoot + "/rootCA.pem")
+	crt, e := ioutil.ReadFile(path.Join(caRoot, "rootCA.pem"))
 	if e != nil {
 		return fmt.Errorf("unable to read the mkcert RootCA certificate: %s", e)
 	}
-	key, e := ioutil.ReadFile(caRoot + "/rootCA-key.pem")
+	key, e := ioutil.ReadFile(path.Join(caRoot, "rootCA-key.pem"))
 	if e != nil {
 		return fmt.Errorf("unable to read the mkcert RootCA key: %s", e)
 	}
@@ -178,11 +179,11 @@ func (m *certManager) applyClusterIssuer() error {
 		return e
 	}
 
+	// no namespace needed. The referenced secret will be installed in the same namespace as the cert-manager helm chart.
 	issuer := &unstructured.Unstructured{}
 	issuer.SetUnstructuredContent(map[string]interface{}{"spec": map[string]interface{}{"ca": map[string]interface{}{"secretName": issuerName}}})
 	issuer.SetGroupVersionKind(groupVersion.WithKind("ClusterIssuer"))
 	issuer.SetName(issuerName)
-	issuer.SetNamespace(m.namespace)
 
 	clusterIssuerInterface := client.Resource(groupVersion.WithResource("clusterissuers"))
 	old, e := clusterIssuerInterface.Get(issuerName, metav1.GetOptions{})

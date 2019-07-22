@@ -58,7 +58,7 @@ func StandardHelperProcess(*testing.T) {
 
 	executedCommand, executedArgs := ExtractMockedCommandAndArgs()
 
-	response := findTestProcessResponse(responses, executedCommand, executedArgs)
+	response := FindTestProcessResponse(responses, executedCommand, executedArgs)
 
 	defer os.Exit(response.ResponseStatus)
 	_, _ = fmt.Fprint(os.Stderr, response.Stderr)
@@ -66,7 +66,7 @@ func StandardHelperProcess(*testing.T) {
 	time.Sleep(response.delay)
 }
 
-func findTestProcessResponse(responses []TestProcessResponse, cmd string, args []string) *TestProcessResponse {
+func FindTestProcessResponse(responses []TestProcessResponse, cmd string, args []string) *TestProcessResponse {
 	for _, response := range responses {
 		if response.Command != cmd {
 			continue

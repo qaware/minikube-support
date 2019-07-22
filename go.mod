@@ -8,6 +8,7 @@ require (
 	github.com/golang/protobuf v1.3.2
 	github.com/hashicorp/go-multierror v1.0.0
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51
+	github.com/magiconair/properties v1.8.0
 	github.com/miekg/dns v1.1.15
 	github.com/pkg/errors v0.8.1
 	github.com/sirupsen/logrus v1.4.2
