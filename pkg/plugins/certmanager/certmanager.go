@@ -23,7 +23,7 @@ import (
 type certManager struct {
 	manager        helm.Manager
 	contextHandler kubernetes.ContextHandler
-	clientSet      *kubernetes2.Clientset
+	clientSet      kubernetes2.Interface
 	ghClient       github.Client
 	namespace      string
 	values         map[string]interface{}

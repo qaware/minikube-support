@@ -16,7 +16,7 @@ import (
 // retrieving the kubernetes configuration and context.
 type ContextHandler interface {
 	// GetClientSet gets the kubernetes client set for the defined config file and context.
-	GetClientSet() (*kubernetes.Clientset, error)
+	GetClientSet() (kubernetes.Interface, error)
 
 	// GetDynamicClient gets the kubernetes dynamic client to access unknown custom resources.
 	GetDynamicClient() (dynamic.Interface, error)
@@ -44,7 +44,7 @@ func NewContextHandler(configFile *string, contextName *string) ContextHandler {
 	return &contextHandler{configFile: configFile, contextName: contextName, clientSetMutex: sync.Mutex{}}
 }
 
-func (h *contextHandler) GetClientSet() (*kubernetes.Clientset, error) {
+func (h *contextHandler) GetClientSet() (kubernetes.Interface, error) {
 	h.clientSetMutex.Lock()
 	defer h.clientSetMutex.Unlock()
 
