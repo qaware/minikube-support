@@ -1,5 +1,7 @@
 package packagemanager
 
+//go:generate mockgen -destination=fake/mocks.go -package=fake -source=packagemanager.go
+
 import (
 	"fmt"
 	"github.com/sirupsen/logrus"

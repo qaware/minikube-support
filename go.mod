@@ -5,6 +5,7 @@ go 1.12
 require (
 	github.com/buger/goterm v0.0.0-20181115115552-c206103e1f37
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
+	github.com/golang/mock v1.1.1
 	github.com/golang/protobuf v1.3.2
 	github.com/hashicorp/go-multierror v1.0.0
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51

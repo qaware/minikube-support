@@ -52,7 +52,7 @@ windows-build: pb
 	CGO_ENABLED=0 GOARCH=amd64 GOOS=windows go build $(BUILDFLAGS) -o $(BUILD_DIR)/$(NAME)-windows.exe $(ROOT_PACKAGE)
 
 .PHONY: test
-test:
+test: generate
 	go test -v $(PACKAGE_DIRS)
 
 .PHONY: release
@@ -68,6 +68,10 @@ cross: darwin-build linux-build windows-build
 .PHONY: pb
 pb:
 	$(MAKE) -C pb
+
+.PHONY: generate
+generate:
+	go generate ./...
 
 .PHONY: clean
 clean:

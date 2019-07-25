@@ -1,5 +1,7 @@
 package helm
 
+//go:generate mockgen -destination=fake/mocks.go -package=fake -source=helmmanager.go
+
 import (
 	"fmt"
 	"github.com/kballard/go-shellquote"
