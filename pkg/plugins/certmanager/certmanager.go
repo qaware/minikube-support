@@ -122,7 +122,7 @@ func (m *certManager) Uninstall(purge bool) {
 	err = multierror.Append(err, e)
 
 	if err.Len() > 0 {
-		logrus.Errorf("Unable to uninstall the certManager plugin: %s", e)
+		logrus.Errorf("Unable to uninstall the certManager plugin: %s", err)
 	} else {
 		logrus.Info("CertManager plugin successfully uninstalled.")
 	}
