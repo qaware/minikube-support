@@ -1,10 +1,9 @@
 package cmd
 
 import (
+	"github.com/qaware/minikube-support/pkg/testutils"
 	"github.com/sirupsen/logrus"
 	"github.com/sirupsen/logrus/hooks/test"
-	"github.com/stretchr/testify/assert"
-	"strings"
 	"syscall"
 	"testing"
 	"time"
@@ -35,20 +34,11 @@ func TestRunSingleOptions_Run(t *testing.T) {
 
 			go i.Run(&cobra.Command{}, []string{})
 			time.Sleep(10 * time.Millisecond)
-			checkLogEntry(t, hook, tt.startupPrefix)
+			testutils.CheckLogEntry(t, hook, tt.startupPrefix)
 
 			syscall.Kill(syscall.Getpid(), syscall.SIGINT)
 			time.Sleep(10 * time.Millisecond)
-			checkLogEntry(t, hook, tt.stopPrefix)
+			testutils.CheckLogEntry(t, hook, tt.stopPrefix)
 		})
 	}
-}
-
-func checkLogEntry(t *testing.T, hook *test.Hook, prefix string) {
-	entry := hook.LastEntry()
-	if entry == nil {
-		t.Errorf("Entry is nil")
-		return
-	}
-	assert.True(t, strings.HasPrefix(entry.Message, prefix), "Should have prefix: '%s'; got [%s] '%s'", prefix, entry.Level, entry.Message)
 }
