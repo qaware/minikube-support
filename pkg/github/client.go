@@ -1,5 +1,7 @@
 package github
 
+//go:generate mockgen -destination=fake/mocks.go -package=fake -source=client.go
+
 import (
 	"encoding/json"
 	"fmt"
