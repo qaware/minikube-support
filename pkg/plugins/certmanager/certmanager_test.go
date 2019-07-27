@@ -50,13 +50,49 @@ func TestNewCertManager(t *testing.T) {
 	}
 }
 
+func Test_certManager_Install(t *testing.T) {
+	hook := test.NewGlobal()
+	logrus.SetLevel(logrus.DebugLevel)
+	tests := []struct {
+		name               string
+		addRepoError       error
+		latestVersionError error
+		lastLogEntry       string
+	}{
+		{"addRepoError", errors.New("failed to add repo"), nil, "Unable to add jetstack repository"},
+		{"can't get latest version", nil, errors.New("can't get latest version"), "Unable to detect latest certmanager version"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+			helmManager := helmFake.NewMockManager(ctrl)
+			ghClient := ghClientFake.NewMockClient(ctrl)
+			m := &certManager{
+				manager:  helmManager,
+				ghClient: ghClient,
+			}
+			helmManager.EXPECT().
+				AddRepository("jetstack", "https://charts.jetstack.io").
+				Return(tt.addRepoError)
+			ghClient.EXPECT().
+				GetLatestReleaseTag(gomock.Any(), gomock.Any()).
+				Return("", tt.latestVersionError).
+				MinTimes(0).
+				MaxTimes(1)
+			m.Install()
+
+			testutils.CheckLogEntry(t, hook, tt.lastLogEntry)
+		})
+	}
+}
+
 func Test_certManager_Update(t *testing.T) {
 	hook := test.NewGlobal()
 	logrus.SetLevel(logrus.DebugLevel)
 	helmInstallWaitPeriod = 0
 	tests := []struct {
-		name string
-
+		name                   string
 		latestVersion          string
 		latestVersionError     error
 		kApplyStatus           int
