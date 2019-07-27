@@ -36,6 +36,7 @@ const issuerName = "ca-issuer"
 const releaseName = "cert-manager"
 
 var groupVersion = schema.GroupVersion{Group: "certmanager.k8s.io", Version: "v1alpha1"}
+var helmInstallWaitPeriod = 20 * time.Second
 
 func NewCertManager(manager helm.Manager, handler kubernetes.ContextHandler) (apis.InstallablePlugin, error) {
 	clientset, e := handler.GetClientSet()
@@ -92,7 +93,7 @@ func (m *certManager) Update() {
 	m.manager.Install("jetstack/cert-manager", releaseName, m.namespace, m.values, true)
 
 	var err *multierror.Error
-	time.Sleep(20 * time.Second)
+	time.Sleep(helmInstallWaitPeriod)
 	err = multierror.Append(err, m.applyCertSecret())
 	err = multierror.Append(err, m.applyClusterIssuer())
 

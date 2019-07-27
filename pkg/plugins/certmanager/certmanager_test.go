@@ -1,25 +1,26 @@
 package certmanager
 
 import (
+	"errors"
 	"github.com/golang/mock/gomock"
-	"github.com/sirupsen/logrus"
-	"github.com/sirupsen/logrus/hooks/test"
-	assert2 "github.com/stretchr/testify/assert"
-	testing2 "k8s.io/client-go/testing"
-
 	"github.com/magiconair/properties/assert"
+	ghClientFake "github.com/qaware/minikube-support/pkg/github/fake"
 	"github.com/qaware/minikube-support/pkg/kubernetes"
 	"github.com/qaware/minikube-support/pkg/kubernetes/fake"
 	"github.com/qaware/minikube-support/pkg/packagemanager/helm"
-	fake2 "github.com/qaware/minikube-support/pkg/packagemanager/helm/fake"
+	helmFake "github.com/qaware/minikube-support/pkg/packagemanager/helm/fake"
 	"github.com/qaware/minikube-support/pkg/sh"
 	"github.com/qaware/minikube-support/pkg/testutils"
+	"github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus/hooks/test"
+	assert2 "github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	dynamicFake "k8s.io/client-go/dynamic/fake"
 	k8sFake "k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/kubernetes/scheme"
+	testing2 "k8s.io/client-go/testing"
 	"os/exec"
 	"testing"
 )
@@ -45,6 +46,63 @@ func TestNewCertManager(t *testing.T) {
 			if _, ok := got.(*certManager); ok != tt.wantPlugin {
 				t.Errorf("NewCertManager() got %v, wantPlugin = %v", got, tt.wantPlugin)
 			}
+		})
+	}
+}
+
+func Test_certManager_Update(t *testing.T) {
+	hook := test.NewGlobal()
+	logrus.SetLevel(logrus.DebugLevel)
+	helmInstallWaitPeriod = 0
+	tests := []struct {
+		name string
+
+		latestVersion          string
+		latestVersionError     error
+		kApplyStatus           int
+		repoUpdateError        error
+		expectedLogEntryPrefix string
+	}{
+		{"ok", "1.0", nil, 0, nil, ""},
+		{"failed to fetch version", "", errors.New("no version"), 0, nil, "Unable to detect latest certmanager version"},
+		{"failed to apply crds", "1.0", nil, 1, nil, "Unable to install the certmanager crds"},
+		{"failed update repos", "1.0", nil, 0, errors.New("no repo update"), "Unable to update helm repositories"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			helmManager := helmFake.NewMockManager(ctrl)
+			ghClient := ghClientFake.NewMockClient(ctrl)
+			handler := fake.NewContextHandler(k8sFake.NewSimpleClientset(), dynamicFake.NewSimpleDynamicClient(scheme.Scheme))
+			m := &certManager{
+				manager:        helmManager,
+				contextHandler: handler,
+				clientSet:      handler.ClientSet,
+				ghClient:       ghClient,
+				namespace:      "mks",
+				values:         map[string]interface{}{},
+			}
+
+			ghClient.EXPECT().
+				GetLatestReleaseTag("jetstack", "cert-manager").
+				Return(tt.latestVersion, tt.latestVersionError)
+
+			handler.MockKubectl("apply", []string{"-f", "https://raw.githubusercontent.com/jetstack/cert-manager/" + tt.latestVersion + "/deploy/manifests/00-crds.yaml"}, "", tt.kApplyStatus)
+			helmManager.EXPECT().
+				UpdateRepository().
+				Return(tt.repoUpdateError).
+				MinTimes(0).
+				MaxTimes(1)
+			helmManager.EXPECT().
+				Install("jetstack/cert-manager", releaseName, "mks", gomock.Any(), true).
+				MinTimes(0).
+				MaxTimes(1)
+
+			m.Update()
+
+			testutils.CheckLogEntry(t, hook, tt.expectedLogEntryPrefix)
 		})
 	}
 }
@@ -136,7 +194,7 @@ func Test_certManager_Uninstall(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
-			manager := fake2.NewMockManager(ctrl)
+			manager := helmFake.NewMockManager(ctrl)
 			m, _ := NewCertManager(manager, tt.handler)
 			if tt.expectHelmUninstall {
 				manager.EXPECT().Uninstall(releaseName, tt.purge)
