@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/hashicorp/go-multierror"
 	"github.com/qaware/minikube-support/pkg/apis"
 	packageManagerOs "github.com/qaware/minikube-support/pkg/packagemanager/os"
 	"github.com/qaware/minikube-support/pkg/plugins"
@@ -15,24 +16,44 @@ type RootCommandOptions struct {
 	contextName               string
 	installablePluginRegistry apis.InstallablePluginRegistry
 	startStopPluginRegistry   apis.StartStopPluginRegistry
+	preRunInit                []PreRunInit
 }
+
+// PreRunInit defines the interface for small helper functions which will perform
+// a late initialization of some already initialized object instances.
+type PreRunInit func(options *RootCommandOptions) error
 
 var rootCmd *cobra.Command
 
 // NewRootCmd initializes the root cobra command including all the flags on root level.
 func NewRootCmd() (*cobra.Command, *RootCommandOptions) {
-	cmd := &cobra.Command{
-		Use:   "minikube-support",
-		Short: "The minikube-support tools helps to integrate minikube better into your local os.",
-	}
-
 	options := NewRootCmdOptions()
+	cmd := &cobra.Command{
+		Use:               "minikube-support",
+		Short:             "The minikube-support tools helps to integrate minikube better into your local os.",
+		PersistentPreRunE: options.preRun,
+	}
 
 	flags := cmd.PersistentFlags()
 	flags.StringVar(&options.kubeConfig, "kubeconfig", "", "Path to the kubeconfig file to use for CLI requests.")
 	flags.StringVar(&options.contextName, "context", "", "The name of the kubeconfig context to use")
 
 	return cmd, options
+}
+
+// preRun will be called by cobra as PersistentPreRun function before the actual command will be executed.
+// This allows to inject configuration and argument values into already pre initialized objects.
+func (o *RootCommandOptions) preRun(_ *cobra.Command, _ []string) error {
+	var errors *multierror.Error
+	for _, f := range o.preRunInit {
+		errors = multierror.Append(errors, f(o))
+	}
+	return errors.ErrorOrNil()
+}
+
+// AddPreRunInitFunction adds a new PreRunInit function to the list for preRun()
+func (o *RootCommandOptions) AddPreRunInitFunction(f PreRunInit) {
+	o.preRunInit = append(o.preRunInit, f)
 }
 
 // NewRootCmdOptions creates a new option structure for the the root cli command.
