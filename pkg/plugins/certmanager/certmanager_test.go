@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/golang/mock/gomock"
 	"github.com/magiconair/properties/assert"
+	"github.com/qaware/minikube-support/pkg/github"
 	ghClientFake "github.com/qaware/minikube-support/pkg/github/fake"
 	"github.com/qaware/minikube-support/pkg/kubernetes"
 	"github.com/qaware/minikube-support/pkg/kubernetes/fake"
@@ -14,7 +15,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/sirupsen/logrus/hooks/test"
 	assert2 "github.com/stretchr/testify/assert"
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	dynamicFake "k8s.io/client-go/dynamic/fake"
@@ -38,7 +39,7 @@ func TestNewCertManager(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := NewCertManager(tt.manager, tt.handler)
+			got, err := NewCertManager(tt.manager, tt.handler, github.NewClient())
 			if (err != nil) != tt.wantErr {
 				t.Errorf("NewCertManager() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -159,7 +160,7 @@ func Test_certManager_Uninstall(t *testing.T) {
 	}{
 		{"ok",
 			true,
-			fake.NewContextHandler(k8sFake.NewSimpleClientset(&v1.Secret{
+			fake.NewContextHandler(k8sFake.NewSimpleClientset(&corev1.Secret{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "Secret",
 					APIVersion: "v1",
@@ -176,7 +177,7 @@ func Test_certManager_Uninstall(t *testing.T) {
 		},
 		{"ok no purge",
 			false,
-			fake.NewContextHandler(k8sFake.NewSimpleClientset(&v1.Secret{
+			fake.NewContextHandler(k8sFake.NewSimpleClientset(&corev1.Secret{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "Secret",
 					APIVersion: "v1",
@@ -202,7 +203,7 @@ func Test_certManager_Uninstall(t *testing.T) {
 		},
 		{"no issuer",
 			false,
-			fake.NewContextHandler(k8sFake.NewSimpleClientset(&v1.Secret{
+			fake.NewContextHandler(k8sFake.NewSimpleClientset(&corev1.Secret{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "Secret",
 					APIVersion: "v1",
@@ -231,7 +232,7 @@ func Test_certManager_Uninstall(t *testing.T) {
 			defer ctrl.Finish()
 
 			manager := helmFake.NewMockManager(ctrl)
-			m, _ := NewCertManager(manager, tt.handler)
+			m, _ := NewCertManager(manager, tt.handler, github.NewClient())
 			if tt.expectHelmUninstall {
 				manager.EXPECT().Uninstall(releaseName, tt.purge)
 			}
@@ -253,7 +254,7 @@ func Test_certManager_applyCertSecret(t *testing.T) {
 	defer func() { sh.ExecCommand = exec.Command }()
 	tests := []struct {
 		name           string
-		existingSecret *v1.Secret
+		existingSecret *corev1.Secret
 		mkcertRoot     string
 		wantAction     string
 		wantErr        bool
@@ -265,7 +266,7 @@ func Test_certManager_applyCertSecret(t *testing.T) {
 			false,
 		},
 		{"ok, update",
-			&v1.Secret{
+			&corev1.Secret{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "Secret",
 					APIVersion: "v1",
@@ -306,7 +307,7 @@ func Test_certManager_applyCertSecret(t *testing.T) {
 			} else {
 				fakeClientSet = k8sFake.NewSimpleClientset()
 			}
-			o, _ := NewCertManager(nil, fake.NewContextHandler(fakeClientSet, nil))
+			o, _ := NewCertManager(nil, fake.NewContextHandler(fakeClientSet, nil), github.NewClient())
 			m := o.(*certManager)
 			if err := m.applyCertSecret(); (err != nil) != tt.wantErr {
 				t.Errorf("certManager.applyCertSecret() error = %v, wantErr %v", err, tt.wantErr)
@@ -335,7 +336,7 @@ func Test_certManager_applyClusterIssuer(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			handler := fake.NewContextHandler(k8sFake.NewSimpleClientset(), tt.dynamicClient)
-			o, _ := NewCertManager(nil, handler)
+			o, _ := NewCertManager(nil, handler, github.NewClient())
 			m := o.(*certManager)
 
 			if err := m.applyClusterIssuer(); (err != nil) != tt.wantErr {

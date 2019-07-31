@@ -38,7 +38,7 @@ const releaseName = "cert-manager"
 var groupVersion = schema.GroupVersion{Group: "certmanager.k8s.io", Version: "v1alpha1"}
 var helmInstallWaitPeriod = 20 * time.Second
 
-func NewCertManager(manager helm.Manager, handler kubernetes.ContextHandler) (apis.InstallablePlugin, error) {
+func NewCertManager(manager helm.Manager, handler kubernetes.ContextHandler, ghClient github.Client) (apis.InstallablePlugin, error) {
 	clientset, e := handler.GetClientSet()
 	if e != nil {
 		return nil, fmt.Errorf("can not get clientset: %s", e)
@@ -47,7 +47,7 @@ func NewCertManager(manager helm.Manager, handler kubernetes.ContextHandler) (ap
 	return &certManager{
 		manager:        manager,
 		contextHandler: handler,
-		ghClient:       github.NewClient(""),
+		ghClient:       ghClient,
 		values:         map[string]interface{}{},
 		clientSet:      clientset,
 		namespace:      "mks",

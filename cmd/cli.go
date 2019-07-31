@@ -14,6 +14,7 @@ import (
 type RootCommandOptions struct {
 	kubeConfig                string
 	contextName               string
+	githubAccessToken         string
 	installablePluginRegistry apis.InstallablePluginRegistry
 	startStopPluginRegistry   apis.StartStopPluginRegistry
 	preRunInit                []PreRunInit
@@ -37,6 +38,7 @@ func NewRootCmd() (*cobra.Command, *RootCommandOptions) {
 	flags := cmd.PersistentFlags()
 	flags.StringVar(&options.kubeConfig, "kubeconfig", "", "Path to the kubeconfig file to use for CLI requests.")
 	flags.StringVar(&options.contextName, "context", "", "The name of the kubeconfig context to use")
+	flags.StringVar(&options.githubAccessToken, "ghAccessToken", "", "The github access token to access private repositories or avoid rate limiting.\nSee https://github.blog/2013-05-16-personal-api-tokens/ for information about how to create such a token.")
 
 	return cmd, options
 }

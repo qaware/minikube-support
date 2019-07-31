@@ -3,6 +3,7 @@ package cmd
 import (
 	"github.com/hashicorp/go-multierror"
 	"github.com/qaware/minikube-support/pkg/apis"
+	"github.com/qaware/minikube-support/pkg/github"
 	"github.com/qaware/minikube-support/pkg/kubernetes"
 	"github.com/qaware/minikube-support/pkg/packagemanager/helm"
 	"github.com/qaware/minikube-support/pkg/plugins"
@@ -26,9 +27,16 @@ func initPlugins(options *RootCommandOptions) {
 	coreDns := coredns.NewGrpcPlugin()
 	manager, _ := coredns.NewManager(coreDns)
 	k8sIngresses := ingress.NewK8sIngress(handler, manager)
+
+	ghClient := github.NewClient()
+	options.AddPreRunInitFunction(func(o *RootCommandOptions) error {
+		ghClient.SetApiToken(o.githubAccessToken)
+		return nil
+	})
+
 	coreDnsIngressPlugin, _ := plugins.NewCombinedPlugin("coredns-ingress", []apis.StartStopPlugin{coreDns, k8sIngresses}, true)
 
-	certManager, e := certmanager.NewCertManager(helmManager, handler)
+	certManager, e := certmanager.NewCertManager(helmManager, handler, ghClient)
 	errors = multierror.Append(errors, e)
 
 	options.installablePluginRegistry.AddPlugins(
