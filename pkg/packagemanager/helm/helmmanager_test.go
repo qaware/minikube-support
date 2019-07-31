@@ -209,6 +209,70 @@ func Test_defaultManager_Uninstall(t *testing.T) {
 	}
 }
 
+func Test_defaultManager_AddRepository(t *testing.T) {
+	sh.ExecCommand = testutils.FakeExecCommand
+	defer func() { sh.ExecCommand = exec.Command }()
+	tests := []struct {
+		name           string
+		initialized    bool
+		repoName       string
+		url            string
+		expectedArgs   []string
+		responseStatus int
+		wantErr        bool
+	}{
+		{"ok uninitialized", false, "dummy", "http://localhost", []string{"repo", "add", "dummy", "http://localhost"}, 0, false},
+		{"ok", true, "dummy", "http://localhost", []string{"repo", "add", "dummy", "http://localhost"}, 0, false},
+		{"failed", true, "dummy", "http://localhost", []string{"repo", "add", "dummy", "http://localhost"}, 1, true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			m := &defaultManager{
+				initialized: tt.initialized,
+			}
+			testutils.TestProcessResponses = []testutils.TestProcessResponse{
+				{Command: "helm", Args: tt.expectedArgs, ResponseStatus: tt.responseStatus, Stdout: ""},
+				{Command: "helm", Args: []string{"version", "-s"}, ResponseStatus: 0, Stdout: ""},
+			}
+
+			if err := m.AddRepository(tt.repoName, tt.url); (err != nil) != tt.wantErr {
+				t.Errorf("AddRepository() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func Test_defaultManager_UpdateRepository(t *testing.T) {
+	sh.ExecCommand = testutils.FakeExecCommand
+	defer func() { sh.ExecCommand = exec.Command }()
+	tests := []struct {
+		name           string
+		initialized    bool
+		expectedArgs   []string
+		responseStatus int
+		wantErr        bool
+	}{
+		{"ok uninitialized", false, []string{"repo", "update"}, 0, false},
+		{"ok", true, []string{"repo", "update"}, 0, false},
+		{"failed", true, []string{"repo", "update"}, 1, true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			m := &defaultManager{
+				initialized: tt.initialized,
+			}
+			testutils.TestProcessResponses = []testutils.TestProcessResponse{
+				{Command: "helm", Args: tt.expectedArgs, ResponseStatus: tt.responseStatus, Stdout: ""},
+				{Command: "helm", Args: []string{"version", "-s"}, ResponseStatus: 0, Stdout: ""},
+			}
+
+			if err := m.UpdateRepository(); (err != nil) != tt.wantErr {
+				t.Errorf("AddRepository() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
 func TestHelperProcess(t *testing.T) {
 	testutils.StandardHelperProcess(t)
 }
