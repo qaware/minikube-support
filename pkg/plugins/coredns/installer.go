@@ -22,9 +22,9 @@ type installer struct {
 
 const PluginName = "coredns"
 
-func NewInstaller(prefix string) apis.InstallablePlugin {
+func NewInstaller(prefix string, ghClient github.Client) apis.InstallablePlugin {
 	return &installer{
-		ghClient: github.NewClient(""),
+		ghClient: ghClient,
 		prefix:   prefix,
 	}
 }
