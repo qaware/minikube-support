@@ -10,8 +10,15 @@ import (
 	"time"
 )
 
+// Client is a small client to access some features of the GitHub API.
 type Client interface {
+	// SetApiToken sets the api token to access private apis of the GitHub API.
+	SetApiToken(apiToken string)
+
+	// GetLatestReleaseTag finds the latest release tag in the given repository.
 	GetLatestReleaseTag(org string, repository string) (string, error)
+
+	// DownloadReleaseAsset downloads the defined asset for the given release.
 	DownloadReleaseAsset(org string, repository string, tag string, assetName string) (io.ReadCloser, error)
 }
 
@@ -21,15 +28,19 @@ type client struct {
 	client  *http.Client
 }
 
-func NewClient(apiToken string) Client {
+func NewClient() Client {
 	httpClient := &http.Client{Timeout: 10 * time.Second}
-	if apiToken != "" {
-		httpClient.Transport = newAuthTransport(apiToken)
-	}
+
 	return &client{
 		apiHost: "https://api.github.com",
 		host:    "https://github.com",
 		client:  httpClient,
+	}
+}
+
+func (c *client) SetApiToken(apiToken string) {
+	if apiToken != "" {
+		c.client.Transport = newAuthTransport(apiToken)
 	}
 }
 
@@ -63,6 +74,9 @@ func (c *client) DownloadReleaseAsset(org string, repository string, tag string,
 	if e != nil {
 		return nil, fmt.Errorf("can not download asset %s for %s/%s of release %s: %s", assetName, org, repository, tag, e)
 	}
+	if resp.StatusCode > 399 {
+		return nil, fmt.Errorf("can not download asset %s for %s/%s of release %s: got status %s", assetName, org, repository, tag, resp.Status)
+	}
 
 	return resp.Body, nil
 }
@@ -81,7 +95,7 @@ func newAuthTransport(apiToken string) *transport {
 
 func (t *transport) RoundTrip(req *http.Request) (*http.Response, error) {
 	if t.apiToken != "" {
-		req.Header.Add("Authorization", "Bearer "+t.apiToken)
+		req.Header.Add("Authorization", "token "+t.apiToken)
 	}
 	return t.underlyingTransport.RoundTrip(req)
 }

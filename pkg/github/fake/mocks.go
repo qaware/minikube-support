@@ -33,6 +33,16 @@ func (m *MockClient) EXPECT() *MockClientMockRecorder {
 	return m.recorder
 }
 
+// SetApiToken mocks base method
+func (m *MockClient) SetApiToken(apiToken string) {
+	m.ctrl.Call(m, "SetApiToken", apiToken)
+}
+
+// SetApiToken indicates an expected call of SetApiToken
+func (mr *MockClientMockRecorder) SetApiToken(apiToken interface{}) *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetApiToken", reflect.TypeOf((*MockClient)(nil).SetApiToken), apiToken)
+}
+
 // GetLatestReleaseTag mocks base method
 func (m *MockClient) GetLatestReleaseTag(org, repository string) (string, error) {
 	ret := m.ctrl.Call(m, "GetLatestReleaseTag", org, repository)
