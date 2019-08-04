@@ -22,7 +22,7 @@ func initPlugins(options *RootCommandOptions) {
 	var errors *multierror.Error
 
 	handler := kubernetes.NewContextHandler(&options.kubeConfig, &options.contextName)
-	helmManager := helm.NewHelmManager()
+	helmManager := helm.NewHelmManager(handler)
 
 	coreDns := coredns.NewGrpcPlugin()
 	manager, _ := coredns.NewManager(coreDns)

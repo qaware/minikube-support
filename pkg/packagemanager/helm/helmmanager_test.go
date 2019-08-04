@@ -1,6 +1,8 @@
 package helm
 
 import (
+	"github.com/qaware/minikube-support/pkg/kubernetes"
+	"github.com/qaware/minikube-support/pkg/kubernetes/fake"
 	"github.com/qaware/minikube-support/pkg/sh"
 	"github.com/qaware/minikube-support/pkg/testutils"
 	"github.com/sirupsen/logrus"
@@ -29,7 +31,10 @@ func Test_defaultManager_Init(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			m := &defaultManager{initialized: tt.initialized}
+			m := &defaultManager{
+				context:     fake.NewContextHandler(nil, nil),
+				initialized: tt.initialized,
+			}
 			testutils.TestProcessResponses = []testutils.TestProcessResponse{
 				{Command: "helm", Args: []string{"version", "-s"}, ResponseStatus: tt.versionStatus, Stdout: tt.versionMsg},
 				{Command: "helm", Args: []string{"init", "--wait"}, ResponseStatus: tt.initStatus},
@@ -122,6 +127,7 @@ func Test_defaultManager_Install(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			m := &defaultManager{
+				context:     fake.NewContextHandler(nil, nil),
 				initialized: tt.initialized,
 			}
 
@@ -194,6 +200,7 @@ func Test_defaultManager_Uninstall(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			m := &defaultManager{
+				context:     fake.NewContextHandler(nil, nil),
 				initialized: tt.initialized,
 			}
 			testutils.TestProcessResponses = []testutils.TestProcessResponse{
@@ -228,6 +235,7 @@ func Test_defaultManager_AddRepository(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			m := &defaultManager{
+				context:     fake.NewContextHandler(nil, nil),
 				initialized: tt.initialized,
 			}
 			testutils.TestProcessResponses = []testutils.TestProcessResponse{
@@ -259,6 +267,7 @@ func Test_defaultManager_UpdateRepository(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			m := &defaultManager{
+				context:     fake.NewContextHandler(nil, nil),
 				initialized: tt.initialized,
 			}
 			testutils.TestProcessResponses = []testutils.TestProcessResponse{
@@ -268,6 +277,48 @@ func Test_defaultManager_UpdateRepository(t *testing.T) {
 
 			if err := m.UpdateRepository(); (err != nil) != tt.wantErr {
 				t.Errorf("AddRepository() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func Test_defaultManager_runCommand(t *testing.T) {
+	sh.ExecCommand = testutils.FakeExecCommand
+	defer func() { sh.ExecCommand = exec.Command }()
+	tests := []struct {
+		name       string
+		configFile string
+		context    string
+		want       string
+		wantErr    bool
+	}{
+		{"No context, no config", "", "", "No context, no config", false},
+		{"context, no config", "", "context", "context, no config", false},
+		{"No context, config", ".kubeconfig", "", "No context, config", false},
+		{"context, config", ".kubeconfig", "context", "context, config", false},
+		{"invalid context", "", "invalid", "invalid context", true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			m := &defaultManager{
+				context: kubernetes.NewContextHandler(&tt.configFile, &tt.context),
+			}
+
+			testutils.TestProcessResponses = []testutils.TestProcessResponse{
+				{Command: "helm", Args: []string{"version"}, ResponseStatus: 0, Stdout: "No context, no config"},
+				{Command: "helm", Args: []string{"version", "--kube-context", "context"}, ResponseStatus: 0, Stdout: "context, no config"},
+				{Command: "helm", Args: []string{"version", "--kubeconfig", ".kubeconfig"}, ResponseStatus: 0, Stdout: "No context, config"},
+				{Command: "helm", Args: []string{"version", "--kube-context", "context", "--kubeconfig", ".kubeconfig"}, ResponseStatus: 0, Stdout: "context, config"},
+				{Command: "helm", Args: []string{"version", "--kube-context", "invalid"}, ResponseStatus: 1, Stdout: "invalid context"},
+			}
+
+			got, err := m.runCommand("version")
+			if (err != nil) != tt.wantErr {
+				t.Errorf("runCommand() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got != tt.want {
+				t.Errorf("runCommand() got = %v, want %v", got, tt.want)
 			}
 		})
 	}

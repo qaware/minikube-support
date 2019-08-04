@@ -11,15 +11,20 @@ import (
 
 // ContextHandler is a simple context handler for unit tests.
 type ContextHandler struct {
-	ClientSet     *testclient.Clientset
-	DynamicClient *dyntestclient.FakeDynamicClient
-
+	ClientSet        *testclient.Clientset
+	DynamicClient    *dyntestclient.FakeDynamicClient
+	ConfigFile       string
+	ContextName      string
 	kubectlResponses []testutils.TestProcessResponse
 }
 
 // NewContextHandler initializes a new ContextHandler instance for unit tests.
 func NewContextHandler(clientSet *testclient.Clientset, dynamicClient *dyntestclient.FakeDynamicClient) *ContextHandler {
-	return &ContextHandler{ClientSet: clientSet, DynamicClient: dynamicClient, kubectlResponses: []testutils.TestProcessResponse{}}
+	return &ContextHandler{
+		ClientSet:        clientSet,
+		DynamicClient:    dynamicClient,
+		kubectlResponses: []testutils.TestProcessResponse{},
+	}
 }
 
 func (f *ContextHandler) GetClientSet() (kubernetes.Interface, error) {
@@ -37,11 +42,11 @@ func (f *ContextHandler) GetDynamicClient() (dynamic.Interface, error) {
 }
 
 func (f *ContextHandler) GetConfigFile() string {
-	return ".kubeconfig"
+	return f.ConfigFile
 }
 
 func (f *ContextHandler) GetContextName() string {
-	return "fake"
+	return f.ContextName
 }
 
 func (f *ContextHandler) Kubectl(command string, args ...string) (string, error) {

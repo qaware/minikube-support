@@ -5,6 +5,7 @@ package helm
 import (
 	"fmt"
 	"github.com/kballard/go-shellquote"
+	"github.com/qaware/minikube-support/pkg/kubernetes"
 	"github.com/qaware/minikube-support/pkg/sh"
 	"github.com/qaware/minikube-support/pkg/utils"
 	"github.com/sirupsen/logrus"
@@ -21,13 +22,15 @@ type Manager interface {
 }
 
 type defaultManager struct {
+	context     kubernetes.ContextHandler
 	initialized bool
 	mutex       sync.Mutex
 }
 
-func NewHelmManager() Manager {
+func NewHelmManager(context kubernetes.ContextHandler) Manager {
 	return &defaultManager{
-		mutex: sync.Mutex{},
+		mutex:   sync.Mutex{},
+		context: context,
 	}
 }
 
@@ -143,7 +146,15 @@ func (m *defaultManager) UpdateRepository() error {
 }
 
 func (m *defaultManager) runCommand(command string, args ...string) (string, error) {
-	cmd := sh.ExecCommand("helm", append([]string{command}, args...)...)
+	prefix := append([]string{command})
+	if m.context.GetContextName() != "" {
+		prefix = append(prefix, "--kube-context", m.context.GetContextName())
+	}
+	if m.context.GetConfigFile() != "" {
+		prefix = append(prefix, "--kubeconfig", m.context.GetConfigFile())
+	}
+
+	cmd := sh.ExecCommand("helm", append(prefix, args...)...)
 	cmd.Env = append(cmd.Env, os.Environ()...)
 
 	bytes, e := cmd.CombinedOutput()

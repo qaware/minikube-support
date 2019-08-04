@@ -34,8 +34,8 @@ func TestNewCertManager(t *testing.T) {
 		wantPlugin bool
 		wantErr    bool
 	}{
-		{"ok", helm.NewHelmManager(), fake.NewContextHandler(k8sFake.NewSimpleClientset(), nil), true, false},
-		{"no clientset", helm.NewHelmManager(), fake.NewContextHandler(nil, nil), false, true},
+		{"ok", helm.NewHelmManager(nil), fake.NewContextHandler(k8sFake.NewSimpleClientset(), nil), true, false},
+		{"no clientset", helm.NewHelmManager(nil), fake.NewContextHandler(nil, nil), false, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
