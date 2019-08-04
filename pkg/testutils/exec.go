@@ -59,8 +59,17 @@ func StandardHelperProcess(*testing.T) {
 	executedCommand, executedArgs := ExtractMockedCommandAndArgs()
 
 	response := FindTestProcessResponse(responses, executedCommand, executedArgs)
+	status := response.ResponseStatus
 
-	defer os.Exit(response.ResponseStatus)
+	if response.ExpectedStdin != "" {
+		buffer := make([]byte, len(response.ExpectedStdin)+10)
+		_, _ = os.Stdin.Read(buffer)
+		if !reflect.DeepEqual(buffer, []byte(response.ExpectedStdin)) {
+			status = response.AltResponseStatus
+		}
+	}
+
+	defer os.Exit(status)
 	_, _ = fmt.Fprint(os.Stderr, response.Stderr)
 	_, _ = fmt.Fprint(os.Stdout, response.Stdout)
 	time.Sleep(response.delay)
@@ -88,7 +97,10 @@ type TestProcessResponse struct {
 	ResponseStatus int
 	Stdout         string
 	Stderr         string
+	ExpectedStdin  string
 	delay          time.Duration
+	// AltResponseStatus will be returned if stdin got something else as expected
+	AltResponseStatus int
 }
 
 var TestProcessResponses []TestProcessResponse
