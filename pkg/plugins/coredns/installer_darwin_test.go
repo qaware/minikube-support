@@ -30,7 +30,6 @@ func Test_installer_Install(t *testing.T) {
 		assert.NoError(t, os.RemoveAll(tmpdir))
 		sh.ExecCommand = exec.Command
 	}()
-
 	assert.NoError(t, e)
 
 	i := &installer{
@@ -57,6 +56,34 @@ func Test_installer_Install(t *testing.T) {
 	assert.FileExists(t, path.Join(tmpdir, "etc", "corefile"))
 	assert.DirExists(t, path.Join(tmpdir, "var/run"))
 	assert.DirExists(t, path.Join(tmpdir, "var/log"))
+}
+
+func Test_installer_Uninstall(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	sh.ExecCommand = testutils.FakeExecCommand
+	ghClient := fake.NewMockClient(ctrl)
+	tmpdir, e := ioutil.TempDir(os.TempDir(), "coredns_test")
+
+	defer func() {
+		defer ctrl.Finish()
+		assert.NoError(t, os.RemoveAll(tmpdir))
+		sh.ExecCommand = exec.Command
+	}()
+	assert.NoError(t, e)
+
+	i := &installer{
+		ghClient: ghClient,
+		prefix:   tmpdir,
+	}
+	testutils.MockWithoutResponse(0, "sudo", "launchctl", "unload", launchctlConfig)
+	testutils.MockWithoutResponse(0, "sudo", "rm", launchctlConfig)
+	testutils.MockWithoutResponse(0, "sudo", "rm", dotMinikubeResolverPath)
+
+	i.Uninstall(false)
+	_, e = os.Stat(tmpdir)
+	if e == nil || !os.IsNotExist(e) {
+		t.Errorf("Prefix directory %s should be deleted. But it exists. %s", tmpdir, e)
+	}
 }
 
 func Test_installer_writeLaunchCtlConfig(t *testing.T) {
