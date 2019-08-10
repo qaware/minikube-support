@@ -3,12 +3,61 @@
 package coredns
 
 import (
+	"fmt"
+	"github.com/golang/mock/gomock"
 	"github.com/kballard/go-shellquote"
+	"github.com/qaware/minikube-support/pkg/github/fake"
 	"github.com/qaware/minikube-support/pkg/sh"
 	"github.com/qaware/minikube-support/pkg/testutils"
+	"github.com/stretchr/testify/assert"
+	"io/ioutil"
+	"os"
 	"os/exec"
+	"path"
+	"runtime"
 	"testing"
 )
+
+func Test_installer_Install(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	sh.ExecCommand = testutils.FakeExecCommand
+	ghClient := fake.NewMockClient(ctrl)
+	tmpdir, e := ioutil.TempDir(os.TempDir(), "coredns_test")
+	assetName := fmt.Sprintf("coredns_1.0.0_%s_%s.tgz", runtime.GOOS, runtime.GOARCH)
+
+	defer func() {
+		defer ctrl.Finish()
+		assert.NoError(t, os.RemoveAll(tmpdir))
+		sh.ExecCommand = exec.Command
+	}()
+
+	assert.NoError(t, e)
+
+	i := &installer{
+		ghClient: ghClient,
+		prefix:   tmpdir,
+	}
+	ghClient.EXPECT().
+		GetLatestReleaseTag("coredns", "coredns").
+		Return("v1.0.0", nil)
+	ghClient.EXPECT().
+		DownloadReleaseAsset("coredns", "coredns", "v1.0.0", assetName).
+		Return(os.Open("fixtures/coredns.tar.gz"))
+
+	mockWriteFileAsRoot(launchctlConfig, nil)
+	mockWriteFileAsRoot(dotMinikubeResolverPath, nil)
+	testutils.MockInitSudo()
+	testutils.MockWithoutResponse(0, "sudo", "launchctl", "load", launchctlConfig)
+	i.Install()
+
+	assert.FileExists(t, path.Join(tmpdir, "bin", "coredns"))
+	info, e := os.Stat(path.Join(tmpdir, "bin", "coredns"))
+	assert.NoError(t, e)
+	assert.Equal(t, os.FileMode(0755), info.Mode())
+	assert.FileExists(t, path.Join(tmpdir, "etc", "corefile"))
+	assert.DirExists(t, path.Join(tmpdir, "var/run"))
+	assert.DirExists(t, path.Join(tmpdir, "var/log"))
+}
 
 func Test_installer_writeLaunchCtlConfig(t *testing.T) {
 	sh.ExecCommand = testutils.FakeExecCommand
@@ -70,8 +119,10 @@ func mockWriteFileAsRoot(path string, content []byte) {
 		Command:           "sudo",
 		Args:              []string{"/bin/sh", "-c", shellquote.Join("sed", "-n", "w "+path)},
 		ResponseStatus:    0,
-		ExpectedStdin:     string(content),
 		AltResponseStatus: 10,
+	}
+	if content != nil {
+		test.ExpectedStdin = string(content)
 	}
 
 	testutils.TestProcessResponses = append(testutils.TestProcessResponses, test)
