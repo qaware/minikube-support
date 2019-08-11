@@ -11,7 +11,9 @@ import (
 	"k8s.io/api/core/v1"
 	"k8s.io/api/extensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
+	"reflect"
 	"strings"
 	"text/tabwriter"
 )
@@ -20,7 +22,7 @@ type k8sIngress struct {
 	ctxHandler     kubernetes.ContextHandler
 	messageChannel chan *apis.MonitoringMessage
 	recordManager  coredns.Manager
-	watch          watch.Interface
+	watch          *kubernetes.Watcher
 
 	currentIngresses map[string]ingressEntry
 }
@@ -67,13 +69,19 @@ func (k8s *k8sIngress) Start(messageChannel chan *apis.MonitoringMessage) (strin
 	}
 
 	for _, ingress := range ingressList.Items {
-		e := k8s.handleAddedIngress(ingress)
+		e := k8s.AddedEvent(ingress.DeepCopyObject())
 		if e != nil {
 			logrus.Warnf("Can not add entries for ingress: %s", e)
 		}
 	}
-	k8s.printInfo()
-	go k8s.watchIngresses(ingressList.ResourceVersion)
+	_ = k8s.PostEvent()
+
+	k8s.watch, e = kubernetes.NewWatcher(k8s, nil, ingressList.ResourceVersion)
+	if e != nil {
+		return "", fmt.Errorf("can not start watcher: %s", e)
+	}
+
+	k8s.watch.Start()
 	return pluginName, nil
 }
 
@@ -84,49 +92,27 @@ func (k8s *k8sIngress) Stop() error {
 	return nil
 }
 
-// watchIngresses watches for all changes of ingresses in the connected kubernetes cluster.
-// It will add, update or remove the ingresses directly after it get notified about changes.
-func (k8s *k8sIngress) watchIngresses(resourceVersion string) {
+func (k8s *k8sIngress) PreWatch(options metav1.ListOptions) (watch.Interface, error) {
 	clientSet, e := k8s.ctxHandler.GetClientSet()
 	if e != nil {
-		logrus.Errorf("can not get clientSet: %s", e)
-		return
+		return nil, fmt.Errorf("can not get clientSet: %s", e)
 	}
 
 	ingresses := clientSet.
 		ExtensionsV1beta1().
 		Ingresses(v1.NamespaceAll)
 
-	w, e := ingresses.Watch(metav1.ListOptions{ResourceVersion: resourceVersion})
-	if e != nil {
-		logrus.Errorf("Can not start watch for ingresses: %s", e)
-	}
-	k8s.watch = w
-	for event := range w.ResultChan() {
-		ingress := event.Object.(*v1beta1.Ingress)
-		var e error
-		switch event.Type {
-		case watch.Added:
-			e = k8s.handleAddedIngress(*ingress)
-		case watch.Modified:
-			e = k8s.handleUpdatedIngress(*ingress)
-		case watch.Deleted:
-			k8s.handleDeletedIngress(*ingress)
-		default:
-			logrus.Infof("Received unhandled event %s for ingress %s/%s", event.Type, ingress.GetNamespace(), ingress.GetName())
-		}
-
-		if e != nil {
-			logrus.Warnf("Can not handle %s event: %s", event.Type, e)
-		}
-		k8s.printInfo()
-	}
+	return ingresses.Watch(options)
 }
 
 // handleAddedIngress adds the given ingress and adds all the host names to the dns
 // backend if they point to a target.
-func (k8s *k8sIngress) handleAddedIngress(ingress v1beta1.Ingress) error {
-	ingressEntry := convertToIngressEntry(ingress)
+func (k8s *k8sIngress) AddedEvent(obj runtime.Object) error {
+	ingress, ok := obj.(*v1beta1.Ingress)
+	if !ok {
+		return fmt.Errorf("can not convert %v into Ingress", reflect.TypeOf(obj))
+	}
+	ingressEntry := convertToIngressEntry(*ingress)
 
 	if !ingressEntry.hasTargets() {
 		k8s.currentIngresses[ingressEntry.String()] = ingressEntry
@@ -143,13 +129,17 @@ func (k8s *k8sIngress) handleAddedIngress(ingress v1beta1.Ingress) error {
 
 // handleUpdatedIngress updates the given ingress.
 // It tries to change at least as possible entries.
-func (k8s *k8sIngress) handleUpdatedIngress(ingress v1beta1.Ingress) error {
-	ingressEntry := convertToIngressEntry(ingress)
+func (k8s *k8sIngress) UpdatedEvent(obj runtime.Object) error {
+	ingress, ok := obj.(*v1beta1.Ingress)
+	if !ok {
+		return fmt.Errorf("can not convert %v into Ingress", reflect.TypeOf(obj))
+	}
+	ingressEntry := convertToIngressEntry(*ingress)
 	oldEntry, ok := k8s.currentIngresses[ingressEntry.String()]
 
 	if !ok {
 		logrus.Warnf("Can not find old entry for ingress %s. Add the new one.", ingressEntry)
-		return k8s.handleAddedIngress(ingress)
+		return k8s.AddedEvent(ingress)
 	}
 
 	if !ingressEntry.hasTargets() {
@@ -196,17 +186,22 @@ func (k8s *k8sIngress) addTargets(entry ingressEntry, host string) *multierror.E
 
 // handleDeletedIngress is always called when the ingress was deleted or updated and can
 // not be reached anymore.
-func (k8s *k8sIngress) handleDeletedIngress(ingress v1beta1.Ingress) {
-	ingressEntry := convertToIngressEntry(ingress)
+func (k8s *k8sIngress) DeletedEvent(obj runtime.Object) error {
+	ingress, ok := obj.(*v1beta1.Ingress)
+	if !ok {
+		return fmt.Errorf("can not convert %v into Ingress", reflect.TypeOf(obj))
+	}
+	ingressEntry := convertToIngressEntry(*ingress)
 
 	for _, host := range ingressEntry.hostNames {
 		k8s.recordManager.RemoveHost(host)
 	}
 	delete(k8s.currentIngresses, ingressEntry.String())
 	logrus.Infof("DNS records for ingress %s successfully removed", ingressEntry)
+	return nil
 }
 
-func (k8s *k8sIngress) printInfo() {
+func (k8s *k8sIngress) PostEvent() error {
 	buffer := new(bytes.Buffer)
 	writer := tabwriter.NewWriter(buffer, 0, 0, 1, ' ', tabwriter.Debug)
 	fmt.Fprintf(writer, "Name\t Namespace\t Hostname\t Targets\n")
@@ -215,4 +210,5 @@ func (k8s *k8sIngress) printInfo() {
 	}
 	writer.Flush()
 	k8s.messageChannel <- &apis.MonitoringMessage{pluginName, buffer.String()}
+	return nil
 }
