@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"github.com/hashicorp/go-multierror"
 	"github.com/qaware/minikube-support/pkg/apis"
 	"github.com/qaware/minikube-support/pkg/github"
 	"github.com/qaware/minikube-support/pkg/kubernetes"
@@ -19,7 +18,6 @@ import (
 // Initializes all active plugins and register them in the two (installable and start stop) plugin registries.
 func initPlugins(options *RootCommandOptions) {
 	logPlugin := logs.NewLogsPlugin(logrus.StandardLogger())
-	var errors *multierror.Error
 
 	handler := kubernetes.NewContextHandler(&options.kubeConfig, &options.contextName)
 	helmManager := helm.NewHelmManager(handler)
@@ -35,9 +33,7 @@ func initPlugins(options *RootCommandOptions) {
 	})
 
 	coreDnsIngressPlugin, _ := plugins.NewCombinedPlugin("coredns-ingress", []apis.StartStopPlugin{coreDns, k8sIngresses}, true)
-
-	certManager, e := certmanager.NewCertManager(helmManager, handler, ghClient)
-	errors = multierror.Append(errors, e)
+	certManager := certmanager.NewCertManager(helmManager, handler, ghClient)
 
 	options.installablePluginRegistry.AddPlugins(
 		mkcert.CreateMkcertInstallerPlugin(),

@@ -15,7 +15,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	kubernetes2 "k8s.io/client-go/kubernetes"
 	"path"
 	"strings"
 	"time"
@@ -24,7 +23,6 @@ import (
 type certManager struct {
 	manager        helm.Manager
 	contextHandler kubernetes.ContextHandler
-	clientSet      kubernetes2.Interface
 	ghClient       github.Client
 	namespace      string
 	values         map[string]interface{}
@@ -38,20 +36,14 @@ const releaseName = "cert-manager"
 var groupVersion = schema.GroupVersion{Group: "certmanager.k8s.io", Version: "v1alpha1"}
 var helmInstallWaitPeriod = 20 * time.Second
 
-func NewCertManager(manager helm.Manager, handler kubernetes.ContextHandler, ghClient github.Client) (apis.InstallablePlugin, error) {
-	clientset, e := handler.GetClientSet()
-	if e != nil {
-		return nil, fmt.Errorf("can not get clientset: %s", e)
-	}
-
+func NewCertManager(manager helm.Manager, handler kubernetes.ContextHandler, ghClient github.Client) apis.InstallablePlugin {
 	return &certManager{
 		manager:        manager,
 		contextHandler: handler,
 		ghClient:       ghClient,
 		values:         map[string]interface{}{},
-		clientSet:      clientset,
 		namespace:      "mks",
-	}, nil
+	}
 }
 
 func (m *certManager) String() string {
@@ -112,7 +104,13 @@ func (m *certManager) Uninstall(purge bool) {
 
 	m.manager.Uninstall(releaseName, purge)
 
-	e = m.clientSet.
+	clientSet, e := m.contextHandler.GetClientSet()
+	if e != nil {
+		logrus.Errorf("unable to get k8s client: %s", e)
+		return
+	}
+
+	e = clientSet.
 		CoreV1().
 		Secrets(m.namespace).
 		Delete(issuerName, &metav1.DeleteOptions{})
@@ -149,7 +147,11 @@ func (m *certManager) applyCertSecret() error {
 		return fmt.Errorf("unable to read the mkcert RootCA key: %s", e)
 	}
 
-	secretInterface := m.clientSet.CoreV1().Secrets(m.namespace)
+	clientSet, e := m.contextHandler.GetClientSet()
+	if e != nil {
+		return fmt.Errorf("unable to get k8s client: %s", e)
+	}
+	secretInterface := clientSet.CoreV1().Secrets(m.namespace)
 
 	secret := &v1.Secret{
 		TypeMeta:   metav1.TypeMeta{Kind: "Secret", APIVersion: "v1"},

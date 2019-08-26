@@ -32,18 +32,12 @@ func TestNewCertManager(t *testing.T) {
 		manager    helm.Manager
 		handler    kubernetes.ContextHandler
 		wantPlugin bool
-		wantErr    bool
 	}{
-		{"ok", helm.NewHelmManager(nil), fake.NewContextHandler(k8sFake.NewSimpleClientset(), nil), true, false},
-		{"no clientset", helm.NewHelmManager(nil), fake.NewContextHandler(nil, nil), false, true},
+		{"ok", helm.NewHelmManager(nil), fake.NewContextHandler(k8sFake.NewSimpleClientset(), nil), true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := NewCertManager(tt.manager, tt.handler, github.NewClient())
-			if (err != nil) != tt.wantErr {
-				t.Errorf("NewCertManager() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
+			got := NewCertManager(tt.manager, tt.handler, github.NewClient())
 			if _, ok := got.(*certManager); ok != tt.wantPlugin {
 				t.Errorf("NewCertManager() got %v, wantPlugin = %v", got, tt.wantPlugin)
 			}
@@ -116,7 +110,6 @@ func Test_certManager_Update(t *testing.T) {
 			m := &certManager{
 				manager:        helmManager,
 				contextHandler: handler,
-				clientSet:      handler.ClientSet,
 				ghClient:       ghClient,
 				namespace:      "mks",
 				values:         map[string]interface{}{},
@@ -232,7 +225,7 @@ func Test_certManager_Uninstall(t *testing.T) {
 			defer ctrl.Finish()
 
 			manager := helmFake.NewMockManager(ctrl)
-			m, _ := NewCertManager(manager, tt.handler, github.NewClient())
+			m := NewCertManager(manager, tt.handler, github.NewClient())
 			if tt.expectHelmUninstall {
 				manager.EXPECT().Uninstall(releaseName, tt.purge)
 			}
@@ -307,7 +300,7 @@ func Test_certManager_applyCertSecret(t *testing.T) {
 			} else {
 				fakeClientSet = k8sFake.NewSimpleClientset()
 			}
-			o, _ := NewCertManager(nil, fake.NewContextHandler(fakeClientSet, nil), github.NewClient())
+			o := NewCertManager(nil, fake.NewContextHandler(fakeClientSet, nil), github.NewClient())
 			m := o.(*certManager)
 			if err := m.applyCertSecret(); (err != nil) != tt.wantErr {
 				t.Errorf("certManager.applyCertSecret() error = %v, wantErr %v", err, tt.wantErr)
@@ -336,7 +329,7 @@ func Test_certManager_applyClusterIssuer(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			handler := fake.NewContextHandler(k8sFake.NewSimpleClientset(), tt.dynamicClient)
-			o, _ := NewCertManager(nil, handler, github.NewClient())
+			o := NewCertManager(nil, handler, github.NewClient())
 			m := o.(*certManager)
 
 			if err := m.applyClusterIssuer(); (err != nil) != tt.wantErr {
