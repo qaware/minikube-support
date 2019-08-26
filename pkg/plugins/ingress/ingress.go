@@ -9,11 +9,9 @@ import (
 	"github.com/qaware/minikube-support/pkg/plugins/coredns"
 	"github.com/sirupsen/logrus"
 	"k8s.io/api/core/v1"
-	"k8s.io/api/extensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
-	"reflect"
 	"strings"
 	"text/tabwriter"
 )
@@ -24,7 +22,7 @@ type k8sIngress struct {
 	recordManager  coredns.Manager
 	watch          *kubernetes.Watcher
 
-	currentIngresses map[string]ingressEntry
+	currentEntries map[string]*entry
 }
 
 const pluginName = "kubernetes-ingress"
@@ -37,9 +35,9 @@ func NewK8sIngress(contextHandler kubernetes.ContextHandler, recordManager cored
 	}
 
 	return &k8sIngress{
-		ctxHandler:       contextHandler,
-		recordManager:    recordManager,
-		currentIngresses: make(map[string]ingressEntry),
+		ctxHandler:     contextHandler,
+		recordManager:  recordManager,
+		currentEntries: make(map[string]*entry),
 	}
 }
 
@@ -105,45 +103,43 @@ func (k8s *k8sIngress) PreWatch(options metav1.ListOptions) (watch.Interface, er
 	return ingresses.Watch(options)
 }
 
-// handleAddedIngress adds the given ingress and adds all the host names to the dns
+// AddedEvent adds the given ingress and adds all the host names to the dns
 // backend if they point to a target.
 func (k8s *k8sIngress) AddedEvent(obj runtime.Object) error {
-	ingress, ok := obj.(*v1beta1.Ingress)
-	if !ok {
-		return fmt.Errorf("can not convert %v into Ingress", reflect.TypeOf(obj))
+	entry, e := convertObjectToEntry(obj)
+	if e != nil {
+		return e
 	}
-	ingressEntry := convertToIngressEntry(*ingress)
 
-	if !ingressEntry.hasTargets() {
-		k8s.currentIngresses[ingressEntry.String()] = ingressEntry
-		return fmt.Errorf("ingress %s has no target ip addresses", ingressEntry)
+	if !entry.hasTargets() {
+		k8s.currentEntries[entry.String()] = entry
+		return fmt.Errorf("%s %s has no target ip addresses", entry.typ, entry)
 	}
 
 	var errors *multierror.Error
-	for _, host := range ingressEntry.hostNames {
-		errors = multierror.Append(errors, k8s.addTargets(ingressEntry, host))
+	for _, host := range entry.hostNames {
+		errors = multierror.Append(errors, k8s.addTargets(entry, host))
 	}
-	k8s.currentIngresses[ingressEntry.String()] = ingressEntry
+	k8s.currentEntries[entry.String()] = entry
 	return errors.ErrorOrNil()
 }
 
-// handleUpdatedIngress updates the given ingress.
+// UpdatedEvent updates the given ingress.
 // It tries to change at least as possible entries.
 func (k8s *k8sIngress) UpdatedEvent(obj runtime.Object) error {
-	ingress, ok := obj.(*v1beta1.Ingress)
-	if !ok {
-		return fmt.Errorf("can not convert %v into Ingress", reflect.TypeOf(obj))
+	entry, e := convertObjectToEntry(obj)
+	if e != nil {
+		return e
 	}
-	ingressEntry := convertToIngressEntry(*ingress)
-	oldEntry, ok := k8s.currentIngresses[ingressEntry.String()]
+	oldEntry, ok := k8s.currentEntries[entry.String()]
 
 	if !ok {
-		logrus.Warnf("Can not find old entry for ingress %s. Add the new one.", ingressEntry)
-		return k8s.AddedEvent(ingress)
+		logrus.Warnf("Can not find old entry for %s %s. Add the new one.", entry.typ, entry)
+		return k8s.AddedEvent(obj)
 	}
 
-	if !ingressEntry.hasTargets() {
-		logrus.Debugf("Ingress %s updated. It is not anymore associated to a loadbalancer. Removing all dns entries.", ingressEntry)
+	if !entry.hasTargets() {
+		logrus.Debugf("%s %s updated. It is not anymore associated to a loadbalancer. Removing all dns entries.", entry.typ, entry)
 		for _, host := range oldEntry.hostNames {
 			k8s.recordManager.RemoveHost(host)
 		}
@@ -152,28 +148,28 @@ func (k8s *k8sIngress) UpdatedEvent(obj runtime.Object) error {
 
 	var errors *multierror.Error
 	// remove old host entries
-	for _, host := range ingressEntry.getRemovedHostNames(oldEntry) {
+	for _, host := range entry.getRemovedHostNames(oldEntry) {
 		k8s.recordManager.RemoveHost(host)
 	}
 
 	// if targets has changed remove the updated hosts and add the new ones
-	if !ingressEntry.hasSameTargets(oldEntry) {
-		for _, host := range ingressEntry.getUpdatedHostNames(oldEntry) {
+	if !entry.hasSameTargets(oldEntry) {
+		for _, host := range entry.getUpdatedHostNames(oldEntry) {
 			k8s.recordManager.RemoveHost(host)
-			errors = multierror.Append(errors, k8s.addTargets(ingressEntry, host))
+			errors = multierror.Append(errors, k8s.addTargets(entry, host))
 		}
 	}
 
 	// add the new ones
-	for _, host := range ingressEntry.getAddedHostNames(oldEntry) {
-		errors = multierror.Append(errors, k8s.addTargets(ingressEntry, host))
+	for _, host := range entry.getAddedHostNames(oldEntry) {
+		errors = multierror.Append(errors, k8s.addTargets(entry, host))
 	}
-	k8s.currentIngresses[ingressEntry.String()] = ingressEntry
+	k8s.currentEntries[entry.String()] = entry
 	return errors.ErrorOrNil()
 }
 
 // addTargets adds all targets of the ingress entry as target of the given host to the dns backend.
-func (k8s *k8sIngress) addTargets(entry ingressEntry, host string) *multierror.Error {
+func (k8s *k8sIngress) addTargets(entry *entry, host string) *multierror.Error {
 	var errors *multierror.Error
 	for _, ip := range entry.targetIps {
 		errors = multierror.Append(errors, k8s.recordManager.AddHost(host, ip))
@@ -184,20 +180,19 @@ func (k8s *k8sIngress) addTargets(entry ingressEntry, host string) *multierror.E
 	return errors
 }
 
-// handleDeletedIngress is always called when the ingress was deleted or updated and can
+// DeletedEvent is always called when the ingress was deleted or updated and can
 // not be reached anymore.
 func (k8s *k8sIngress) DeletedEvent(obj runtime.Object) error {
-	ingress, ok := obj.(*v1beta1.Ingress)
-	if !ok {
-		return fmt.Errorf("can not convert %v into Ingress", reflect.TypeOf(obj))
+	entry, e := convertObjectToEntry(obj)
+	if e != nil {
+		return e
 	}
-	ingressEntry := convertToIngressEntry(*ingress)
 
-	for _, host := range ingressEntry.hostNames {
+	for _, host := range entry.hostNames {
 		k8s.recordManager.RemoveHost(host)
 	}
-	delete(k8s.currentIngresses, ingressEntry.String())
-	logrus.Infof("DNS records for ingress %s successfully removed", ingressEntry)
+	delete(k8s.currentEntries, entry.String())
+	logrus.Infof("DNS records for %s %s successfully removed", entry.typ, entry)
 	return nil
 }
 
@@ -205,8 +200,8 @@ func (k8s *k8sIngress) PostEvent() error {
 	buffer := new(bytes.Buffer)
 	writer := tabwriter.NewWriter(buffer, 0, 0, 1, ' ', tabwriter.Debug)
 	fmt.Fprintf(writer, "Name\t Namespace\t Hostname\t Targets\n")
-	for _, ingress := range k8s.currentIngresses {
-		fmt.Fprintf(writer, "%s\t %s\t %s\t %s\n", ingress.name, ingress.namespace, strings.Join(ingress.hostNames, ","), strings.Join(ingress.targetIps, ","))
+	for _, entry := range k8s.currentEntries {
+		fmt.Fprintf(writer, "%s\t %s\t %s\t %s\n", entry.name, entry.namespace, strings.Join(entry.hostNames, ","), strings.Join(entry.targetIps, ","))
 	}
 	writer.Flush()
 	k8s.messageChannel <- &apis.MonitoringMessage{pluginName, buffer.String()}

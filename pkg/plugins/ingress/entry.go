@@ -1,63 +1,93 @@
 package ingress
 
 import (
+	"fmt"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/api/extensions/v1beta1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"reflect"
 )
 
-// ingressEntry is a helper structure for intern handling of updated ingresses.
-type ingressEntry struct {
+// entry is a helper structure for intern handling of updated ingresses and services.
+type entry struct {
 	name        string
 	namespace   string
+	typ         string
 	hostNames   []string
 	targetIps   []string
 	targetHosts []string
 }
 
 // String get the ingress name including the namespace
-func (e ingressEntry) String() string {
+func (e entry) String() string {
 	return e.namespace + "/" + e.name
 }
 
-// convertToIngressEntry converts a k8s ingress into the ingress entry by flatten everything.
-func convertToIngressEntry(ingress v1beta1.Ingress) ingressEntry {
-	return ingressEntry{
+// convertObjectToEntry converts the given object into the entry by flatten everything.
+// It can handles services and ingresses.
+func convertObjectToEntry(obj runtime.Object) (*entry, error) {
+	switch o := obj.(type) {
+	case *v1beta1.Ingress:
+		return convertIngressToEntry(o), nil
+	case *v1.Service:
+		return convertServiceToEntry(o), nil
+	default:
+		return nil, fmt.Errorf("can not convert %v into entry. Must be either Ingress or Service", o.GetObjectKind().GroupVersionKind())
+	}
+}
+
+// convertIngressToEntry converts a k8s ingress into the entry by flatten everything.
+func convertIngressToEntry(ingress *v1beta1.Ingress) *entry {
+	return &entry{
 		name:        ingress.Name,
 		namespace:   ingress.Namespace,
+		typ:         "Ingress",
 		hostNames:   getHostNames(ingress),
-		targetIps:   getLoadBalancerIps(ingress),
-		targetHosts: getLoadBalancerHostNames(ingress),
+		targetIps:   getLoadBalancerIps(ingress.Status.LoadBalancer),
+		targetHosts: getLoadBalancerHostNames(ingress.Status.LoadBalancer),
+	}
+}
+
+// convertServiceToEntry converts a k8s service into the entry by flatten everything.
+func convertServiceToEntry(service *v1.Service) *entry {
+	return &entry{
+		name:        service.Name,
+		namespace:   service.Namespace,
+		typ:         "Service",
+		hostNames:   []string{fmt.Sprintf("%s.%s.svc.minikube.", service.Name, service.Namespace)},
+		targetIps:   getLoadBalancerIps(service.Status.LoadBalancer),
+		targetHosts: getLoadBalancerHostNames(service.Status.LoadBalancer),
 	}
 }
 
 // hasTargets check if this ingress entry has at least one target address.
-func (e ingressEntry) hasTargets() bool {
+func (e entry) hasTargets() bool {
 	return len(e.targetIps)+len(e.targetHosts) > 0
 }
 
 // hasSameTargets check if this ingress entry has the same targets than o.
-func (e ingressEntry) hasSameTargets(o ingressEntry) bool {
+func (e entry) hasSameTargets(o *entry) bool {
 	return reflect.DeepEqual(e.targetIps, o.targetIps) &&
 		reflect.DeepEqual(e.targetHosts, o.targetHosts)
 }
 
 // getAddedHostNames compares this with the given o and returns a list of all added host names in this.
-func (e ingressEntry) getAddedHostNames(o ingressEntry) []string {
+func (e entry) getAddedHostNames(o *entry) []string {
 	return difference(e.hostNames, o.hostNames)
 }
 
 // getUpdatedHostNames compares this with the given o and returns a list of all potentially updated host names.
-func (e ingressEntry) getUpdatedHostNames(o ingressEntry) []string {
+func (e entry) getUpdatedHostNames(o *entry) []string {
 	return intersection(e.hostNames, o.hostNames)
 }
 
 // getRemovedHostNames  compares this with the given o and returns a list of all removed host names in this.
-func (e ingressEntry) getRemovedHostNames(o ingressEntry) []string {
+func (e entry) getRemovedHostNames(o *entry) []string {
 	return difference(o.hostNames, e.hostNames)
 }
 
 // getHostNames is a helper function to extract all host names from the given k8s ingress.
-func getHostNames(ingress v1beta1.Ingress) []string {
+func getHostNames(ingress *v1beta1.Ingress) []string {
 	hostMap := make(map[string]bool)
 
 	for _, rule := range ingress.Spec.Rules {
@@ -77,9 +107,9 @@ func getHostNames(ingress v1beta1.Ingress) []string {
 }
 
 // getLoadBalancerIps is a helper function to extract all target ip addresses from the given k8s ingress.
-func getLoadBalancerIps(ingress v1beta1.Ingress) []string {
+func getLoadBalancerIps(status v1.LoadBalancerStatus) []string {
 	var result []string
-	for _, i := range ingress.Status.LoadBalancer.Ingress {
+	for _, i := range status.Ingress {
 		if i.IP != "" {
 			result = append(result, i.IP)
 		}
@@ -88,9 +118,9 @@ func getLoadBalancerIps(ingress v1beta1.Ingress) []string {
 }
 
 // getLoadBalancerHostNames is a helper function to extract all target host names from the given k8s ingress.
-func getLoadBalancerHostNames(ingress v1beta1.Ingress) []string {
+func getLoadBalancerHostNames(status v1.LoadBalancerStatus) []string {
 	var result []string
-	for _, i := range ingress.Status.LoadBalancer.Ingress {
+	for _, i := range status.Ingress {
 		if i.Hostname != "" {
 			result = append(result, i.Hostname)
 		}

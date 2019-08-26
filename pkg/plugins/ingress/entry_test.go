@@ -1,8 +1,10 @@
 package ingress
 
 import (
+	"fmt"
 	v1 "k8s.io/api/core/v1"
 	v1meta "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"reflect"
 	"testing"
 
@@ -19,26 +21,27 @@ func Test_ingressEntry_String(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.ingressName, func(t *testing.T) {
-			e := ingressEntry{
+			e := entry{
 				name:      tt.ingressName,
 				namespace: tt.namespace,
 			}
 			if got := e.String(); got != tt.want {
-				t.Errorf("ingressEntry.String() = %v, want %v", got, tt.want)
+				t.Errorf("entry.String() = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
-func Test_convertToIngressEntry(t *testing.T) {
+func Test_convertObjectToEntry(t *testing.T) {
 	tests := []struct {
 		name    string
-		ingress v1beta1.Ingress
-		want    ingressEntry
+		obj     runtime.Object
+		want    *entry
+		wantErr bool
 	}{
 		{
-			"full",
-			v1beta1.Ingress{
+			"ingress full",
+			&v1beta1.Ingress{
 				ObjectMeta: v1meta.ObjectMeta{Name: "test", Namespace: "test-ns"},
 				Spec: v1beta1.IngressSpec{
 					Rules: []v1beta1.IngressRule{{Host: "1"}},
@@ -46,19 +49,46 @@ func Test_convertToIngressEntry(t *testing.T) {
 				},
 				Status: v1beta1.IngressStatus{LoadBalancer: v1.LoadBalancerStatus{Ingress: []v1.LoadBalancerIngress{{IP: "ip", Hostname: "host"}}}},
 			},
-			ingressEntry{
+			&entry{
 				name:        "test",
 				namespace:   "test-ns",
+				typ:         "Ingress",
 				hostNames:   []string{"1"},
 				targetIps:   []string{"ip"},
 				targetHosts: []string{"host"},
 			},
+			false,
+		}, {
+			"service full",
+			&v1.Service{
+				ObjectMeta: v1meta.ObjectMeta{Name: "test", Namespace: "test-ns"},
+				Status:     v1.ServiceStatus{LoadBalancer: v1.LoadBalancerStatus{Ingress: []v1.LoadBalancerIngress{{IP: "ip", Hostname: "host"}}}},
+			},
+			&entry{
+				name:        "test",
+				namespace:   "test-ns",
+				typ:         "Service",
+				hostNames:   []string{"test.test-ns.svc.minikube."},
+				targetIps:   []string{"ip"},
+				targetHosts: []string{"host"},
+			},
+			false,
+		}, {
+			"invalid obj",
+			&v1.Pod{},
+			nil,
+			true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := convertToIngressEntry(tt.ingress); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("convertToIngressEntry() = '%v', want '%v'", got, tt.want)
+			got, err := convertObjectToEntry(tt.obj)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("convertObjectToEntry() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("convertObjectToEntry() got = %v, want %v", got.debug(), tt.want.debug())
 			}
 		})
 	}
@@ -78,12 +108,12 @@ func Test_ingressEntry_hasTargets(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			e := ingressEntry{
+			e := entry{
 				targetIps:   tt.targetIps,
 				targetHosts: tt.targetHosts,
 			}
 			if got := e.hasTargets(); got != tt.want {
-				t.Errorf("ingressEntry.hasTargets() = %v, want %v", got, tt.want)
+				t.Errorf("entry.hasTargets() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -103,11 +133,11 @@ func Test_ingressEntry_getAddedHostNames(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			e := ingressEntry{
+			e := entry{
 				hostNames: tt.hostNames,
 			}
-			if got := e.getAddedHostNames(ingressEntry{hostNames: tt.oldHostNames}); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("ingressEntry.getAddedHostNames() = %v, want %v", got, tt.want)
+			if got := e.getAddedHostNames(&entry{hostNames: tt.oldHostNames}); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("entry.getAddedHostNames() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -127,11 +157,11 @@ func Test_ingressEntry_getUpdatedHostNames(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			e := ingressEntry{
+			e := entry{
 				hostNames: tt.hostNames,
 			}
-			if got := e.getUpdatedHostNames(ingressEntry{hostNames: tt.oldHostNames}); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("ingressEntry.getUpdatedHostNames() = %v, want %v", got, tt.want)
+			if got := e.getUpdatedHostNames(&entry{hostNames: tt.oldHostNames}); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("entry.getUpdatedHostNames() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -152,10 +182,21 @@ func Test_ingressEntry_getRemovedHostNames(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			e := ingressEntry{hostNames: tt.hostNames}
-			if got := e.getRemovedHostNames(ingressEntry{hostNames: tt.oldHostNames}); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("ingressEntry.getRemovedHostNames() = %v, want %v", got, tt.want)
+			e := entry{hostNames: tt.hostNames}
+			if got := e.getRemovedHostNames(&entry{hostNames: tt.oldHostNames}); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("entry.getRemovedHostNames() = %v, want %v", got, tt.want)
 			}
 		})
 	}
+}
+
+// Improves the debug output when tests fail
+func (e *entry) debug() string {
+	if e == nil {
+		return "<nil>"
+	}
+	return fmt.Sprintf(
+		"%s %s {hostNames=%s, targetIps=%s, targetHosts=%s}",
+		e.typ,
+		e.String(), e.hostNames, e.targetIps, e.targetHosts)
 }

@@ -14,7 +14,7 @@ import (
 func Test_k8sIngress_AddedEvent(t *testing.T) {
 	tests := []struct {
 		name         string
-		ingress      v1beta1.Ingress
+		ingress      *v1beta1.Ingress
 		wantAddHosts []string
 		wantAddAlias []string
 		wantErr      bool
@@ -28,10 +28,10 @@ func Test_k8sIngress_AddedEvent(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			manager := newTestManager(t)
 			k8s := &k8sIngress{
-				recordManager:    manager,
-				currentIngresses: make(map[string]ingressEntry),
+				recordManager:  manager,
+				currentEntries: make(map[string]*entry),
 			}
-			if err := k8s.AddedEvent(&tt.ingress); (err != nil) != tt.wantErr {
+			if err := k8s.AddedEvent(tt.ingress); (err != nil) != tt.wantErr {
 				t.Errorf("k8sIngress.AddedEvent() error = %v, wantErr %v", err, tt.wantErr)
 			}
 			if !reflect.DeepEqual(manager.addedHosts, tt.wantAddHosts) {
@@ -47,8 +47,8 @@ func Test_k8sIngress_AddedEvent(t *testing.T) {
 func Test_k8sIngress_UpdatedEvent(t *testing.T) {
 	tests := []struct {
 		name             string
-		currentIngresses map[string]ingressEntry
-		ingress          v1beta1.Ingress
+		currentIngresses map[string]*entry
+		ingress          *v1beta1.Ingress
 		wantAddHosts     []string
 		wantAddAlias     []string
 		wantRemovedHosts []string
@@ -56,7 +56,7 @@ func Test_k8sIngress_UpdatedEvent(t *testing.T) {
 	}{
 		{
 			"add host",
-			map[string]ingressEntry{"t/t": {
+			map[string]*entry{"t/t": {
 				name:        "t",
 				namespace:   "t",
 				hostNames:   []string{},
@@ -71,7 +71,7 @@ func Test_k8sIngress_UpdatedEvent(t *testing.T) {
 		},
 		{
 			"add alias",
-			map[string]ingressEntry{"t/t": {
+			map[string]*entry{"t/t": {
 				name:        "t",
 				namespace:   "t",
 				hostNames:   []string{},
@@ -86,7 +86,7 @@ func Test_k8sIngress_UpdatedEvent(t *testing.T) {
 		},
 		{
 			"no target",
-			map[string]ingressEntry{"t/t": {
+			map[string]*entry{"t/t": {
 				name:        "t",
 				namespace:   "t",
 				hostNames:   []string{"1"},
@@ -101,7 +101,7 @@ func Test_k8sIngress_UpdatedEvent(t *testing.T) {
 		},
 		{
 			"other ip",
-			map[string]ingressEntry{"t/t": {
+			map[string]*entry{"t/t": {
 				name:        "t",
 				namespace:   "t",
 				hostNames:   []string{"1"},
@@ -116,7 +116,7 @@ func Test_k8sIngress_UpdatedEvent(t *testing.T) {
 		},
 		{
 			"other target host",
-			map[string]ingressEntry{"t/t": {
+			map[string]*entry{"t/t": {
 				name:        "t",
 				namespace:   "t",
 				hostNames:   []string{"1"},
@@ -131,7 +131,7 @@ func Test_k8sIngress_UpdatedEvent(t *testing.T) {
 		},
 		{
 			"new hostname",
-			map[string]ingressEntry{"t/t": {
+			map[string]*entry{"t/t": {
 				name:        "t",
 				namespace:   "t",
 				hostNames:   []string{"1"},
@@ -146,7 +146,7 @@ func Test_k8sIngress_UpdatedEvent(t *testing.T) {
 		},
 		{
 			"remove hostname",
-			map[string]ingressEntry{"t/t": {
+			map[string]*entry{"t/t": {
 				name:        "t",
 				namespace:   "t",
 				hostNames:   []string{"1", "2"},
@@ -161,7 +161,7 @@ func Test_k8sIngress_UpdatedEvent(t *testing.T) {
 		},
 		{
 			"new hostname with alias",
-			map[string]ingressEntry{"t/t": {
+			map[string]*entry{"t/t": {
 				name:        "t",
 				namespace:   "t",
 				hostNames:   []string{"1"},
@@ -176,7 +176,7 @@ func Test_k8sIngress_UpdatedEvent(t *testing.T) {
 		},
 		{
 			"remove hostname with alias",
-			map[string]ingressEntry{"t/t": {
+			map[string]*entry{"t/t": {
 				name:        "t",
 				namespace:   "t",
 				hostNames:   []string{"1", "2"},
@@ -191,7 +191,7 @@ func Test_k8sIngress_UpdatedEvent(t *testing.T) {
 		},
 		{
 			"no old entry",
-			map[string]ingressEntry{},
+			map[string]*entry{},
 			createDummyIngress("t", "t", "", "localhost", "1"),
 			[]string{},
 			[]string{"1"},
@@ -203,10 +203,10 @@ func Test_k8sIngress_UpdatedEvent(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			manager := newTestManager(t)
 			k8s := &k8sIngress{
-				recordManager:    manager,
-				currentIngresses: tt.currentIngresses,
+				recordManager:  manager,
+				currentEntries: tt.currentIngresses,
 			}
-			if err := k8s.UpdatedEvent(&tt.ingress); (err != nil) != tt.wantErr {
+			if err := k8s.UpdatedEvent(tt.ingress); (err != nil) != tt.wantErr {
 				t.Errorf("k8sIngress.UpdatedEvent() error = %v, wantErr %v", err, tt.wantErr)
 			}
 			if !reflect.DeepEqual(manager.addedHosts, tt.wantAddHosts) {
@@ -225,7 +225,7 @@ func Test_k8sIngress_UpdatedEvent(t *testing.T) {
 func Test_k8sIngress_DeletedEvent(t *testing.T) {
 	tests := []struct {
 		name             string
-		ingress          v1beta1.Ingress
+		ingress          *v1beta1.Ingress
 		wantRemovedHosts []string
 		wantErr          bool
 	}{
@@ -236,11 +236,11 @@ func Test_k8sIngress_DeletedEvent(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			manager := newTestManager(t)
 			k8s := &k8sIngress{
-				recordManager:    manager,
-				currentIngresses: make(map[string]ingressEntry),
+				recordManager:  manager,
+				currentEntries: make(map[string]*entry),
 			}
 
-			if err := k8s.DeletedEvent(&tt.ingress); (err != nil) != tt.wantErr {
+			if err := k8s.DeletedEvent(tt.ingress); (err != nil) != tt.wantErr {
 				t.Errorf("k8sIngress.DeletedEvent() error = %v, wantErr %v", err, tt.wantErr)
 			}
 			sort.Strings(manager.removedHosts)
@@ -251,8 +251,8 @@ func Test_k8sIngress_DeletedEvent(t *testing.T) {
 	}
 }
 
-func createDummyIngress(name string, ns string, targetIp string, targetHost string, hosts ...string) v1beta1.Ingress {
-	return v1beta1.Ingress{
+func createDummyIngress(name string, ns string, targetIp string, targetHost string, hosts ...string) *v1beta1.Ingress {
+	return &v1beta1.Ingress{
 		ObjectMeta: v1meta.ObjectMeta{Name: name, Namespace: ns},
 		Spec: v1beta1.IngressSpec{
 			TLS: []v1beta1.IngressTLS{{Hosts: hosts}},
