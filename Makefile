@@ -52,7 +52,7 @@ windows-build: pb
 	CGO_ENABLED=0 GOARCH=amd64 GOOS=windows go build $(BUILDFLAGS) -o $(BUILD_DIR)/$(NAME)-windows.exe $(ROOT_PACKAGE)
 
 .PHONY: test
-test: generate
+test: generate pb
 	go test -v $(PACKAGE_DIRS)
 
 .PHONY: release
@@ -77,3 +77,10 @@ generate:
 clean:
 	rm -rf $(BUILD_DIR)
 	rm -rf release
+
+.PHONY: buildDeps
+buildDeps:
+	go get -u google.golang.org/grpc
+	go get -u github.com/golang/protobuf/protoc-gen-go
+	go install -i github.com/golang/mock/mockgen
+	$(MAKE) -C pb buildDeps
