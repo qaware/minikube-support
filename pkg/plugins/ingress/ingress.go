@@ -196,14 +196,30 @@ func (k8s *k8sIngress) DeletedEvent(obj runtime.Object) error {
 	return nil
 }
 
+// PostEvent generates a short overview about the currently handled ingresses and services.
 func (k8s *k8sIngress) PostEvent() error {
+	var errors *multierror.Error
 	buffer := new(bytes.Buffer)
 	writer := tabwriter.NewWriter(buffer, 0, 0, 1, ' ', tabwriter.Debug)
-	fmt.Fprintf(writer, "Name\t Namespace\t Hostname\t Targets\n")
+	_, e := fmt.Fprintf(writer, "Name\t Namespace\t Typ\t Hostname\t Targets\n")
+	errors = multierror.Append(errors, e)
+
 	for _, entry := range k8s.currentEntries {
-		fmt.Fprintf(writer, "%s\t %s\t %s\t %s\n", entry.name, entry.namespace, strings.Join(entry.hostNames, ","), strings.Join(entry.targetIps, ","))
+
+		_, e := fmt.Fprintf(writer,
+			"%s\t %s\t %s\t %s\t %s\n",
+			entry.name,
+			entry.namespace,
+			entry.typ,
+			strings.Join(entry.hostNames, ","),
+			strings.Join(entry.targetIps, ","))
+
+		errors = multierror.Append(errors, e)
 	}
-	writer.Flush()
-	k8s.messageChannel <- &apis.MonitoringMessage{pluginName, buffer.String()}
-	return nil
+
+	errors = multierror.Append(errors, writer.Flush())
+	if errors.Len() == 0 {
+		k8s.messageChannel <- &apis.MonitoringMessage{Box: pluginName, Message: buffer.String()}
+	}
+	return errors.ErrorOrNil()
 }

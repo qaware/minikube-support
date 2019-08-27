@@ -1,6 +1,7 @@
 package ingress
 
 import (
+	"github.com/qaware/minikube-support/pkg/apis"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
 	v1meta "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -286,4 +287,57 @@ func (m *testManager) AddAlias(hostName string, target string) error {
 
 func (m *testManager) RemoveHost(hostName string) {
 	m.removedHosts = append(m.removedHosts, hostName)
+}
+
+func Test_k8sIngress_PostEvent(t *testing.T) {
+	tests := []struct {
+		name           string
+		currentEntries map[string]*entry
+		wantMessage    string
+		wantErr        bool
+	}{
+		{
+			"no entries",
+			map[string]*entry{},
+			"Name | Namespace | Typ | Hostname | Targets\n",
+			false,
+		}, {
+			"one ingress",
+			map[string]*entry{"test.abc": {
+				name:      "test",
+				namespace: "test",
+				typ:       "Ingress",
+				hostNames: []string{"host.abc"},
+				targetIps: []string{"ip"},
+			}},
+			"Name | Namespace | Typ     | Hostname | Targets\ntest | test      | Ingress | host.abc | ip\n",
+			false,
+		}, {
+			"one service",
+			map[string]*entry{"test.abc": {
+				name:      "test",
+				namespace: "test",
+				typ:       "Service",
+				hostNames: []string{"host.abc"},
+				targetIps: []string{"ip"},
+			}},
+			"Name | Namespace | Typ     | Hostname | Targets\ntest | test      | Service | host.abc | ip\n",
+			false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			messageChannel := make(chan *apis.MonitoringMessage, 1)
+			k8s := &k8sIngress{
+				messageChannel: messageChannel,
+				currentEntries: tt.currentEntries,
+			}
+			if err := k8s.PostEvent(); (err != nil) != tt.wantErr {
+				t.Errorf("PostEvent() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			msg := <-messageChannel
+			assert.Equal(t, tt.wantMessage, msg.Message)
+		})
+	}
 }
