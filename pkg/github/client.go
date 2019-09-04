@@ -29,7 +29,7 @@ type client struct {
 }
 
 func NewClient() Client {
-	httpClient := &http.Client{Timeout: 10 * time.Second}
+	httpClient := &http.Client{Timeout: 60 * time.Second}
 
 	return &client{
 		apiHost: "https://api.github.com",
