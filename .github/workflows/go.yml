@@ -13,8 +13,6 @@ jobs:
 
       - name: Set up Go 1.13
         uses: actions/setup-go@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           go-version: 1.13
         id: go
@@ -28,8 +26,6 @@ jobs:
           make buildDeps
 
       - name: Build
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           export PATH=$HOME/go/bin:$PATH
           make generate test cross
