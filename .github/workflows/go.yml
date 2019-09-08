@@ -28,4 +28,4 @@ jobs:
       - name: Build
         run: |
           export PATH=$HOME/go/bin:$PATH
-          make generate test cross
+          make generate test build
