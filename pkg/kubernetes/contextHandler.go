@@ -37,6 +37,7 @@ type contextHandler struct {
 	clientSetMutex sync.Mutex
 	configFile     *string
 	contextName    *string
+	clientConfig   clientcmd.ClientConfig
 }
 
 // NewContextHandler creates a new ContextHandler instance for the given config file and context name.
@@ -110,7 +111,6 @@ func (h *contextHandler) openRestConfig() error {
 	var e error
 	var config *rest.Config
 	configFile := *h.configFile
-	contextName := *h.contextName
 
 	if configFile == "" {
 		config, e = rest.InClusterConfig()
@@ -119,7 +119,7 @@ func (h *contextHandler) openRestConfig() error {
 		if e == rest.ErrNotInCluster {
 			homeDir := homedir.HomeDir()
 			configPath := filepath.Join(homeDir, ".kube", "config")
-			config, e = loadConfig(configPath, contextName)
+			config, e = h.loadConfig(configPath)
 		}
 
 		// Neither in cluster config nor user home config exists.
@@ -128,7 +128,7 @@ func (h *contextHandler) openRestConfig() error {
 		}
 	} else {
 		// Use config from given file name.
-		config, e = loadConfig(configFile, contextName)
+		config, e = h.loadConfig(configFile)
 		if e != nil {
 			return fmt.Errorf("can not read config from file %s: %s", configFile, e)
 		}
@@ -149,9 +149,10 @@ func (h *contextHandler) openRestConfig() error {
 }
 
 // loadConfig loads the actual configuration file and sets the context name.
-func loadConfig(kubeconfigPath string, contextName string) (*rest.Config, error) {
-	return clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
+func (h *contextHandler) loadConfig(kubeconfigPath string) (*rest.Config, error) {
+	h.clientConfig = clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
 		&clientcmd.ClientConfigLoadingRules{ExplicitPath: kubeconfigPath},
-		&clientcmd.ConfigOverrides{CurrentContext: contextName},
-	).ClientConfig()
+		&clientcmd.ConfigOverrides{CurrentContext: *h.contextName},
+	)
+	return h.clientConfig.ClientConfig()
 }
