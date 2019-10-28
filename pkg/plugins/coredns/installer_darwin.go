@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"path/filepath"
 )
 
 const launchctlConfig = "/Library/LaunchDaemons/de.chrfritz.minikube-support.coredns.plist"
@@ -70,6 +71,11 @@ func (i *installer) writeConfig() error {
 }
 
 func (i *installer) writeLaunchCtlConfig() error {
+	binary := filepath.Join(i.prefix, "bin", "coredns")
+	corefile := filepath.Join(i.prefix, "etc", "corefile")
+	pidFile := filepath.Join(i.prefix, "var", "run", "coredns.pid")
+	logFile := filepath.Join(i.prefix, "var", "log", "coredns.log")
+	errorLogFile := filepath.Join(i.prefix, "var", "log", "coredns.error.log")
 	config := `
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -79,11 +85,11 @@ func (i *installer) writeLaunchCtlConfig() error {
 		<string>de.chrfritz.minikube-support.coredns</string>
 		<key>ProgramArguments</key>
 		<array>
-			<string>` + i.prefix + `bin/coredns</string>
+			<string>` + binary + `</string>
 			<string>-conf</string>
-			<string>` + i.prefix + `etc/corefile</string>
+			<string>` + corefile + `</string>
 			<string>-pidfile</string>
-			<string>` + i.prefix + `var/run/coredns.pid</string>
+			<string>` + pidFile + `</string>
 		</array>
 		<key>RunAtLoad</key>
 		<true/>
@@ -92,9 +98,9 @@ func (i *installer) writeLaunchCtlConfig() error {
 		<key>UserName</key>
 		<string>root</string>
 		<key>StandardErrorPath</key>
-		<string>` + i.prefix + `var/log/coredns.error.log</string>
+		<string>` + errorLogFile + `</string>
 		<key>StandardOutPath</key>
-		<string>` + i.prefix + `var/log/coredns.log</string>
+		<string>` + logFile + `</string>
 	</dict>
 </plist>
 `
