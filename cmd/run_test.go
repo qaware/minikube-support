@@ -25,9 +25,23 @@ func TestRunOptions_Run(t *testing.T) {
 		activePlugins []string
 		lastMessages  []apis.MonitoringMessage
 	}{
-		{"all ok", []apis.StartStopPlugin{&DummyPlugin{}}, []string{"dummy"}, []apis.MonitoringMessage{{"dummy", "Starting..."}}},
-		{"one start fails", []apis.StartStopPlugin{&DummyPlugin{failStart: true}, &DummyPlugin{name: "dummy1"}}, []string{"dummy1"}, []apis.MonitoringMessage{{"dummy1", "Starting..."}}},
-		{"one start fails", []apis.StartStopPlugin{&DummyPlugin{failStop: true}}, []string{"dummy"}, []apis.MonitoringMessage{{"dummy", "Starting..."}}},
+		{
+			"all ok",
+			[]apis.StartStopPlugin{&DummyPlugin{}},
+			[]string{"dummy"},
+			[]apis.MonitoringMessage{{"dummy", "Starting..."}},
+		}, {
+			"one start fails",
+			[]apis.StartStopPlugin{&DummyPlugin{failStart: true},
+				&DummyPlugin{name: "dummy1"}},
+			[]string{"dummy1"},
+			[]apis.MonitoringMessage{{"dummy1", "Starting..."}},
+		}, {
+			"one start fails",
+			[]apis.StartStopPlugin{&DummyPlugin{failStop: true}},
+			[]string{"dummy"},
+			[]apis.MonitoringMessage{{"dummy", "Starting..."}},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -38,16 +52,12 @@ func TestRunOptions_Run(t *testing.T) {
 				lastMessages:   map[string]*apis.MonitoringMessage{},
 			}
 			go options.Run(&cobra.Command{}, []string{})
-			time.Sleep(50 * time.Millisecond)
-			syscall.Kill(syscall.Getpid(), syscall.SIGINT)
+			time.Sleep(100 * time.Millisecond)
+			_ = syscall.Kill(syscall.Getpid(), syscall.SIGINT)
 
-			if !reflect.DeepEqual(tt.activePlugins, options.activePlugins) {
-				t.Errorf("Wrong active plugins: %s, got %s", tt.activePlugins, options.activePlugins)
-			}
+			assert.Equal(t, tt.activePlugins, options.activePlugins)
 			messages := messagesValues(options.lastMessages)
-			if !reflect.DeepEqual(tt.lastMessages, messages) {
-				t.Errorf("Wrong last messages: %v, got %v", tt.lastMessages, messages)
-			}
+			assert.Equal(t, tt.lastMessages, messages)
 		})
 	}
 }
@@ -75,20 +85,17 @@ func TestRunOptions_startPlugins(t *testing.T) {
 					break
 				}
 			}
-
-			if !reflect.DeepEqual(tt.activePlugins, options.activePlugins) {
-				t.Errorf("Wrong active plugins: %s, got %s", tt.activePlugins, options.activePlugins)
-			}
+			assert.Equal(t, tt.activePlugins, options.activePlugins)
 		})
 	}
 }
 
 func Test_printHeader(t *testing.T) {
 	terminalWidth = func() int { return 30 }
-	var print string
+	var printed string
 	terminalPrint = func(a ...interface{}) (n int, err error) {
-		print = fmt.Sprint(a...)
-		return len(print), nil
+		printed = fmt.Sprint(a...)
+		return len(printed), nil
 	}
 	tests := []struct {
 		name       string
@@ -102,13 +109,13 @@ func Test_printHeader(t *testing.T) {
 			if err := printHeader(tt.k8sContext); (err != nil) != tt.wantErr {
 				t.Errorf("printHeader() error = %v, wantErr %v", err, tt.wantErr)
 			}
-			assert.Equal(t, "Kubernetes Kontext: context "+time.Now().Format(time.UnixDate), print)
+			assert.Equal(t, "Kubernetes Kontext: context "+time.Now().Format(time.UnixDate), printed)
 		})
 	}
 }
 
 func messagesValues(m map[string]*apis.MonitoringMessage) []apis.MonitoringMessage {
-	result := []apis.MonitoringMessage{}
+	var result []apis.MonitoringMessage
 	for _, v := range m {
 		result = append(result, *v)
 	}
