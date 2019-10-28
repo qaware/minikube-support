@@ -73,6 +73,8 @@ func (k8s *k8sDns) Start(messageChannel chan *apis.MonitoringMessage) (string, e
 	switch k8s.accessType {
 	case AccessTypeIngress:
 		k8s.accessor = ingressAccessor{clientSet: clientSet}
+	case AccessTypeService:
+		k8s.accessor = serviceAccessor{clientSet: clientSet}
 	default:
 		return "", fmt.Errorf("invalid access type given: %s", k8s.accessType)
 	}

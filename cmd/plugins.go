@@ -26,6 +26,7 @@ func initPlugins(options *RootCommandOptions) {
 	coreDns := coredns.NewGrpcPlugin()
 	manager, _ := coredns.NewManager(coreDns)
 	k8sIngresses := k8sdns.NewK8sDns(handler, manager, k8sdns.AccessTypeIngress)
+	k8sServices := k8sdns.NewK8sDns(handler, manager, k8sdns.AccessTypeService)
 
 	ghClient := github.NewClient()
 	options.AddPreRunInitFunction(func(o *RootCommandOptions) error {
@@ -33,7 +34,7 @@ func initPlugins(options *RootCommandOptions) {
 		return nil
 	})
 
-	coreDnsIngressPlugin, _ := plugins.NewCombinedPlugin("coredns-ingress", []apis.StartStopPlugin{coreDns, k8sIngresses}, true)
+	coreDnsIngressPlugin, _ := plugins.NewCombinedPlugin("coredns-ingress", []apis.StartStopPlugin{coreDns, k8sIngresses, k8sServices}, true)
 	certManager := certmanager.NewCertManager(helmManager, handler, ghClient)
 
 	options.installablePluginRegistry.AddPlugins(
