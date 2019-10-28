@@ -1,4 +1,4 @@
-package ingress
+package k8sdns
 
 import (
 	"github.com/qaware/minikube-support/pkg/apis"
@@ -28,18 +28,18 @@ func Test_k8sIngress_AddedEvent(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			manager := newTestManager(t)
-			k8s := &k8sIngress{
+			k8s := &k8sDns{
 				recordManager:  manager,
 				currentEntries: make(map[string]*entry),
 			}
 			if err := k8s.AddedEvent(tt.ingress); (err != nil) != tt.wantErr {
-				t.Errorf("k8sIngress.AddedEvent() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("k8sDns.AddedEvent() error = %v, wantErr %v", err, tt.wantErr)
 			}
 			if !reflect.DeepEqual(manager.addedHosts, tt.wantAddHosts) {
-				t.Errorf("k8sIngress.AddedEvent() addedHosts = %v, wantAddedHosts %v", manager.addedHosts, tt.wantAddHosts)
+				t.Errorf("k8sDns.AddedEvent() addedHosts = %v, wantAddedHosts %v", manager.addedHosts, tt.wantAddHosts)
 			}
 			if !reflect.DeepEqual(manager.addedAlias, tt.wantAddAlias) {
-				t.Errorf("k8sIngress.AddedEvent() wantAddAlias = %v, wantAddAlias %v", manager.addedAlias, tt.wantAddAlias)
+				t.Errorf("k8sDns.AddedEvent() wantAddAlias = %v, wantAddAlias %v", manager.addedAlias, tt.wantAddAlias)
 			}
 		})
 	}
@@ -203,21 +203,21 @@ func Test_k8sIngress_UpdatedEvent(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			manager := newTestManager(t)
-			k8s := &k8sIngress{
+			k8s := &k8sDns{
 				recordManager:  manager,
 				currentEntries: tt.currentIngresses,
 			}
 			if err := k8s.UpdatedEvent(tt.ingress); (err != nil) != tt.wantErr {
-				t.Errorf("k8sIngress.UpdatedEvent() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("k8sDns.UpdatedEvent() error = %v, wantErr %v", err, tt.wantErr)
 			}
 			if !reflect.DeepEqual(manager.addedHosts, tt.wantAddHosts) {
-				t.Errorf("k8sIngress.UpdatedEvent() addedHosts = %v, wantAddedHosts %v", manager.addedHosts, tt.wantAddHosts)
+				t.Errorf("k8sDns.UpdatedEvent() addedHosts = %v, wantAddedHosts %v", manager.addedHosts, tt.wantAddHosts)
 			}
 			if !reflect.DeepEqual(manager.addedAlias, tt.wantAddAlias) {
-				t.Errorf("k8sIngress.UpdatedEvent() wantAddAlias = %v, wantAddAlias %v", manager.addedAlias, tt.wantAddAlias)
+				t.Errorf("k8sDns.UpdatedEvent() wantAddAlias = %v, wantAddAlias %v", manager.addedAlias, tt.wantAddAlias)
 			}
 			if !reflect.DeepEqual(manager.removedHosts, tt.wantRemovedHosts) {
-				t.Errorf("k8sIngress.UpdatedEvent() removedHosts = %v, wantRemovedHosts %v", manager.removedHosts, tt.wantRemovedHosts)
+				t.Errorf("k8sDns.UpdatedEvent() removedHosts = %v, wantRemovedHosts %v", manager.removedHosts, tt.wantRemovedHosts)
 			}
 		})
 	}
@@ -236,17 +236,17 @@ func Test_k8sIngress_DeletedEvent(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			manager := newTestManager(t)
-			k8s := &k8sIngress{
+			k8s := &k8sDns{
 				recordManager:  manager,
 				currentEntries: make(map[string]*entry),
 			}
 
 			if err := k8s.DeletedEvent(tt.ingress); (err != nil) != tt.wantErr {
-				t.Errorf("k8sIngress.DeletedEvent() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("k8sDns.DeletedEvent() error = %v, wantErr %v", err, tt.wantErr)
 			}
 			sort.Strings(manager.removedHosts)
 			if !reflect.DeepEqual(manager.removedHosts, tt.wantRemovedHosts) {
-				t.Errorf("k8sIngress.DeletedEvent() removedHosts = %v, wantRemovedHosts %v", manager.removedHosts, tt.wantRemovedHosts)
+				t.Errorf("k8sDns.DeletedEvent() removedHosts = %v, wantRemovedHosts %v", manager.removedHosts, tt.wantRemovedHosts)
 			}
 		})
 	}
@@ -328,7 +328,7 @@ func Test_k8sIngress_PostEvent(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			messageChannel := make(chan *apis.MonitoringMessage, 1)
-			k8s := &k8sIngress{
+			k8s := &k8sDns{
 				messageChannel: messageChannel,
 				currentEntries: tt.currentEntries,
 			}

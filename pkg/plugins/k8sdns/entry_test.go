@@ -1,4 +1,4 @@
-package ingress
+package k8sdns
 
 import (
 	"fmt"

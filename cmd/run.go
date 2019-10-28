@@ -15,7 +15,7 @@ import (
 	"time"
 )
 
-var boxConfig = [][]string{{"kubernetes-ingress", "coredns-grpc", "minikube-tunnel"}, {"logs"}}
+var boxConfig = [][]string{{"k8sdns-ingress", "coredns-grpc", "minikube-tunnel"}, {"logs"}}
 
 const BORDER_STRING = "─ │ ┌ ┐ └ ┘"
 

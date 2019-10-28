@@ -1,4 +1,4 @@
-package ingress
+package k8sdns
 
 import (
 	"bytes"
@@ -8,7 +8,6 @@ import (
 	"github.com/qaware/minikube-support/pkg/kubernetes"
 	"github.com/qaware/minikube-support/pkg/plugins/coredns"
 	"github.com/sirupsen/logrus"
-	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
@@ -16,41 +15,54 @@ import (
 	"text/tabwriter"
 )
 
-type k8sIngress struct {
+type k8sDns struct {
 	ctxHandler     kubernetes.ContextHandler
 	messageChannel chan *apis.MonitoringMessage
 	recordManager  coredns.Manager
 	watch          *kubernetes.Watcher
+	accessType     AccessType
+	accessor       accessor
 
 	currentEntries map[string]*entry
 }
 
-const pluginName = "kubernetes-ingress"
+type AccessType string
 
-// NewK8sIngress will initialize a new ingress plugin.
+type accessor interface {
+	PreFetch() ([]runtime.Object, metav1.ListInterface, error)
+	Watch(options metav1.ListOptions) (watch.Interface, error)
+}
+
+const AccessTypeIngress = AccessType("ingress")
+const AccessTypeService = AccessType("service")
+
+const pluginName = "k8sdns-"
+
+// NewK8sDns will initialize a new ingress plugin.
 // It allows to configure the functions to add and remove the hosts in the dns backend.
-func NewK8sIngress(contextHandler kubernetes.ContextHandler, recordManager coredns.Manager) apis.StartStopPlugin {
+func NewK8sDns(contextHandler kubernetes.ContextHandler, recordManager coredns.Manager, accessType AccessType) apis.StartStopPlugin {
 	if recordManager == nil {
 		recordManager = coredns.NewNoOpManager()
 	}
 
-	return &k8sIngress{
+	return &k8sDns{
 		ctxHandler:     contextHandler,
 		recordManager:  recordManager,
+		accessType:     accessType,
 		currentEntries: make(map[string]*entry),
 	}
 }
 
-func (*k8sIngress) IsSingleRunnable() bool {
+func (*k8sDns) IsSingleRunnable() bool {
 	return true
 }
 
-func (*k8sIngress) String() string {
-	return pluginName
+func (k8s *k8sDns) String() string {
+	return pluginName + string(k8s.accessType)
 }
 
 // Start starts the ingress plugin. It will automatically add all current ingresses.
-func (k8s *k8sIngress) Start(messageChannel chan *apis.MonitoringMessage) (string, error) {
+func (k8s *k8sDns) Start(messageChannel chan *apis.MonitoringMessage) (string, error) {
 	k8s.messageChannel = messageChannel
 
 	clientSet, e := k8s.ctxHandler.GetClientSet()
@@ -58,54 +70,49 @@ func (k8s *k8sIngress) Start(messageChannel chan *apis.MonitoringMessage) (strin
 		return "", fmt.Errorf("can not get clientSet: %s", e)
 	}
 
-	ingresses := clientSet.
-		ExtensionsV1beta1().
-		Ingresses(v1.NamespaceAll)
-	ingressList, e := ingresses.List(metav1.ListOptions{})
-	if e != nil {
-		return "", fmt.Errorf("can not list ingresses: %s", e)
+	switch k8s.accessType {
+	case AccessTypeIngress:
+		k8s.accessor = ingressAccessor{clientSet: clientSet}
+	default:
+		return "", fmt.Errorf("invalid access type given: %s", k8s.accessType)
 	}
 
-	for _, ingress := range ingressList.Items {
-		e := k8s.AddedEvent(ingress.DeepCopyObject())
+	objects, list, e := k8s.accessor.PreFetch()
+	if e != nil {
+		return "", e
+	}
+
+	for _, element := range objects {
+		e := k8s.AddedEvent(element)
 		if e != nil {
-			logrus.Warnf("Can not add entries for ingress: %s", e)
+			logrus.Warnf("Can not add entries for %s: %s", k8s.accessType, e)
 		}
 	}
 	_ = k8s.PostEvent()
 
-	k8s.watch, e = kubernetes.NewWatcher(k8s, nil, ingressList.ResourceVersion)
+	k8s.watch, e = kubernetes.NewWatcher(k8s, nil, list.GetResourceVersion())
 	if e != nil {
 		return "", fmt.Errorf("can not start watcher: %s", e)
 	}
 
 	k8s.watch.Start()
-	return pluginName, nil
+	return k8s.String(), nil
 }
 
 // Stop stopps the plugin.
 // It will shutdown the ingress watcher.
-func (k8s *k8sIngress) Stop() error {
+func (k8s *k8sDns) Stop() error {
 	k8s.watch.Stop()
 	return nil
 }
 
-func (k8s *k8sIngress) PreWatch(options metav1.ListOptions) (watch.Interface, error) {
-	clientSet, e := k8s.ctxHandler.GetClientSet()
-	if e != nil {
-		return nil, fmt.Errorf("can not get clientSet: %s", e)
-	}
-
-	ingresses := clientSet.
-		ExtensionsV1beta1().
-		Ingresses(v1.NamespaceAll)
-
-	return ingresses.Watch(options)
+func (k8s *k8sDns) PreWatch(options metav1.ListOptions) (watch.Interface, error) {
+	return k8s.accessor.Watch(options)
 }
 
 // AddedEvent adds the given ingress and adds all the host names to the dns
 // backend if they point to a target.
-func (k8s *k8sIngress) AddedEvent(obj runtime.Object) error {
+func (k8s *k8sDns) AddedEvent(obj runtime.Object) error {
 	entry, e := convertObjectToEntry(obj)
 	if e != nil {
 		return e
@@ -121,12 +128,13 @@ func (k8s *k8sIngress) AddedEvent(obj runtime.Object) error {
 		errors = multierror.Append(errors, k8s.addTargets(entry, host))
 	}
 	k8s.currentEntries[entry.String()] = entry
+	//noinspection GoNilness
 	return errors.ErrorOrNil()
 }
 
 // UpdatedEvent updates the given ingress.
 // It tries to change at least as possible entries.
-func (k8s *k8sIngress) UpdatedEvent(obj runtime.Object) error {
+func (k8s *k8sDns) UpdatedEvent(obj runtime.Object) error {
 	entry, e := convertObjectToEntry(obj)
 	if e != nil {
 		return e
@@ -165,11 +173,12 @@ func (k8s *k8sIngress) UpdatedEvent(obj runtime.Object) error {
 		errors = multierror.Append(errors, k8s.addTargets(entry, host))
 	}
 	k8s.currentEntries[entry.String()] = entry
+	//noinspection GoNilness
 	return errors.ErrorOrNil()
 }
 
 // addTargets adds all targets of the ingress entry as target of the given host to the dns backend.
-func (k8s *k8sIngress) addTargets(entry *entry, host string) *multierror.Error {
+func (k8s *k8sDns) addTargets(entry *entry, host string) *multierror.Error {
 	var errors *multierror.Error
 	for _, ip := range entry.targetIps {
 		errors = multierror.Append(errors, k8s.recordManager.AddHost(host, ip))
@@ -182,7 +191,7 @@ func (k8s *k8sIngress) addTargets(entry *entry, host string) *multierror.Error {
 
 // DeletedEvent is always called when the ingress was deleted or updated and can
 // not be reached anymore.
-func (k8s *k8sIngress) DeletedEvent(obj runtime.Object) error {
+func (k8s *k8sDns) DeletedEvent(obj runtime.Object) error {
 	entry, e := convertObjectToEntry(obj)
 	if e != nil {
 		return e
@@ -197,7 +206,7 @@ func (k8s *k8sIngress) DeletedEvent(obj runtime.Object) error {
 }
 
 // PostEvent generates a short overview about the currently handled ingresses and services.
-func (k8s *k8sIngress) PostEvent() error {
+func (k8s *k8sDns) PostEvent() error {
 	var errors *multierror.Error
 	buffer := new(bytes.Buffer)
 	writer := tabwriter.NewWriter(buffer, 0, 0, 1, ' ', tabwriter.Debug)
@@ -219,7 +228,7 @@ func (k8s *k8sIngress) PostEvent() error {
 
 	errors = multierror.Append(errors, writer.Flush())
 	if errors.Len() == 0 {
-		k8s.messageChannel <- &apis.MonitoringMessage{Box: pluginName, Message: buffer.String()}
+		k8s.messageChannel <- &apis.MonitoringMessage{Box: k8s.String(), Message: buffer.String()}
 	}
 	return errors.ErrorOrNil()
 }

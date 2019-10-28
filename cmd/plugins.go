@@ -9,6 +9,7 @@ import (
 	"github.com/qaware/minikube-support/pkg/plugins/certmanager"
 	"github.com/qaware/minikube-support/pkg/plugins/coredns"
 	"github.com/qaware/minikube-support/pkg/plugins/ingress"
+	"github.com/qaware/minikube-support/pkg/plugins/k8sdns"
 	"github.com/qaware/minikube-support/pkg/plugins/logs"
 	"github.com/qaware/minikube-support/pkg/plugins/minikube"
 	"github.com/qaware/minikube-support/pkg/plugins/mkcert"
@@ -24,7 +25,7 @@ func initPlugins(options *RootCommandOptions) {
 
 	coreDns := coredns.NewGrpcPlugin()
 	manager, _ := coredns.NewManager(coreDns)
-	k8sIngresses := ingress.NewK8sIngress(handler, manager)
+	k8sIngresses := k8sdns.NewK8sDns(handler, manager, k8sdns.AccessTypeIngress)
 
 	ghClient := github.NewClient()
 	options.AddPreRunInitFunction(func(o *RootCommandOptions) error {
