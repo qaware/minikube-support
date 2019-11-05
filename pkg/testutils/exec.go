@@ -44,7 +44,7 @@ func ExtractMockedCommandAndArgs() (string, []string) {
 	return args[0], args[1:]
 }
 
-func StandardHelperProcess(*testing.T) {
+func StandardHelperProcess(_ *testing.T) {
 	if os.Getenv("GO_WANT_HELPER_PROCESS") != "1" {
 		return
 	}
