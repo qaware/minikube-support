@@ -62,7 +62,7 @@ func (i *installer) Uninstall(_ bool) {
 	var errs *multierror.Error
 
 	errs = multierror.Append(errs, i.uninstallSpecific())
-	errs = multierror.Append(errs, os.RemoveAll(i.prefix))
+	errs = multierror.Append(errs, sudos.RemoveAll(i.prefix))
 	if errs.Len() > 0 {
 		logrus.Errorf("Unable to uninstall coredns from %s:\n  Errors: %s", i.prefix, errs)
 	}

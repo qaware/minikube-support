@@ -15,6 +15,7 @@ import (
 	"os/exec"
 	"path"
 	"runtime"
+	"strings"
 	"testing"
 )
 
@@ -48,6 +49,7 @@ func Test_installer_Install(t *testing.T) {
 	testutils.MockInitSudo()
 	testutils.MockWithoutResponse(0, "sudo", "launchctl", "load", launchctlConfig)
 	testutils.MockWithoutResponse(0, "sudo", "mkdir", "-p", path.Join(tmpdir, "bin"), "-m", "777")
+	testutils.MockWithoutResponse(0, "sudo", "chown", fmt.Sprintf("%d:%d", os.Getuid(), os.Getgid()), path.Join(tmpdir, "bin"), "-R")
 	_ = os.MkdirAll(path.Join(tmpdir, "bin"), 0777)
 	i.Install()
 
@@ -158,5 +160,21 @@ func mockWriteFileAsRoot(path string, content []byte) {
 }
 
 func TestHelperProcess(t *testing.T) {
+	if os.Getenv("GO_WANT_HELPER_PROCESS") != "1" {
+		return
+	}
+	// adds mock for remove all in uninstall (no sudo!)
+	cmd, args := testutils.ExtractMockedCommandAndArgs()
+	if cmd == "sudo" && len(args) == 3 && args[0] == "rm" && args[1] == "-R" {
+		p := args[2]
+		expected := os.TempDir()
+		if strings.HasPrefix(p, expected) {
+			_ = os.RemoveAll(p)
+			os.Exit(0)
+			return
+		}
+		os.Exit(1)
+	}
+
 	testutils.StandardHelperProcess(t)
 }
