@@ -29,6 +29,9 @@ type ContextHandler interface {
 
 	// Kubectl executes the given command with the given arguments in the configured cluster.
 	Kubectl(command string, args ...string) (string, error)
+
+	// IsMinikube returns true if the target of this context is a minikube instance. Otherwise false.
+	IsMinikube() (bool, error)
 }
 
 type contextHandler struct {
@@ -103,6 +106,10 @@ func (h *contextHandler) Kubectl(command string, args ...string) (string, error)
 		return output, fmt.Errorf("run kubectl %s was not successful: (%s) %s", command, e, output)
 	}
 	return output, nil
+}
+
+func (h *contextHandler) IsMinikube() (bool, error) {
+	return false, nil
 }
 
 // openRestConfig opens the kubernetes configuration and creates a client set that can

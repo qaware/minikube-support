@@ -16,6 +16,7 @@ type ContextHandler struct {
 	ConfigFile       string
 	ContextName      string
 	kubectlResponses []testutils.TestProcessResponse
+	MiniKube         bool
 }
 
 // NewContextHandler initializes a new ContextHandler instance for unit tests.
@@ -65,4 +66,8 @@ func (f *ContextHandler) MockKubectl(command string, args []string, response str
 		Stdout:         response,
 		ResponseStatus: responseStatus,
 	})
+}
+
+func (f *ContextHandler) IsMinikube() (bool, error) {
+	return f.MiniKube, nil
 }
