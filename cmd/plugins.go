@@ -46,8 +46,8 @@ func initPlugins(options *RootCommandOptions) {
 
 	options.startStopPluginRegistry.AddPlugins(
 		logPlugin,
-		minikube.NewTunnel(),
+		minikube.NewTunnel(handler),
 		coreDnsIngressPlugin,
-		minikube.NewIpPlugin(manager),
+		minikube.NewIpPlugin(manager, handler),
 	)
 }

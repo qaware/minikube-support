@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/qaware/minikube-support/pkg/apis"
+	"github.com/qaware/minikube-support/pkg/kubernetes"
 	"github.com/qaware/minikube-support/pkg/sh"
 	"github.com/sirupsen/logrus"
 	"io"
@@ -14,12 +15,13 @@ import (
 )
 
 type tunnel struct {
-	command    *exec.Cmd
-	msgChannel chan *apis.MonitoringMessage
+	command        *exec.Cmd
+	msgChannel     chan *apis.MonitoringMessage
+	contextHandler kubernetes.ContextHandler
 }
 
-func NewTunnel() apis.StartStopPlugin {
-	return &tunnel{}
+func NewTunnel(handler kubernetes.ContextHandler) apis.StartStopPlugin {
+	return &tunnel{contextHandler: handler}
 }
 
 const tunnelBoxName = "minikube-tunnel"
@@ -32,6 +34,14 @@ func (t *tunnel) Start(monitoringChannel chan *apis.MonitoringMessage) (boxName 
 	e := sh.InitSudo()
 	if e != nil {
 		return "", fmt.Errorf("unable to enter sudo mode for minikube tunnel: %e", e)
+	}
+
+	isMinikube, e := t.contextHandler.IsMinikube()
+	if e != nil {
+		return "", e
+	}
+	if !isMinikube {
+		return "", nil
 	}
 
 	t.command = sh.ExecCommand("sudo", "minikube", "tunnel")

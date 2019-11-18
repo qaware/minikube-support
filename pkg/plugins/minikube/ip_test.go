@@ -1,6 +1,7 @@
 package minikube
 
 import (
+	"github.com/qaware/minikube-support/pkg/kubernetes/fake"
 	"github.com/qaware/minikube-support/pkg/sh"
 	"github.com/qaware/minikube-support/pkg/testutils"
 	"github.com/stretchr/testify/assert"
@@ -13,13 +14,23 @@ func Test_ip_addVmIp(t *testing.T) {
 	defer func() { sh.ExecCommand = exec.Command }()
 
 	manager := newTestManager(t)
-	i := &ip{
-		dnsBackendManager: manager,
-	}
+	handler := fake.NewContextHandler(nil, nil)
+	handler.MiniKube = true
+	i := NewIpPlugin(manager, handler).(*ip)
 	i.addVmIp()
 
 	assert.Len(t, manager.addedHosts, 1)
 	assert.Equal(t, "vm.minikube", manager.addedHosts[0])
+}
+
+func Test_ip_addVmIp_noMinikube(t *testing.T) {
+	manager := newTestManager(t)
+	handler := fake.NewContextHandler(nil, nil)
+	handler.MiniKube = false
+	i := NewIpPlugin(manager, handler).(*ip)
+	i.addVmIp()
+
+	assert.Len(t, manager.addedHosts, 0)
 }
 
 type testManager struct {

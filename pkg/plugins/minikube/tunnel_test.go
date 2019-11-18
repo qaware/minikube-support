@@ -3,6 +3,7 @@ package minikube
 import (
 	"fmt"
 	"github.com/qaware/minikube-support/pkg/apis"
+	"github.com/qaware/minikube-support/pkg/kubernetes/fake"
 	"github.com/qaware/minikube-support/pkg/sh"
 	"github.com/qaware/minikube-support/pkg/testutils"
 	"github.com/stretchr/testify/assert"
@@ -50,7 +51,9 @@ func Test_tunnel_Start(t *testing.T) {
 
 	wantBoxName := "minikube-tunnel"
 	monitoringChannel := make(chan *apis.MonitoringMessage)
-	mkt := NewTunnel()
+	handler := fake.NewContextHandler(nil, nil)
+	handler.MiniKube = true
+	mkt := NewTunnel(handler)
 	var count = 0
 	go func() {
 		for message := range monitoringChannel {
@@ -71,12 +74,38 @@ func Test_tunnel_Start(t *testing.T) {
 	assert.Equal(t, 4, count)
 }
 
+func Test_tunnel_Start_noMinikube(t *testing.T) {
+	sh.ExecCommand = testutils.FakeExecCommand
+	defer func() { sh.ExecCommand = exec.Command }()
+
+	wantBoxName := "minikube-tunnel"
+	monitoringChannel := make(chan *apis.MonitoringMessage)
+	handler := fake.NewContextHandler(nil, nil)
+	handler.MiniKube = false
+	mkt := NewTunnel(handler)
+	var count = 0
+	go func() {
+		for message := range monitoringChannel {
+			assert.Equal(t, wantBoxName, message.Box)
+			assert.NotEmpty(t, message.Message)
+			count++
+		}
+	}()
+	gotBoxName, err := mkt.Start(monitoringChannel)
+	assert.Equal(t, "", gotBoxName)
+	assert.NoError(t, err)
+	time.Sleep(100 * time.Millisecond)
+	assert.Equal(t, 0, count)
+}
+
 func Test_tunnel_Stop(t *testing.T) {
 	sh.ExecCommand = testutils.FakeExecCommand
 	defer func() { sh.ExecCommand = exec.Command }()
 
 	monitoringChannel := make(chan *apis.MonitoringMessage, 4)
-	mkt := NewTunnel()
+	handler := fake.NewContextHandler(nil, nil)
+	handler.MiniKube = true
+	mkt := NewTunnel(handler)
 
 	_, _ = mkt.Start(monitoringChannel)
 	time.Sleep(100 * time.Millisecond)

@@ -2,6 +2,7 @@ package minikube
 
 import (
 	"github.com/qaware/minikube-support/pkg/apis"
+	"github.com/qaware/minikube-support/pkg/kubernetes"
 	"github.com/qaware/minikube-support/pkg/plugins/coredns"
 	"github.com/qaware/minikube-support/pkg/sh"
 	"github.com/sirupsen/logrus"
@@ -13,13 +14,14 @@ import (
 type ip struct {
 	addIpTimer        *time.Timer
 	dnsBackendManager coredns.Manager
+	contextHandler    kubernetes.ContextHandler
 }
 
 const ipPluginName = "minikube-ip"
 
 // NewIpPlugin initializes the minikube ip address plugin.
-func NewIpPlugin(manager coredns.Manager) apis.StartStopPlugin {
-	return &ip{dnsBackendManager: manager}
+func NewIpPlugin(manager coredns.Manager, handler kubernetes.ContextHandler) apis.StartStopPlugin {
+	return &ip{dnsBackendManager: manager, contextHandler: handler}
 }
 
 func (i *ip) String() string {
@@ -42,6 +44,16 @@ func (i *ip) Stop() error {
 
 // addVmIp tries to get the current minikube ip and adds a new resource entry "vm.minikube" to this ip.
 func (i *ip) addVmIp() {
+	isMinikube, e := i.contextHandler.IsMinikube()
+	if e != nil {
+		logrus.Errorf("can not determ if running in minikube: %s", e)
+		return
+	}
+	if !isMinikube {
+		logrus.Info("Context is not set to minikube. Do not add A-record for vm.minikube.")
+		return
+	}
+
 	ip, e := sh.RunCmd("minikube", "ip")
 	if e != nil {
 		logrus.Errorf("can not determ minikube ip: %s", e)
