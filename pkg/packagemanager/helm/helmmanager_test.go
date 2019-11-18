@@ -1,12 +1,12 @@
 package helm
 
 import (
-	"github.com/qaware/minikube-support/pkg/kubernetes"
 	"github.com/qaware/minikube-support/pkg/kubernetes/fake"
 	"github.com/qaware/minikube-support/pkg/sh"
 	"github.com/qaware/minikube-support/pkg/testutils"
 	"github.com/sirupsen/logrus"
 	"github.com/sirupsen/logrus/hooks/test"
+	"github.com/stretchr/testify/assert"
 	"os/exec"
 	"testing"
 )
@@ -139,9 +139,7 @@ func Test_defaultManager_Install(t *testing.T) {
 			m.Install(tt.chart, tt.release, tt.namespace, tt.values, tt.wait)
 
 			lastEntry := global.LastEntry()
-			if lastEntry.Level != tt.lastEntryLevel {
-				t.Errorf("Expected log level of last entry %s but was %s", tt.lastEntryLevel, lastEntry.Level)
-			}
+			assert.Equal(t, tt.lastEntryLevel, lastEntry.Level)
 		})
 	}
 }
@@ -300,9 +298,12 @@ func Test_defaultManager_runCommand(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			handler := fake.NewContextHandler(nil, nil)
 			m := &defaultManager{
-				context: kubernetes.NewContextHandler(&tt.configFile, &tt.context),
+				context: handler,
 			}
+			handler.ConfigFile = tt.configFile
+			handler.ContextName = tt.context
 
 			testutils.TestProcessResponses = []testutils.TestProcessResponse{
 				{Command: "helm", Args: []string{"version"}, ResponseStatus: 0, Stdout: "No context, no config"},
@@ -317,9 +318,7 @@ func Test_defaultManager_runCommand(t *testing.T) {
 				t.Errorf("runCommand() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if got != tt.want {
-				t.Errorf("runCommand() got = %v, want %v", got, tt.want)
-			}
+			assert.Equal(t, tt.want, got)
 		})
 	}
 }

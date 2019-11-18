@@ -34,6 +34,7 @@ func (m *MockManager) EXPECT() *MockManagerMockRecorder {
 
 // Init mocks base method
 func (m *MockManager) Init() error {
+	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Init")
 	ret0, _ := ret[0].(error)
 	return ret0
@@ -41,11 +42,13 @@ func (m *MockManager) Init() error {
 
 // Init indicates an expected call of Init
 func (mr *MockManagerMockRecorder) Init() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Init", reflect.TypeOf((*MockManager)(nil).Init))
 }
 
 // AddRepository mocks base method
 func (m *MockManager) AddRepository(name, url string) error {
+	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AddRepository", name, url)
 	ret0, _ := ret[0].(error)
 	return ret0
@@ -53,11 +56,13 @@ func (m *MockManager) AddRepository(name, url string) error {
 
 // AddRepository indicates an expected call of AddRepository
 func (mr *MockManagerMockRecorder) AddRepository(name, url interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddRepository", reflect.TypeOf((*MockManager)(nil).AddRepository), name, url)
 }
 
 // UpdateRepository mocks base method
 func (m *MockManager) UpdateRepository() error {
+	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdateRepository")
 	ret0, _ := ret[0].(error)
 	return ret0
@@ -65,25 +70,30 @@ func (m *MockManager) UpdateRepository() error {
 
 // UpdateRepository indicates an expected call of UpdateRepository
 func (mr *MockManagerMockRecorder) UpdateRepository() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateRepository", reflect.TypeOf((*MockManager)(nil).UpdateRepository))
 }
 
 // Install mocks base method
 func (m *MockManager) Install(chart, release, namespace string, values map[string]interface{}, wait bool) {
+	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "Install", chart, release, namespace, values, wait)
 }
 
 // Install indicates an expected call of Install
 func (mr *MockManagerMockRecorder) Install(chart, release, namespace, values, wait interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Install", reflect.TypeOf((*MockManager)(nil).Install), chart, release, namespace, values, wait)
 }
 
 // Uninstall mocks base method
 func (m *MockManager) Uninstall(release string, purge bool) {
+	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "Uninstall", release, purge)
 }
 
 // Uninstall indicates an expected call of Uninstall
 func (mr *MockManagerMockRecorder) Uninstall(release, purge interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Uninstall", reflect.TypeOf((*MockManager)(nil).Uninstall), release, purge)
 }
