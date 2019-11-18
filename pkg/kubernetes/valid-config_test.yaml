@@ -16,5 +16,10 @@ contexts:
     user: "admin"
     namespace: "default"
     cluster: "test"
+- name: "test1"
+  context:
+    user: "admin"
+    namespace: "default"
+    cluster: "test"
 
 current-context: "test"

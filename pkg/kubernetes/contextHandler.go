@@ -9,6 +9,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/homedir"
 	"path/filepath"
+	"strings"
 	"sync"
 )
 
@@ -35,17 +36,20 @@ type ContextHandler interface {
 }
 
 type contextHandler struct {
-	clientSet      *kubernetes.Clientset
-	dynamicClient  dynamic.Interface
-	clientSetMutex sync.Mutex
-	configFile     *string
-	contextName    *string
-	clientConfig   clientcmd.ClientConfig
+	clientSet             *kubernetes.Clientset
+	dynamicClient         dynamic.Interface
+	clientSetMutex        sync.Mutex
+	configFile            *string
+	contextName           string
+	predefinedContextName *string
+	clientConfig          clientcmd.ClientConfig
+	restConfig            *rest.Config
+	minikube              *bool
 }
 
 // NewContextHandler creates a new ContextHandler instance for the given config file and context name.
 func NewContextHandler(configFile *string, contextName *string) ContextHandler {
-	return &contextHandler{configFile: configFile, contextName: contextName, clientSetMutex: sync.Mutex{}}
+	return &contextHandler{configFile: configFile, predefinedContextName: contextName, clientSetMutex: sync.Mutex{}}
 }
 
 func (h *contextHandler) GetClientSet() (kubernetes.Interface, error) {
@@ -84,16 +88,20 @@ func (h *contextHandler) GetConfigFile() string {
 }
 
 func (h *contextHandler) GetContextName() string {
-	if h.contextName != nil {
-		return *h.contextName
+	return h.contextName
+}
+
+func (h *contextHandler) GetPredefinedContextName() string {
+	if h.predefinedContextName != nil {
+		return *h.predefinedContextName
 	}
 	return ""
 }
 
 func (h *contextHandler) Kubectl(command string, args ...string) (string, error) {
 	prefix := append([]string{command})
-	if h.GetContextName() != "" {
-		prefix = append(prefix, "--context", h.GetContextName())
+	if h.GetPredefinedContextName() != "" {
+		prefix = append(prefix, "--context", h.GetPredefinedContextName())
 	}
 	if h.GetConfigFile() != "" {
 		prefix = append(prefix, "--kubeconfig", h.GetConfigFile())
@@ -109,7 +117,25 @@ func (h *contextHandler) Kubectl(command string, args ...string) (string, error)
 }
 
 func (h *contextHandler) IsMinikube() (bool, error) {
-	return false, nil
+	h.clientSetMutex.Lock()
+	defer h.clientSetMutex.Unlock()
+
+	if h.restConfig == nil {
+		e := h.openRestConfig()
+		if e != nil {
+			return false, e
+		}
+	}
+
+	if h.minikube == nil {
+		ip, e := sh.RunCmd("minikube", "ip")
+		if e != nil {
+			return false, e
+		}
+		state := strings.Contains(h.restConfig.Host, ip)
+		h.minikube = &state
+	}
+	return *h.minikube, nil
 }
 
 // openRestConfig opens the kubernetes configuration and creates a client set that can
@@ -146,6 +172,7 @@ func (h *contextHandler) openRestConfig() error {
 		return fmt.Errorf("unable to create clientSet: %s", e)
 	}
 	h.clientSet = clientSet
+	h.restConfig = config
 
 	dynamicClient, e := dynamic.NewForConfig(config)
 	if e != nil {
@@ -159,7 +186,25 @@ func (h *contextHandler) openRestConfig() error {
 func (h *contextHandler) loadConfig(kubeconfigPath string) (*rest.Config, error) {
 	h.clientConfig = clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
 		&clientcmd.ClientConfigLoadingRules{ExplicitPath: kubeconfigPath},
-		&clientcmd.ConfigOverrides{CurrentContext: *h.contextName},
+		&clientcmd.ConfigOverrides{CurrentContext: h.GetPredefinedContextName()},
 	)
+	e := h.findUsedContextName()
+	if e != nil {
+		return nil, e
+	}
 	return h.clientConfig.ClientConfig()
+}
+
+func (h *contextHandler) findUsedContextName() error {
+	if h.predefinedContextName != nil {
+		h.contextName = *h.predefinedContextName
+		return nil
+	}
+	config, e := h.clientConfig.RawConfig()
+	if e != nil {
+		return e
+	}
+
+	h.contextName = config.CurrentContext
+	return nil
 }
