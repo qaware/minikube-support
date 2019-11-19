@@ -208,11 +208,11 @@ func Test_contextHandler_IsMinikube(t *testing.T) {
 		want           bool
 		wantErr        bool
 	}{
-		{"yes and initialized", &rest.Config{Host: "192.168.64.2"}, "192.168.64.2", 0, true, false},
+		{"yes and initialized", &rest.Config{Host: "192.168.64.2"}, "192.168.64.2\n", 0, true, false},
 		{"no and initialized", &rest.Config{}, "192.168.64.3", 0, false, false},
 		{"error and initialized", &rest.Config{}, "", 1, false, true},
 		{"no and uninitialized", nil, "192.168.64.3", 0, false, false},
-		{"yes and uninitialized", nil, "localhost", 0, true, false},
+		{"yes and uninitialized", nil, "localhost\r\n", 0, true, false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

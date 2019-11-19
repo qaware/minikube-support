@@ -132,6 +132,7 @@ func (h *contextHandler) IsMinikube() (bool, error) {
 		if e != nil {
 			return false, e
 		}
+		ip = strings.Trim(ip, "\n\r\t ")
 		state := strings.Contains(h.restConfig.Host, ip)
 		h.minikube = &state
 	}
