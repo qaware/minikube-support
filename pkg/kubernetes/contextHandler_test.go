@@ -211,6 +211,7 @@ func Test_contextHandler_IsMinikube(t *testing.T) {
 		{"yes and initialized", &rest.Config{Host: "192.168.64.2"}, "192.168.64.2\n", 0, true, false},
 		{"no and initialized", &rest.Config{}, "192.168.64.3", 0, false, false},
 		{"error and initialized", &rest.Config{}, "", 1, false, true},
+		{"uninitialized and no minikube vm", nil, "", 66, false, false},
 		{"no and uninitialized", nil, "192.168.64.3", 0, false, false},
 		{"yes and uninitialized", nil, "localhost\r\n", 0, true, false},
 	}

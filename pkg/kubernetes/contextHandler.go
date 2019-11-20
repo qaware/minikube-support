@@ -130,6 +130,12 @@ func (h *contextHandler) IsMinikube() (bool, error) {
 	if h.minikube == nil {
 		ip, e := sh.RunCmd("minikube", "ip")
 		if e != nil {
+			if sh.IsExitCode(e, 66) {
+				// minikube vm don't exists
+				state := false
+				h.minikube = &state
+				return false, nil
+			}
 			return false, e
 		}
 		ip = strings.Trim(ip, "\n\r\t ")

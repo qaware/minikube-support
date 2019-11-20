@@ -32,3 +32,11 @@ func executeCommand(name string, arg ...string) *exec.Cmd {
 	logrus.Tracef("Executing command: %s %s", name, strings.Join(arg, " "))
 	return exec.Command(name, arg...)
 }
+
+// IsExitCode checks the given error for a process exit error and if the exit code is the expected one.
+func IsExitCode(err error, exitCode int) bool {
+	if ee, ok := err.(*exec.ExitError); ok {
+		return ee.ExitCode() == exitCode
+	}
+	return false
+}
