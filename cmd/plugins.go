@@ -21,6 +21,7 @@ func initPlugins(options *RootCommandOptions) {
 	logPlugin := logs.NewLogsPlugin(logrus.StandardLogger())
 
 	handler := kubernetes.NewContextHandler(&options.kubeConfig, &options.contextName)
+	options.contextNameSupplier = handler.GetContextName
 	helmManager := helm.NewHelmManager(handler)
 
 	coreDns := coredns.NewGrpcPlugin()

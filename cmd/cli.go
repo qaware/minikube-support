@@ -18,6 +18,7 @@ type RootCommandOptions struct {
 	installablePluginRegistry apis.InstallablePluginRegistry
 	startStopPluginRegistry   apis.StartStopPluginRegistry
 	preRunInit                []PreRunInit
+	contextNameSupplier       ContextNameSupplier
 }
 
 // PreRunInit defines the interface for small helper functions which will perform
@@ -90,7 +91,7 @@ func init() {
 		NewUninstallCommand(options.installablePluginRegistry))
 
 	// initializes run commands
-	runCmd := NewRunCommand(options.startStopPluginRegistry)
+	runCmd := NewRunCommand(options.startStopPluginRegistry, options.contextNameSupplier)
 	rootCmd.AddCommand(runCmd)
 	for _, plugin := range options.startStopPluginRegistry.ListPlugins() {
 		if plugin.IsSingleRunnable() {

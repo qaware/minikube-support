@@ -50,6 +50,7 @@ func TestRunOptions_Run(t *testing.T) {
 				plugins:        tt.plugins,
 				messageChannel: make(chan *apis.MonitoringMessage),
 				lastMessages:   map[string]*apis.MonitoringMessage{},
+				contextName:    func() string { return "" },
 			}
 			go options.Run(&cobra.Command{}, []string{})
 			time.Sleep(100 * time.Millisecond)

@@ -28,18 +28,25 @@ type RunOptions struct {
 	messageChannel chan *apis.MonitoringMessage
 	activePlugins  []string
 	lastMessages   map[string]*apis.MonitoringMessage
+	contextName    ContextNameSupplier
 }
 
-func NewRunOptions(registry apis.StartStopPluginRegistry) *RunOptions {
+type ContextNameSupplier func() string
+
+func NewRunOptions(registry apis.StartStopPluginRegistry, contextName ContextNameSupplier) *RunOptions {
+	if contextName == nil {
+		contextName = func() string { return "no contextName supplier set" }
+	}
 	return &RunOptions{
 		messageChannel: make(chan *apis.MonitoringMessage),
 		plugins:        registry.ListPlugins(),
 		lastMessages:   map[string]*apis.MonitoringMessage{},
+		contextName:    contextName,
 	}
 }
 
-func NewRunCommand(registry apis.StartStopPluginRegistry) *cobra.Command {
-	options := NewRunOptions(registry)
+func NewRunCommand(registry apis.StartStopPluginRegistry, contextName ContextNameSupplier) *cobra.Command {
+	options := NewRunOptions(registry, contextName)
 
 	command := &cobra.Command{
 		Use:   "run",
@@ -107,7 +114,7 @@ func (i *RunOptions) renderBoxes() error {
 	vBoxSizes := calcBoxSize(terminalHeight()-yOffset, len(boxConfig))
 
 	goterm.MoveCursor(1, 1)
-	errors = multierror.Append(errors, printHeader(""))
+	errors = multierror.Append(errors, printHeader(i.contextName()))
 
 	nextY := 1 + yOffset
 	for line, boxLineConfig := range boxConfig {
