@@ -31,6 +31,7 @@ func Test_runBrewCommand(t *testing.T) {
 		})
 	}
 }
+
 func Test_brewPackageManager_Install(t *testing.T) {
 	sh.ExecCommand = testutils.FakeExecCommand
 	defer func() { sh.ExecCommand = exec.Command }()
@@ -52,6 +53,7 @@ func Test_brewPackageManager_Install(t *testing.T) {
 		})
 	}
 }
+
 func Test_brewPackageManager_Update(t *testing.T) {
 	sh.ExecCommand = testutils.FakeExecCommand
 	defer func() { sh.ExecCommand = exec.Command }()
@@ -62,6 +64,7 @@ func Test_brewPackageManager_Update(t *testing.T) {
 		wantErr bool
 	}{
 		{"ok", "ok", false},
+		{"installed", "installed", false},
 		{"not ok", "nok", true},
 	}
 	for _, tt := range tests {
@@ -73,6 +76,7 @@ func Test_brewPackageManager_Update(t *testing.T) {
 		})
 	}
 }
+
 func Test_brewPackageManager_Uninstall(t *testing.T) {
 	sh.ExecCommand = testutils.FakeExecCommand
 	defer func() { sh.ExecCommand = exec.Command }()
@@ -95,6 +99,34 @@ func Test_brewPackageManager_Uninstall(t *testing.T) {
 	}
 }
 
+func Test_brewPackageManager_IsInstalled(t *testing.T) {
+	sh.ExecCommand = testutils.FakeExecCommand
+	defer func() { sh.ExecCommand = exec.Command }()
+
+	tests := []struct {
+		name    string
+		pkg     string
+		want    bool
+		wantErr bool
+	}{
+		{"installed", "mkcert", true, false},
+		{"not-installed", "invalid", false, false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			b := &brewPackageManager{}
+			got, err := b.IsInstalled(tt.pkg)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("IsInstalled() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got != tt.want {
+				t.Errorf("IsInstalled() got = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestHelperProcess(*testing.T) {
 	if os.Getenv("GO_WANT_HELPER_PROCESS") != "1" {
 		return
@@ -107,16 +139,18 @@ func TestHelperProcess(*testing.T) {
 		cmd, args := args[0], args[1:]
 		switch cmd {
 		case "list":
-			fmt.Print("list")
+			fmt.Print("mkcert\nnss\n")
 		case "invalid":
 			os.Exit(1)
 		case "install":
 			fallthrough
 		case "uninstall":
 			fallthrough
-		case "update":
-			if args[0] != "ok" {
+		case "upgrade":
+			if args[0] == "installed" {
 				os.Exit(1)
+			} else if args[0] != "ok" {
+				os.Exit(2)
 			}
 		}
 	}

@@ -20,13 +20,12 @@ func (*mkCertInstaller) String() string {
 }
 
 func (i *mkCertInstaller) Install() {
-	manager := packagemanager.GetPackageManager()
-	e := manager.Install("mkcert")
+	e := packagemanager.InstallOrUpdate("mkcert")
 	if e != nil {
 		logrus.Errorf("can not install mkcert: %s", e)
 		return
 	}
-	e = manager.Install("nss")
+	e = packagemanager.InstallOrUpdate("nss")
 	if e != nil {
 		logrus.Errorf("can not install nss: %s", e)
 	}

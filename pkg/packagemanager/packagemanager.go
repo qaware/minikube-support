@@ -16,6 +16,9 @@ type PackageManager interface {
 	// Installs the given package with this package osPackageManager
 	Install(pkg string) error
 
+	// IsInstalled checks if the given package is already installed.
+	IsInstalled(pkg string) (bool, error)
+
 	// Updates the given package with this package osPackageManager
 	Update(pkg string) error
 
@@ -37,5 +40,19 @@ func GetPackageManager() PackageManager {
 func SetOsPackageManager(manager PackageManager) {
 	if manager != nil {
 		osPackageManager = manager
+	}
+}
+
+// InstallOrUpdate either installs or update the given package. Depending on if the package is already installed or not.
+func InstallOrUpdate(pkg string) error {
+	manager := GetPackageManager()
+	installed, e := manager.IsInstalled(pkg)
+	if e != nil {
+		return e
+	}
+	if installed {
+		return manager.Update(pkg)
+	} else {
+		return manager.Install(pkg)
 	}
 }

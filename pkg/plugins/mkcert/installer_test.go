@@ -91,3 +91,10 @@ func (tt *testPkgMgr) Uninstall(pkg string) error {
 	}
 	return nil
 }
+
+func (tt *testPkgMgr) IsInstalled(pkg string) (bool, error) {
+	if pkg != "mkcert" && pkg != "nss" {
+		return true, nil
+	}
+	return false, nil
+}

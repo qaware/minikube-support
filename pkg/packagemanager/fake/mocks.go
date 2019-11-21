@@ -60,6 +60,21 @@ func (mr *MockPackageManagerMockRecorder) Install(pkg interface{}) *gomock.Call 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Install", reflect.TypeOf((*MockPackageManager)(nil).Install), pkg)
 }
 
+// IsInstalled mocks base method
+func (m *MockPackageManager) IsInstalled(pkg string) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IsInstalled", pkg)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// IsInstalled indicates an expected call of IsInstalled
+func (mr *MockPackageManagerMockRecorder) IsInstalled(pkg interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsInstalled", reflect.TypeOf((*MockPackageManager)(nil).IsInstalled), pkg)
+}
+
 // Update mocks base method
 func (m *MockPackageManager) Update(pkg string) error {
 	m.ctrl.T.Helper()
