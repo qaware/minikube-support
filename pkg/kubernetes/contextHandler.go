@@ -203,7 +203,7 @@ func (h *contextHandler) loadConfig(kubeconfigPath string) (*rest.Config, error)
 }
 
 func (h *contextHandler) findUsedContextName() error {
-	if h.predefinedContextName != nil {
+	if h.predefinedContextName != nil && *h.predefinedContextName != "" {
 		h.contextName = *h.predefinedContextName
 		return nil
 	}

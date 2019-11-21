@@ -45,6 +45,14 @@ func Test_contextHandler_GetClientSet(t *testing.T) {
 			true,
 			false,
 		}, {
+			"use home, empty context given",
+			"",
+			"./test-home/",
+			s(""),
+			"test",
+			true,
+			false,
+		}, {
 			"use home, different context",
 			"",
 			"./test-home/",
