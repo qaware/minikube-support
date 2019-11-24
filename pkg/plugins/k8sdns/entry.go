@@ -1,10 +1,8 @@
 package k8sdns
 
 import (
-	"fmt"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/api/extensions/v1beta1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"reflect"
 )
 
@@ -21,43 +19,6 @@ type entry struct {
 // String get the ingress name including the namespace
 func (e entry) String() string {
 	return e.namespace + "/" + e.name
-}
-
-// convertObjectToEntry converts the given object into the entry by flatten everything.
-// It can handles services and ingresses.
-func convertObjectToEntry(obj runtime.Object) (*entry, error) {
-	switch o := obj.(type) {
-	case *v1beta1.Ingress:
-		return convertIngressToEntry(o), nil
-	case *v1.Service:
-		return convertServiceToEntry(o), nil
-	default:
-		return nil, fmt.Errorf("can not convert %v into entry. Must be either Ingress or Service", o.GetObjectKind().GroupVersionKind())
-	}
-}
-
-// convertIngressToEntry converts a k8s ingress into the entry by flatten everything.
-func convertIngressToEntry(ingress *v1beta1.Ingress) *entry {
-	return &entry{
-		name:        ingress.Name,
-		namespace:   ingress.Namespace,
-		typ:         "Ingress",
-		hostNames:   getHostNames(ingress),
-		targetIps:   getLoadBalancerIps(ingress.Status.LoadBalancer),
-		targetHosts: getLoadBalancerHostNames(ingress.Status.LoadBalancer),
-	}
-}
-
-// convertServiceToEntry converts a k8s service into the entry by flatten everything.
-func convertServiceToEntry(service *v1.Service) *entry {
-	return &entry{
-		name:        service.Name,
-		namespace:   service.Namespace,
-		typ:         "Service",
-		hostNames:   []string{fmt.Sprintf("%s.%s.svc.minikube.", service.Name, service.Namespace)},
-		targetIps:   getLoadBalancerIps(service.Status.LoadBalancer),
-		targetHosts: getLoadBalancerHostNames(service.Status.LoadBalancer),
-	}
 }
 
 // hasTargets check if this ingress entry has at least one target address.

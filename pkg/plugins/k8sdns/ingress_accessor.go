@@ -2,6 +2,7 @@ package k8sdns
 
 import (
 	"fmt"
+	"k8s.io/api/extensions/v1beta1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -38,4 +39,26 @@ func (i ingressAccessor) Watch(options v1.ListOptions) (watch.Interface, error) 
 		Ingresses(v1.NamespaceAll)
 
 	return ingresses.Watch(options)
+}
+
+// ConvertToEntry converts a k8s ingress into the entry by flatten everything.
+func (ingressAccessor) ConvertToEntry(obj runtime.Object) (*entry, error) {
+	ingress, ok := obj.(*v1beta1.Ingress)
+	if !ok {
+		return nil, fmt.Errorf("can not convert non ingress object into ingress")
+	}
+	return &entry{
+		name:        ingress.Name,
+		namespace:   ingress.Namespace,
+		typ:         "Ingress",
+		hostNames:   getHostNames(ingress),
+		targetIps:   getLoadBalancerIps(ingress.Status.LoadBalancer),
+		targetHosts: getLoadBalancerHostNames(ingress.Status.LoadBalancer),
+	}, nil
+}
+
+// MatchesPreconditions checks if the given object matches preconditions for adding the entry.
+func (ingressAccessor) MatchesPreconditions(obj runtime.Object) bool {
+	_, ok := obj.(*v1beta1.Ingress)
+	return ok
 }

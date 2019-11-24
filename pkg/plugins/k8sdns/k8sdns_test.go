@@ -5,7 +5,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
 	v1meta "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"reflect"
 	"sort"
 	"testing"
 
@@ -31,16 +30,13 @@ func Test_k8sIngress_AddedEvent(t *testing.T) {
 			k8s := &k8sDns{
 				recordManager:  manager,
 				currentEntries: make(map[string]*entry),
+				accessor:       ingressAccessor{},
 			}
 			if err := k8s.AddedEvent(tt.ingress); (err != nil) != tt.wantErr {
 				t.Errorf("k8sDns.AddedEvent() error = %v, wantErr %v", err, tt.wantErr)
 			}
-			if !reflect.DeepEqual(manager.addedHosts, tt.wantAddHosts) {
-				t.Errorf("k8sDns.AddedEvent() addedHosts = %v, wantAddedHosts %v", manager.addedHosts, tt.wantAddHosts)
-			}
-			if !reflect.DeepEqual(manager.addedAlias, tt.wantAddAlias) {
-				t.Errorf("k8sDns.AddedEvent() wantAddAlias = %v, wantAddAlias %v", manager.addedAlias, tt.wantAddAlias)
-			}
+			assert.Equal(t, tt.wantAddHosts, manager.addedHosts)
+			assert.Equal(t, tt.wantAddAlias, manager.addedAlias)
 		})
 	}
 }
@@ -206,19 +202,15 @@ func Test_k8sIngress_UpdatedEvent(t *testing.T) {
 			k8s := &k8sDns{
 				recordManager:  manager,
 				currentEntries: tt.currentIngresses,
+				accessor:       ingressAccessor{},
 			}
 			if err := k8s.UpdatedEvent(tt.ingress); (err != nil) != tt.wantErr {
 				t.Errorf("k8sDns.UpdatedEvent() error = %v, wantErr %v", err, tt.wantErr)
 			}
-			if !reflect.DeepEqual(manager.addedHosts, tt.wantAddHosts) {
-				t.Errorf("k8sDns.UpdatedEvent() addedHosts = %v, wantAddedHosts %v", manager.addedHosts, tt.wantAddHosts)
-			}
-			if !reflect.DeepEqual(manager.addedAlias, tt.wantAddAlias) {
-				t.Errorf("k8sDns.UpdatedEvent() wantAddAlias = %v, wantAddAlias %v", manager.addedAlias, tt.wantAddAlias)
-			}
-			if !reflect.DeepEqual(manager.removedHosts, tt.wantRemovedHosts) {
-				t.Errorf("k8sDns.UpdatedEvent() removedHosts = %v, wantRemovedHosts %v", manager.removedHosts, tt.wantRemovedHosts)
-			}
+
+			assert.Equal(t, tt.wantAddHosts, manager.addedHosts)
+			assert.Equal(t, tt.wantAddAlias, manager.addedAlias)
+			assert.Equal(t, tt.wantRemovedHosts, manager.removedHosts)
 		})
 	}
 }
@@ -239,15 +231,14 @@ func Test_k8sIngress_DeletedEvent(t *testing.T) {
 			k8s := &k8sDns{
 				recordManager:  manager,
 				currentEntries: make(map[string]*entry),
+				accessor:       ingressAccessor{},
 			}
 
 			if err := k8s.DeletedEvent(tt.ingress); (err != nil) != tt.wantErr {
 				t.Errorf("k8sDns.DeletedEvent() error = %v, wantErr %v", err, tt.wantErr)
 			}
 			sort.Strings(manager.removedHosts)
-			if !reflect.DeepEqual(manager.removedHosts, tt.wantRemovedHosts) {
-				t.Errorf("k8sDns.DeletedEvent() removedHosts = %v, wantRemovedHosts %v", manager.removedHosts, tt.wantRemovedHosts)
-			}
+			assert.Equal(t, tt.wantRemovedHosts, manager.removedHosts)
 		})
 	}
 }

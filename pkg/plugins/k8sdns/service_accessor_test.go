@@ -121,3 +121,110 @@ func Test_serviceAccessor_Watch(t *testing.T) {
 		})
 	}
 }
+
+func Test_serviceAccessor_ConvertToEntry(t *testing.T) {
+	tests := []struct {
+		name    string
+		obj     runtime.Object
+		want    *entry
+		wantErr bool
+	}{
+		{
+			"ClusterIP service",
+			&v1.Service{
+				ObjectMeta: metav1.ObjectMeta{Name: "test", Namespace: "test-ns"},
+				Spec:       v1.ServiceSpec{Type: v1.ServiceTypeClusterIP},
+				Status:     v1.ServiceStatus{LoadBalancer: v1.LoadBalancerStatus{Ingress: []v1.LoadBalancerIngress{{IP: "ip", Hostname: "host"}}}},
+			},
+			&entry{
+				name:        "test",
+				namespace:   "test-ns",
+				typ:         "Service",
+				hostNames:   []string{"test.test-ns.svc.minikube."},
+				targetIps:   []string{"ip"},
+				targetHosts: []string{"host"},
+			},
+			false,
+		}, {
+			"LoadBalancer service",
+			&v1.Service{
+				ObjectMeta: metav1.ObjectMeta{Name: "test", Namespace: "test-ns"},
+				Spec:       v1.ServiceSpec{Type: v1.ServiceTypeLoadBalancer},
+				Status:     v1.ServiceStatus{LoadBalancer: v1.LoadBalancerStatus{Ingress: []v1.LoadBalancerIngress{{IP: "ip", Hostname: "host"}}}},
+			},
+			&entry{
+				name:        "test",
+				namespace:   "test-ns",
+				typ:         "Service",
+				hostNames:   []string{"test.test-ns.svc.minikube."},
+				targetIps:   []string{"ip"},
+				targetHosts: []string{"host"},
+			},
+			false,
+		}, {
+			"invalid obj",
+			&v1.Pod{},
+			nil,
+			true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			se := serviceAccessor{}
+			got, err := se.ConvertToEntry(tt.obj)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ConvertToEntry() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			assert.Equal(t, tt.want, got)
+
+		})
+	}
+}
+
+func Test_serviceAccessor_MatchesPreconditions(t *testing.T) {
+	tests := []struct {
+		name string
+		obj  runtime.Object
+		want bool
+	}{
+		{
+			"ClusterIP service full",
+			&v1.Service{
+				ObjectMeta: metav1.ObjectMeta{Name: "test", Namespace: "test-ns"},
+				Spec:       v1.ServiceSpec{Type: v1.ServiceTypeClusterIP},
+				Status:     v1.ServiceStatus{LoadBalancer: v1.LoadBalancerStatus{Ingress: []v1.LoadBalancerIngress{{IP: "ip", Hostname: "host"}}}},
+			},
+			false,
+		}, {
+			"LoadBalancer service full",
+			&v1.Service{
+				ObjectMeta: metav1.ObjectMeta{Name: "test", Namespace: "test-ns"},
+				Spec:       v1.ServiceSpec{Type: v1.ServiceTypeLoadBalancer},
+				Status:     v1.ServiceStatus{LoadBalancer: v1.LoadBalancerStatus{Ingress: []v1.LoadBalancerIngress{{IP: "ip", Hostname: "host"}}}},
+			},
+			true,
+		}, {
+			"ExternalName service full",
+			&v1.Service{
+				ObjectMeta: metav1.ObjectMeta{Name: "test", Namespace: "test-ns"},
+				Spec:       v1.ServiceSpec{Type: v1.ServiceTypeExternalName},
+				Status:     v1.ServiceStatus{LoadBalancer: v1.LoadBalancerStatus{Ingress: []v1.LoadBalancerIngress{{IP: "ip", Hostname: "host"}}}},
+			},
+			true,
+		},
+		{
+			"invalid obj",
+			&v1.Pod{},
+			false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			se := serviceAccessor{}
+			if got := se.MatchesPreconditions(tt.obj); got != tt.want {
+				t.Errorf("MatchesPreconditions() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

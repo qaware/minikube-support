@@ -2,13 +2,8 @@ package k8sdns
 
 import (
 	"fmt"
-	v1 "k8s.io/api/core/v1"
-	v1meta "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"reflect"
 	"testing"
-
-	"k8s.io/api/extensions/v1beta1"
 )
 
 func Test_ingressEntry_String(t *testing.T) {
@@ -27,68 +22,6 @@ func Test_ingressEntry_String(t *testing.T) {
 			}
 			if got := e.String(); got != tt.want {
 				t.Errorf("entry.String() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func Test_convertObjectToEntry(t *testing.T) {
-	tests := []struct {
-		name    string
-		obj     runtime.Object
-		want    *entry
-		wantErr bool
-	}{
-		{
-			"ingress full",
-			&v1beta1.Ingress{
-				ObjectMeta: v1meta.ObjectMeta{Name: "test", Namespace: "test-ns"},
-				Spec: v1beta1.IngressSpec{
-					Rules: []v1beta1.IngressRule{{Host: "1"}},
-					TLS:   []v1beta1.IngressTLS{{Hosts: []string{"1"}}},
-				},
-				Status: v1beta1.IngressStatus{LoadBalancer: v1.LoadBalancerStatus{Ingress: []v1.LoadBalancerIngress{{IP: "ip", Hostname: "host"}}}},
-			},
-			&entry{
-				name:        "test",
-				namespace:   "test-ns",
-				typ:         "Ingress",
-				hostNames:   []string{"1"},
-				targetIps:   []string{"ip"},
-				targetHosts: []string{"host"},
-			},
-			false,
-		}, {
-			"service full",
-			&v1.Service{
-				ObjectMeta: v1meta.ObjectMeta{Name: "test", Namespace: "test-ns"},
-				Status:     v1.ServiceStatus{LoadBalancer: v1.LoadBalancerStatus{Ingress: []v1.LoadBalancerIngress{{IP: "ip", Hostname: "host"}}}},
-			},
-			&entry{
-				name:        "test",
-				namespace:   "test-ns",
-				typ:         "Service",
-				hostNames:   []string{"test.test-ns.svc.minikube."},
-				targetIps:   []string{"ip"},
-				targetHosts: []string{"host"},
-			},
-			false,
-		}, {
-			"invalid obj",
-			&v1.Pod{},
-			nil,
-			true,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := convertObjectToEntry(tt.obj)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("convertObjectToEntry() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("convertObjectToEntry() got = %v, want %v", got.debug(), tt.want.debug())
 			}
 		})
 	}

@@ -28,9 +28,19 @@ type k8sDns struct {
 
 type AccessType string
 
+// accessor is an abstraction for accessing different types of k8s objects. For example services vs. ingresses.
 type accessor interface {
+	// PreFetch returns a list of all services, ingresses or other k8s objects and the corresponding list interface.
 	PreFetch() ([]runtime.Object, metav1.ListInterface, error)
+
+	// Watch starts the watch process for services, ingresses or other k8s objects.
 	Watch(options metav1.ListOptions) (watch.Interface, error)
+
+	// ConvertToEntry converts the given object into the entry by flatten everything.
+	ConvertToEntry(runtime.Object) (*entry, error)
+
+	// MatchesPreconditions checks if the given object matches preconditions for adding the entry.
+	MatchesPreconditions(object runtime.Object) bool
 }
 
 const AccessTypeIngress = AccessType("ingress")
@@ -115,7 +125,12 @@ func (k8s *k8sDns) PreWatch(options metav1.ListOptions) (watch.Interface, error)
 // AddedEvent adds the given ingress and adds all the host names to the dns
 // backend if they point to a target.
 func (k8s *k8sDns) AddedEvent(obj runtime.Object) error {
-	entry, e := convertObjectToEntry(obj)
+	if !k8s.accessor.MatchesPreconditions(obj) {
+		logrus.Debugf("%s don't matches the preconditions. Will not add the entry.", obj.GetObjectKind().GroupVersionKind().String())
+		return nil
+	}
+
+	entry, e := k8s.accessor.ConvertToEntry(obj)
 	if e != nil {
 		return e
 	}
@@ -137,7 +152,7 @@ func (k8s *k8sDns) AddedEvent(obj runtime.Object) error {
 // UpdatedEvent updates the given ingress.
 // It tries to change at least as possible entries.
 func (k8s *k8sDns) UpdatedEvent(obj runtime.Object) error {
-	entry, e := convertObjectToEntry(obj)
+	entry, e := k8s.accessor.ConvertToEntry(obj)
 	if e != nil {
 		return e
 	}
@@ -194,7 +209,7 @@ func (k8s *k8sDns) addTargets(entry *entry, host string) *multierror.Error {
 // DeletedEvent is always called when the ingress was deleted or updated and can
 // not be reached anymore.
 func (k8s *k8sDns) DeletedEvent(obj runtime.Object) error {
-	entry, e := convertObjectToEntry(obj)
+	entry, e := k8s.accessor.ConvertToEntry(obj)
 	if e != nil {
 		return e
 	}
