@@ -11,7 +11,7 @@ import (
 
 // MkdirAll does the same as os.MkdirAll() but it will be executed as sub process with root rights (sudo)
 func MkdirAll(path string, mod int) error {
-	resp, e := sh.RunCmd("sudo", "mkdir", "-p", path, "-m", strconv.FormatInt(int64(mod), 8))
+	resp, e := sh.RunCmd("sudo", "mkdir", "-p", "-m", strconv.FormatInt(int64(mod), 8), path)
 	if e != nil {
 		return errors.Wrapf(e, "can not create directory %s: %s", path, resp)
 	}
@@ -20,10 +20,11 @@ func MkdirAll(path string, mod int) error {
 
 // Chown does the same as os.Chown() but it will be executed as sub process with root rights (sudo)
 func Chown(path string, uid int, gid int, recursive bool) error {
-	args := []string{"chown", fmt.Sprintf("%d:%d", uid, gid), path}
+	args := []string{"chown"}
 	if recursive {
 		args = append(args, "-R")
 	}
+	args = append(args, fmt.Sprintf("%d:%d", uid, gid), path)
 
 	s, e := sh.RunCmd("sudo", args...)
 	if e != nil {

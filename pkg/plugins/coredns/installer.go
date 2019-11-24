@@ -36,12 +36,12 @@ func (i *installer) String() string {
 
 func (i *installer) Install() {
 	var errs *multierror.Error
-	errs = multierror.Append(errs, sudos.MkdirAll(path.Join(i.prefix, "bin"), 0777))
+	errs = multierror.Append(errs, sudos.MkdirAll(path.Join(i.prefix, "bin"), 0755))
 	errs = multierror.Append(errs, sudos.Chown(i.prefix, os.Getuid(), os.Getgid(), true))
 
 	errs = multierror.Append(errs, os.MkdirAll(path.Join(i.prefix, "etc"), 0755))
-	errs = multierror.Append(errs, os.MkdirAll(path.Join(i.prefix, "var", "run"), 0777))
-	errs = multierror.Append(errs, os.MkdirAll(path.Join(i.prefix, "var", "log"), 0777))
+	errs = multierror.Append(errs, os.MkdirAll(path.Join(i.prefix, "var", "run"), 0755))
+	errs = multierror.Append(errs, os.MkdirAll(path.Join(i.prefix, "var", "log"), 0755))
 	errs = multierror.Append(errs, i.writeConfig())
 
 	errs = multierror.Append(errs, i.downloadCoreDns())

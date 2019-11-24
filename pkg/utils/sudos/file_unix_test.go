@@ -36,7 +36,7 @@ func TestChown(t *testing.T) {
 			1000,
 			1000,
 			true,
-			[]testutils.TestProcessResponse{{Command: "sudo", Args: []string{"chown", "1000:1000", "./path", "-R"}, ResponseStatus: 0}},
+			[]testutils.TestProcessResponse{{Command: "sudo", Args: []string{"chown", "-R", "1000:1000", "./path"}, ResponseStatus: 0}},
 			false,
 		}, {
 			"nok",
@@ -74,13 +74,13 @@ func TestMkdirAll(t *testing.T) {
 			"ok",
 			"./path",
 			0755,
-			[]testutils.TestProcessResponse{{Command: "sudo", Args: []string{"mkdir", "-p", "./path", "-m", "755"}, ResponseStatus: 0}},
+			[]testutils.TestProcessResponse{{Command: "sudo", Args: []string{"mkdir", "-p", "-m", "755", "./path"}, ResponseStatus: 0}},
 			false,
 		}, {
 			"nok",
 			"./path",
 			0755,
-			[]testutils.TestProcessResponse{{Command: "sudo", Args: []string{"mkdir", "-p", "./path", "-m", "755"}, ResponseStatus: -1}},
+			[]testutils.TestProcessResponse{{Command: "sudo", Args: []string{"mkdir", "-p", "-m", "755", "./path"}, ResponseStatus: -1}},
 			true,
 		},
 	}
