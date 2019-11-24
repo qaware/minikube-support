@@ -33,7 +33,7 @@ const PluginName = "certManager"
 const issuerName = "ca-issuer"
 const releaseName = "cert-manager"
 
-var groupVersion = schema.GroupVersion{Group: "certmanager.k8s.io", Version: "v1alpha1"}
+var groupVersion = schema.GroupVersion{Group: "cert-manager.io", Version: "v1alpha2"}
 var helmInstallWaitPeriod = 20 * time.Second
 
 func NewCertManager(manager helm.Manager, handler kubernetes.ContextHandler, ghClient github.Client) apis.InstallablePlugin {
@@ -173,6 +173,7 @@ func (m *certManager) applyCertSecret() error {
 	if e != nil {
 		return fmt.Errorf("applying the secret failed: %s", e)
 	}
+	logrus.Debugf("CertSecret '%s' successfully added", issuerName)
 	return nil
 }
 

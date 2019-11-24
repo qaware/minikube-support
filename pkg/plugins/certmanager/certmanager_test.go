@@ -27,13 +27,15 @@ import (
 )
 
 func TestNewCertManager(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
 	tests := []struct {
 		name       string
 		manager    helm.Manager
 		handler    kubernetes.ContextHandler
 		wantPlugin bool
 	}{
-		{"ok", helm.NewHelmManager(nil), fake.NewContextHandler(k8sFake.NewSimpleClientset(), nil), true},
+		{"ok", helmFake.NewMockManager(ctrl), fake.NewContextHandler(k8sFake.NewSimpleClientset(), nil), true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -94,7 +96,7 @@ func Test_certManager_Update(t *testing.T) {
 		repoUpdateError        error
 		expectedLogEntryPrefix string
 	}{
-		{"ok", "1.0", nil, 0, nil, ""},
+		{"ok", "1.0", nil, 0, nil, "CertSecret 'ca-issuer' successfully added"},
 		{"failed to fetch version", "", errors.New("no version"), 0, nil, "Unable to detect latest certmanager version"},
 		{"failed to apply crds", "1.0", nil, 1, nil, "Unable to install the certmanager crds"},
 		{"failed update repos", "1.0", nil, 0, errors.New("no repo update"), "Unable to update helm repositories"},
@@ -162,7 +164,7 @@ func Test_certManager_Uninstall(t *testing.T) {
 					Namespace: "mks",
 					Name:      issuerName,
 				}}), dynamicFake.NewSimpleDynamicClient(scheme.Scheme, &unstructured.Unstructured{
-				Object: map[string]interface{}{"apiVersion": "certmanager.k8s.io/v1alpha1", "kind": "ClusterIssuer", "metadata": map[string]interface{}{"name": issuerName}}})),
+				Object: map[string]interface{}{"apiVersion": "cert-manager.io/v1alpha2", "kind": "ClusterIssuer", "metadata": map[string]interface{}{"name": issuerName}}})),
 			true,
 			true,
 			true,
@@ -179,7 +181,7 @@ func Test_certManager_Uninstall(t *testing.T) {
 					Namespace: "mks",
 					Name:      issuerName,
 				}}), dynamicFake.NewSimpleDynamicClient(scheme.Scheme, &unstructured.Unstructured{
-				Object: map[string]interface{}{"apiVersion": "certmanager.k8s.io/v1alpha1", "kind": "ClusterIssuer", "metadata": map[string]interface{}{"name": issuerName}}})),
+				Object: map[string]interface{}{"apiVersion": "cert-manager.io/v1alpha2", "kind": "ClusterIssuer", "metadata": map[string]interface{}{"name": issuerName}}})),
 			true,
 			true,
 			true,
@@ -188,7 +190,7 @@ func Test_certManager_Uninstall(t *testing.T) {
 		{"no secret",
 			false,
 			fake.NewContextHandler(k8sFake.NewSimpleClientset(), dynamicFake.NewSimpleDynamicClient(scheme.Scheme, &unstructured.Unstructured{
-				Object: map[string]interface{}{"apiVersion": "certmanager.k8s.io/v1alpha1", "kind": "ClusterIssuer", "metadata": map[string]interface{}{"name": issuerName}}})),
+				Object: map[string]interface{}{"apiVersion": "cert-manager.io/v1alpha2", "kind": "ClusterIssuer", "metadata": map[string]interface{}{"name": issuerName}}})),
 			true,
 			true,
 			true,
@@ -208,7 +210,7 @@ func Test_certManager_Uninstall(t *testing.T) {
 			true,
 			true,
 			true,
-			"Unable to uninstall the certManager plugin: 1 error occurred:\n\t* clusterissuers.certmanager.k8s.io \"ca-issuer\" not found",
+			"Unable to uninstall the certManager plugin: 1 error occurred:\n\t* clusterissuers.cert-manager.io \"ca-issuer\" not found",
 		},
 		{"no dynamic client",
 			false,
@@ -322,7 +324,7 @@ func Test_certManager_applyClusterIssuer(t *testing.T) {
 	}{
 		{"ok, create", dynamicFake.NewSimpleDynamicClient(scheme.Scheme), "create", false},
 		{"ok, update", dynamicFake.NewSimpleDynamicClient(scheme.Scheme, &unstructured.Unstructured{
-			Object: map[string]interface{}{"apiVersion": "certmanager.k8s.io/v1alpha1", "kind": "ClusterIssuer", "metadata": map[string]interface{}{"name": issuerName}},
+			Object: map[string]interface{}{"apiVersion": "cert-manager.io/v1alpha2", "kind": "ClusterIssuer", "metadata": map[string]interface{}{"name": issuerName}},
 		}), "update", false},
 		{"no client", nil, "create", true},
 	}
