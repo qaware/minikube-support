@@ -5,48 +5,16 @@ import (
 	"github.com/qaware/minikube-support/pkg/sh"
 	"github.com/qaware/minikube-support/pkg/testutils"
 	"github.com/sirupsen/logrus"
-	"github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/assert"
+	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	k8sFake "k8s.io/client-go/kubernetes/fake"
 	"os/exec"
 	"testing"
 )
 
-var global = test.NewGlobal()
-
-func Test_defaultManager_Init(t *testing.T) {
-	sh.ExecCommand = testutils.FakeExecCommand
-	defer func() { sh.ExecCommand = exec.Command }()
-	tests := []struct {
-		name          string
-		initialized   bool
-		versionStatus int
-		versionMsg    string
-		initStatus    int
-		wantErr       bool
-	}{
-		{"installed", false, 0, "", 0, false},
-		{"initialized", true, 0, "", 0, false},
-		{"notInstalled", false, -1, "Error: could not find a ready tiller pod", 0, false},
-		{"installFailure", false, -1, "Error: could not find a ready tiller pod", -1, true},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			m := &defaultManager{
-				context:     fake.NewContextHandler(nil, nil),
-				initialized: tt.initialized,
-			}
-			testutils.TestProcessResponses = []testutils.TestProcessResponse{
-				{Command: "helm", Args: []string{"version", "-s"}, ResponseStatus: tt.versionStatus, Stdout: tt.versionMsg},
-				{Command: "helm", Args: []string{"init", "--wait"}, ResponseStatus: tt.initStatus},
-			}
-			if err := m.Init(); (err != nil) != tt.wantErr {
-				t.Errorf("defaultManager.Init() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
-	}
-}
-
-func Test_defaultManager_Install(t *testing.T) {
+func Test_helm3Manager_Install(t *testing.T) {
 	sh.ExecCommand = testutils.FakeExecCommand
 	defer func() { sh.ExecCommand = exec.Command }()
 	tests := []struct {
@@ -56,8 +24,8 @@ func Test_defaultManager_Install(t *testing.T) {
 		namespace      string
 		wait           bool
 		values         map[string]interface{}
-		initialized    bool
 		expectedArgs   []string
+		nsExists       bool
 		response       string
 		responseStatus int
 		lastEntryLevel logrus.Level
@@ -69,8 +37,20 @@ func Test_defaultManager_Install(t *testing.T) {
 			"test",
 			false,
 			map[string]interface{}{},
-			true,
 			[]string{"upgrade", "--install", "--force", "--namespace", "test", "test", "dummy/test"},
+			true,
+			"ok installed",
+			0,
+			logrus.InfoLevel,
+		}, {
+			"success but namespace is missing",
+			"dummy/test",
+			"test",
+			"test",
+			false,
+			map[string]interface{}{},
+			[]string{"upgrade", "--install", "--force", "--namespace", "test", "test", "dummy/test"},
+			false,
 			"ok installed",
 			0,
 			logrus.InfoLevel,
@@ -81,20 +61,8 @@ func Test_defaultManager_Install(t *testing.T) {
 			"test",
 			true,
 			map[string]interface{}{},
-			true,
 			[]string{"upgrade", "--install", "--force", "--namespace", "test", "test", "dummy/test", "--wait"},
-			"ok installed",
-			0,
-			logrus.InfoLevel,
-		}, {
-			"success uninitialized",
-			"dummy/test",
-			"test",
-			"test",
-			false,
-			map[string]interface{}{},
-			false,
-			[]string{"upgrade", "--install", "--force", "--namespace", "test", "test", "dummy/test"},
+			true,
 			"ok installed",
 			0,
 			logrus.InfoLevel,
@@ -105,8 +73,8 @@ func Test_defaultManager_Install(t *testing.T) {
 			"test",
 			false,
 			map[string]interface{}{"v1": []map[string]interface{}{{"h": 2, "b": "def"}}},
-			true,
 			[]string{"upgrade", "--install", "--force", "--namespace", "test", "test", "dummy/test", "--set", "v1\\[0].h=2", "--set", "v1\\[0].b=def"},
+			true,
 			"ok installed",
 			0,
 			logrus.InfoLevel,
@@ -117,8 +85,8 @@ func Test_defaultManager_Install(t *testing.T) {
 			"test",
 			false,
 			map[string]interface{}{},
-			true,
 			[]string{"upgrade", "--install", "--force", "--namespace", "test", "", ""},
+			true,
 			"no release and name given",
 			1,
 			logrus.ErrorLevel,
@@ -126,9 +94,18 @@ func Test_defaultManager_Install(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			m := &defaultManager{
-				context:     fake.NewContextHandler(nil, nil),
-				initialized: tt.initialized,
+			var fakeClientSet *k8sFake.Clientset
+			if tt.nsExists {
+				fakeClientSet = k8sFake.NewSimpleClientset(&v1.Namespace{
+					TypeMeta:   metav1.TypeMeta{Kind: "Namespace", APIVersion: "v1"},
+					ObjectMeta: metav1.ObjectMeta{Name: tt.namespace},
+				})
+			} else {
+				fakeClientSet = k8sFake.NewSimpleClientset()
+			}
+
+			m := &helm3Manager{
+				context: fake.NewContextHandler(fakeClientSet, nil),
 			}
 
 			testutils.TestProcessResponses = []testutils.TestProcessResponse{
@@ -139,19 +116,21 @@ func Test_defaultManager_Install(t *testing.T) {
 			m.Install(tt.chart, tt.release, tt.namespace, tt.values, tt.wait)
 
 			lastEntry := global.LastEntry()
-			assert.Equal(t, tt.lastEntryLevel, lastEntry.Level)
+			if !assert.Equal(t, tt.lastEntryLevel, lastEntry.Level) {
+				s, _ := lastEntry.String()
+				t.Log(s)
+			}
 		})
 	}
 }
 
-func Test_defaultManager_Uninstall(t *testing.T) {
+func Test_helm3Manager_Uninstall(t *testing.T) {
 	sh.ExecCommand = testutils.FakeExecCommand
 	defer func() { sh.ExecCommand = exec.Command }()
 	tests := []struct {
 		name           string
 		release        string
 		purge          bool
-		initialized    bool
 		expectedArgs   []string
 		response       string
 		responseStatus int
@@ -161,17 +140,7 @@ func Test_defaultManager_Uninstall(t *testing.T) {
 			"success no purge",
 			"test",
 			false,
-			true,
-			[]string{"delete", "test"},
-			"ok removed",
-			0,
-			logrus.InfoLevel,
-		}, {
-			"success no purge uninitialized",
-			"test",
-			false,
-			false,
-			[]string{"delete", "test"},
+			[]string{"uninstall", "--keep-history", "test"},
 			"ok removed",
 			0,
 			logrus.InfoLevel,
@@ -179,8 +148,7 @@ func Test_defaultManager_Uninstall(t *testing.T) {
 			"success purge",
 			"test",
 			true,
-			true,
-			[]string{"delete", "--purge", "test"},
+			[]string{"uninstall", "test"},
 			"ok removed",
 			0,
 			logrus.InfoLevel,
@@ -188,8 +156,7 @@ func Test_defaultManager_Uninstall(t *testing.T) {
 			"not found",
 			"test",
 			false,
-			true,
-			[]string{"delete", "test"},
+			[]string{"uninstall", "--keep-history", "test"},
 			"not found",
 			1,
 			logrus.ErrorLevel,
@@ -197,9 +164,8 @@ func Test_defaultManager_Uninstall(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			m := &defaultManager{
-				context:     fake.NewContextHandler(nil, nil),
-				initialized: tt.initialized,
+			m := &helm3Manager{
+				context: fake.NewContextHandler(nil, nil),
 			}
 			testutils.TestProcessResponses = []testutils.TestProcessResponse{
 				{Command: "helm", Args: tt.expectedArgs, ResponseStatus: tt.responseStatus, Stdout: tt.response},
@@ -214,27 +180,24 @@ func Test_defaultManager_Uninstall(t *testing.T) {
 	}
 }
 
-func Test_defaultManager_AddRepository(t *testing.T) {
+func Test_helm3Manager_AddRepository(t *testing.T) {
 	sh.ExecCommand = testutils.FakeExecCommand
 	defer func() { sh.ExecCommand = exec.Command }()
 	tests := []struct {
 		name           string
-		initialized    bool
 		repoName       string
 		url            string
 		expectedArgs   []string
 		responseStatus int
 		wantErr        bool
 	}{
-		{"ok uninitialized", false, "dummy", "http://localhost", []string{"repo", "add", "dummy", "http://localhost"}, 0, false},
-		{"ok", true, "dummy", "http://localhost", []string{"repo", "add", "dummy", "http://localhost"}, 0, false},
-		{"failed", true, "dummy", "http://localhost", []string{"repo", "add", "dummy", "http://localhost"}, 1, true},
+		{"ok", "dummy", "http://localhost", []string{"repo", "add", "dummy", "http://localhost"}, 0, false},
+		{"failed", "dummy", "http://localhost", []string{"repo", "add", "dummy", "http://localhost"}, 1, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			m := &defaultManager{
-				context:     fake.NewContextHandler(nil, nil),
-				initialized: tt.initialized,
+			m := &helm3Manager{
+				context: fake.NewContextHandler(nil, nil),
 			}
 			testutils.TestProcessResponses = []testutils.TestProcessResponse{
 				{Command: "helm", Args: tt.expectedArgs, ResponseStatus: tt.responseStatus, Stdout: ""},
@@ -248,25 +211,22 @@ func Test_defaultManager_AddRepository(t *testing.T) {
 	}
 }
 
-func Test_defaultManager_UpdateRepository(t *testing.T) {
+func Test_helm3Manager_UpdateRepository(t *testing.T) {
 	sh.ExecCommand = testutils.FakeExecCommand
 	defer func() { sh.ExecCommand = exec.Command }()
 	tests := []struct {
 		name           string
-		initialized    bool
 		expectedArgs   []string
 		responseStatus int
 		wantErr        bool
 	}{
-		{"ok uninitialized", false, []string{"repo", "update"}, 0, false},
-		{"ok", true, []string{"repo", "update"}, 0, false},
-		{"failed", true, []string{"repo", "update"}, 1, true},
+		{"ok", []string{"repo", "update"}, 0, false},
+		{"failed", []string{"repo", "update"}, 1, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			m := &defaultManager{
-				context:     fake.NewContextHandler(nil, nil),
-				initialized: tt.initialized,
+			m := &helm3Manager{
+				context: fake.NewContextHandler(nil, nil),
 			}
 			testutils.TestProcessResponses = []testutils.TestProcessResponse{
 				{Command: "helm", Args: tt.expectedArgs, ResponseStatus: tt.responseStatus, Stdout: ""},
@@ -280,7 +240,7 @@ func Test_defaultManager_UpdateRepository(t *testing.T) {
 	}
 }
 
-func Test_defaultManager_runCommand(t *testing.T) {
+func Test_helm3Manager_runCommand(t *testing.T) {
 	sh.ExecCommand = testutils.FakeExecCommand
 	defer func() { sh.ExecCommand = exec.Command }()
 	tests := []struct {
@@ -299,7 +259,7 @@ func Test_defaultManager_runCommand(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			handler := fake.NewContextHandler(nil, nil)
-			m := &defaultManager{
+			m := &helm3Manager{
 				context: handler,
 			}
 			handler.ConfigFile = tt.configFile
@@ -323,6 +283,28 @@ func Test_defaultManager_runCommand(t *testing.T) {
 	}
 }
 
-func TestHelperProcess(t *testing.T) {
-	testutils.StandardHelperProcess(t)
+func Test_helm3Manager_ensureNamespaceExists(t *testing.T) {
+	tests := []struct {
+		name      string
+		clientset *k8sFake.Clientset
+		namespace string
+		wantErr   bool
+	}{
+		{"exists", k8sFake.NewSimpleClientset(&v1.Namespace{
+			TypeMeta:   metav1.TypeMeta{Kind: "Namespace", APIVersion: "v1"},
+			ObjectMeta: metav1.ObjectMeta{Name: "ns"},
+		}), "ns", false},
+		{"notExists", k8sFake.NewSimpleClientset(), "ns", false},
+		{"no clientset", nil, "ns", true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			h := &helm3Manager{
+				context: fake.NewContextHandler(tt.clientset, nil),
+			}
+			if err := h.ensureNamespaceExists(tt.namespace); (err != nil) != tt.wantErr {
+				t.Errorf("ensureNamespaceExists() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
 }

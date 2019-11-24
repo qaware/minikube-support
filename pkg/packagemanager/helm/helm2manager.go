@@ -1,7 +1,5 @@
 package helm
 
-//go:generate mockgen -destination=fake/mocks.go -package=fake -source=helmmanager.go
-
 import (
 	"fmt"
 	"github.com/kballard/go-shellquote"
@@ -13,28 +11,20 @@ import (
 	"sync"
 )
 
-type Manager interface {
-	Init() error
-	AddRepository(name string, url string) error
-	UpdateRepository() error
-	Install(chart string, release string, namespace string, values map[string]interface{}, wait bool)
-	Uninstall(release string, purge bool)
-}
-
-type defaultManager struct {
+type helm2Manager struct {
 	context     kubernetes.ContextHandler
 	initialized bool
 	mutex       sync.Mutex
 }
 
-func NewHelmManager(context kubernetes.ContextHandler) Manager {
-	return &defaultManager{
+func NewHelm2Manager(context kubernetes.ContextHandler) Manager {
+	return &helm2Manager{
 		mutex:   sync.Mutex{},
 		context: context,
 	}
 }
 
-func (m *defaultManager) Init() error {
+func (m *helm2Manager) Init() error {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 	if m.initialized {
@@ -53,7 +43,7 @@ func (m *defaultManager) Init() error {
 	return nil
 }
 
-func (m *defaultManager) Install(chart string, release string, namespace string, values map[string]interface{}, wait bool) {
+func (m *helm2Manager) Install(chart string, release string, namespace string, values map[string]interface{}, wait bool) {
 	if !m.initialized {
 		if e := m.Init(); e != nil {
 			logrus.Errorf("Can not install helm chart: %s", e)
@@ -91,7 +81,7 @@ func (m *defaultManager) Install(chart string, release string, namespace string,
 	logrus.Debug(response)
 }
 
-func (m *defaultManager) Uninstall(release string, purge bool) {
+func (m *helm2Manager) Uninstall(release string, purge bool) {
 	if !m.initialized {
 		if e := m.Init(); e != nil {
 			logrus.Errorf("Can not uninstall helm chart: %s", e)
@@ -116,7 +106,7 @@ func (m *defaultManager) Uninstall(release string, purge bool) {
 	logrus.Debug(response)
 }
 
-func (m *defaultManager) AddRepository(name string, url string) error {
+func (m *helm2Manager) AddRepository(name string, url string) error {
 	if !m.initialized {
 		if e := m.Init(); e != nil {
 			return e
@@ -131,7 +121,7 @@ func (m *defaultManager) AddRepository(name string, url string) error {
 	return nil
 }
 
-func (m *defaultManager) UpdateRepository() error {
+func (m *helm2Manager) UpdateRepository() error {
 	if !m.initialized {
 		if e := m.Init(); e != nil {
 			return e
@@ -145,7 +135,7 @@ func (m *defaultManager) UpdateRepository() error {
 	return nil
 }
 
-func (m *defaultManager) runCommand(command string, args ...string) (string, error) {
+func (m *helm2Manager) runCommand(command string, args ...string) (string, error) {
 	prefix := append([]string{command})
 	if m.context.GetContextName() != "" {
 		prefix = append(prefix, "--kube-context", m.context.GetContextName())
@@ -165,7 +155,7 @@ func (m *defaultManager) runCommand(command string, args ...string) (string, err
 	return output, nil
 }
 
-func (m *defaultManager) checkTiller() error {
+func (m *helm2Manager) checkTiller() error {
 	output, e := m.runCommand("version", "-s")
 
 	if output == "Error: could not find a ready tiller pod" || e != nil {
@@ -174,7 +164,7 @@ func (m *defaultManager) checkTiller() error {
 	return nil
 }
 
-func (m *defaultManager) initTiller() error {
+func (m *helm2Manager) initTiller() error {
 	output, e := m.runCommand("init", "--wait")
 
 	if e != nil {

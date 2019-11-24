@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"github.com/hashicorp/go-multierror"
 	"github.com/qaware/minikube-support/pkg/apis"
 	"github.com/qaware/minikube-support/pkg/github"
 	"github.com/qaware/minikube-support/pkg/kubernetes"
@@ -18,14 +19,18 @@ import (
 
 // Initializes all active plugins and register them in the two (installable and start stop) plugin registries.
 func initPlugins(options *RootCommandOptions) {
+	var errors *multierror.Error
 	logPlugin := logs.NewLogsPlugin(logrus.StandardLogger())
 
 	handler := kubernetes.NewContextHandler(&options.kubeConfig, &options.contextName)
 	options.contextNameSupplier = handler.GetContextName
-	helmManager := helm.NewHelmManager(handler)
+	helmManager, e := helm.NewHelmManager(handler)
+	errors = multierror.Append(errors, e)
 
 	coreDns := coredns.NewGrpcPlugin()
-	manager, _ := coredns.NewManager(coreDns)
+	manager, e := coredns.NewManager(coreDns)
+	errors = multierror.Append(errors, e)
+
 	k8sIngresses := k8sdns.NewK8sDns(handler, manager, k8sdns.AccessTypeIngress)
 	k8sServices := k8sdns.NewK8sDns(handler, manager, k8sdns.AccessTypeService)
 
@@ -51,4 +56,7 @@ func initPlugins(options *RootCommandOptions) {
 		coreDnsIngressPlugin,
 		minikube.NewIpPlugin(manager, handler),
 	)
+	if errors.Len() != 0 {
+		logrus.Errorf("unable to initialize all plugins: %s", errors)
+	}
 }
