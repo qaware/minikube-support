@@ -34,7 +34,6 @@ func (m *MockPackageManager) EXPECT() *MockPackageManagerMockRecorder {
 
 // String mocks base method
 func (m *MockPackageManager) String() string {
-	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "String")
 	ret0, _ := ret[0].(string)
 	return ret0
@@ -42,13 +41,11 @@ func (m *MockPackageManager) String() string {
 
 // String indicates an expected call of String
 func (mr *MockPackageManagerMockRecorder) String() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "String", reflect.TypeOf((*MockPackageManager)(nil).String))
 }
 
 // Install mocks base method
 func (m *MockPackageManager) Install(pkg string) error {
-	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Install", pkg)
 	ret0, _ := ret[0].(error)
 	return ret0
@@ -56,13 +53,11 @@ func (m *MockPackageManager) Install(pkg string) error {
 
 // Install indicates an expected call of Install
 func (mr *MockPackageManagerMockRecorder) Install(pkg interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Install", reflect.TypeOf((*MockPackageManager)(nil).Install), pkg)
 }
 
 // IsInstalled mocks base method
 func (m *MockPackageManager) IsInstalled(pkg string) (bool, error) {
-	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "IsInstalled", pkg)
 	ret0, _ := ret[0].(bool)
 	ret1, _ := ret[1].(error)
@@ -71,13 +66,11 @@ func (m *MockPackageManager) IsInstalled(pkg string) (bool, error) {
 
 // IsInstalled indicates an expected call of IsInstalled
 func (mr *MockPackageManagerMockRecorder) IsInstalled(pkg interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsInstalled", reflect.TypeOf((*MockPackageManager)(nil).IsInstalled), pkg)
 }
 
 // Update mocks base method
 func (m *MockPackageManager) Update(pkg string) error {
-	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Update", pkg)
 	ret0, _ := ret[0].(error)
 	return ret0
@@ -85,13 +78,11 @@ func (m *MockPackageManager) Update(pkg string) error {
 
 // Update indicates an expected call of Update
 func (mr *MockPackageManagerMockRecorder) Update(pkg interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockPackageManager)(nil).Update), pkg)
 }
 
 // Uninstall mocks base method
 func (m *MockPackageManager) Uninstall(pkg string) error {
-	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Uninstall", pkg)
 	ret0, _ := ret[0].(error)
 	return ret0
@@ -99,6 +90,5 @@ func (m *MockPackageManager) Uninstall(pkg string) error {
 
 // Uninstall indicates an expected call of Uninstall
 func (mr *MockPackageManagerMockRecorder) Uninstall(pkg interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Uninstall", reflect.TypeOf((*MockPackageManager)(nil).Uninstall), pkg)
 }
