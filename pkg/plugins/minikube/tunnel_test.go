@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/exec"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 )
@@ -136,6 +137,8 @@ func TestHelperProcess(*testing.T) {
 				time.Sleep(1 * time.Second)
 				_, _ = fmt.Fprintf(os.Stdout, string(bytes))
 			}
+		case "echo":
+			_, _ = fmt.Fprintf(os.Stdout, strings.Join(args, " "))
 		}
 	case "minikube":
 		cmd, _ := args[0], args[1:]
@@ -143,5 +146,13 @@ func TestHelperProcess(*testing.T) {
 		case "ip":
 			_, _ = fmt.Fprintln(os.Stdout, "127.0.0.1")
 		}
+	case "which":
+		cmd, _ := args[0], args[1:]
+		switch cmd {
+		case "sudo":
+			_, _ = fmt.Fprintln(os.Stdout, "sudo")
+		}
+	default:
+		os.Exit(1)
 	}
 }

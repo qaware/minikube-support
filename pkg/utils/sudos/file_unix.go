@@ -11,7 +11,7 @@ import (
 
 // MkdirAll does the same as os.MkdirAll() but it will be executed as sub process with root rights (sudo)
 func MkdirAll(path string, mod int) error {
-	resp, e := sh.RunCmd("sudo", "mkdir", "-p", "-m", strconv.FormatInt(int64(mod), 8), path)
+	resp, e := sh.RunSudoCmd("mkdir", "-p", "-m", strconv.FormatInt(int64(mod), 8), path)
 	if e != nil {
 		return errors.Wrapf(e, "can not create directory %s: %s", path, resp)
 	}
@@ -20,13 +20,13 @@ func MkdirAll(path string, mod int) error {
 
 // Chown does the same as os.Chown() but it will be executed as sub process with root rights (sudo)
 func Chown(path string, uid int, gid int, recursive bool) error {
-	args := []string{"chown"}
+	var args []string
 	if recursive {
-		args = append(args, "-R")
+		args = []string{"-R"}
 	}
 	args = append(args, fmt.Sprintf("%d:%d", uid, gid), path)
 
-	s, e := sh.RunCmd("sudo", args...)
+	s, e := sh.RunSudoCmd("chown", args...)
 	if e != nil {
 		return errors.Wrapf(e, "can not set owner for %s to current user:group (%d:%d): %s", path, uid, gid, s)
 	}
@@ -35,7 +35,7 @@ func Chown(path string, uid int, gid int, recursive bool) error {
 
 // RemoveAll does the same as os.RemoveAll() but it will be executed as sub process with root rights (sudo)
 func RemoveAll(path string) error {
-	resp, e := sh.RunCmd("sudo", "rm", "-R", path)
+	resp, e := sh.RunSudoCmd("rm", "-R", path)
 	if e != nil {
 		return errors.Wrapf(e, "can not remove %s recursive: %s", path, resp)
 	}

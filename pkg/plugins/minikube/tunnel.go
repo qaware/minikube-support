@@ -44,7 +44,7 @@ func (t *tunnel) Start(monitoringChannel chan *apis.MonitoringMessage) (boxName 
 		return "", nil
 	}
 
-	t.command = sh.ExecCommand("sudo", "minikube", "tunnel")
+	t.command = sh.ExecSudoCommand("minikube", "tunnel")
 	t.command.Env = append(t.command.Env, os.Environ()...)
 	stdoutPipe, e := t.command.StdoutPipe()
 	if e != nil {

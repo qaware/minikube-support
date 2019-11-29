@@ -79,6 +79,7 @@ func Test_installer_Uninstall(t *testing.T) {
 		ghClient: ghClient,
 		prefix:   tmpdir,
 	}
+	testutils.MockInitSudo()
 	testutils.MockWithoutResponse(0, "sudo", "launchctl", "unload", launchctlConfig)
 	testutils.MockWithoutResponse(0, "sudo", "rm", launchctlConfig)
 	testutils.MockWithoutResponse(0, "sudo", "rm", dotMinikubeResolverPath)

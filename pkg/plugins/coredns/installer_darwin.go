@@ -24,7 +24,7 @@ func (i *installer) installSpecific() error {
 	if e != nil {
 		return fmt.Errorf("can not write launchctl config: %s", e)
 	}
-	_, e = sh.RunCmd("sudo", "launchctl", "load", launchctlConfig)
+	_, e = sh.RunSudoCmd("launchctl", "load", launchctlConfig)
 	if e != nil {
 		return fmt.Errorf("can not load coredns launch daemon: %s", e)
 	}
@@ -35,17 +35,17 @@ func (i *installer) updateSpecific() error {
 	return nil
 }
 func (i *installer) uninstallSpecific() error {
-	_, e := sh.RunCmd("sudo", "launchctl", "unload", launchctlConfig)
+	_, e := sh.RunSudoCmd("launchctl", "unload", launchctlConfig)
 	if e != nil {
 		return fmt.Errorf("can not unload coredns launch daemon: %s", e)
 	}
 
-	_, e = sh.RunCmd("sudo", "rm", launchctlConfig)
+	_, e = sh.RunSudoCmd("rm", launchctlConfig)
 	if e != nil {
 		return fmt.Errorf("can not remove coredns launch daemon config: %s", e)
 	}
 
-	_, e = sh.RunCmd("sudo", "rm", dotMinikubeResolverPath)
+	_, e = sh.RunSudoCmd("rm", dotMinikubeResolverPath)
 	if e != nil {
 		return fmt.Errorf("can not remove coredns minikube resolver config: %s", e)
 	}
@@ -114,7 +114,7 @@ func (i *installer) writeResolverConfig() error {
 }
 
 func (i *installer) writeFileAsRoot(path string, content []byte) error {
-	command := sh.ExecCommand("sudo", "/bin/sh", "-c", shellquote.Join("sed", "-n", "w "+path))
+	command := sh.ExecSudoCommand("/bin/sh", "-c", shellquote.Join("sed", "-n", "w "+path))
 	command.Env = append(command.Env, os.Environ()...)
 	defer func() {
 		if e := command.Wait(); e != nil {
