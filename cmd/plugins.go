@@ -6,6 +6,7 @@ import (
 	"github.com/qaware/minikube-support/pkg/github"
 	"github.com/qaware/minikube-support/pkg/kubernetes"
 	"github.com/qaware/minikube-support/pkg/packagemanager/helm"
+	"github.com/qaware/minikube-support/pkg/packagemanager/os"
 	"github.com/qaware/minikube-support/pkg/plugins"
 	"github.com/qaware/minikube-support/pkg/plugins/certmanager"
 	"github.com/qaware/minikube-support/pkg/plugins/coredns"
@@ -21,6 +22,7 @@ import (
 func initPlugins(options *RootCommandOptions) {
 	var errors *multierror.Error
 	logPlugin := logs.NewLogsPlugin(logrus.StandardLogger())
+	os.RegisterOsPackage()
 
 	handler := kubernetes.NewContextHandler(&options.kubeConfig, &options.contextName)
 	options.contextNameSupplier = handler.GetContextName

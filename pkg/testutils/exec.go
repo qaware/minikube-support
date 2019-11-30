@@ -4,12 +4,24 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/qaware/minikube-support/pkg/sh"
 	"os"
 	"os/exec"
 	"reflect"
 	"testing"
 	"time"
 )
+
+// StartCommandLineTest initializes everything that is needed for commandline tests.
+func StartCommandLineTest() {
+	sh.ExecCommand = FakeExecCommand
+	TestProcessResponses = []TestProcessResponse{}
+}
+
+// StopCommandLineTests reset the changes from StartCommandLineTest.
+func StopCommandLineTest() {
+	sh.ExecCommand = exec.Command
+}
 
 // This command fakes the exec command. This should be only used in Tests.
 func FakeExecCommand(command string, args ...string) *exec.Cmd {

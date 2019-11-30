@@ -3,18 +3,12 @@
 package os
 
 import (
-	"fmt"
-	"github.com/qaware/minikube-support/pkg/sh"
 	"github.com/qaware/minikube-support/pkg/testutils"
 	"os"
-	"os/exec"
 	"testing"
 )
 
 func Test_runBrewCommand(t *testing.T) {
-	sh.ExecCommand = testutils.FakeExecCommand
-	defer func() { sh.ExecCommand = exec.Command }()
-
 	tests := []struct {
 		name    string
 		command string
@@ -25,6 +19,12 @@ func Test_runBrewCommand(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			testutils.StartCommandLineTest()
+			defer testutils.StopCommandLineTest()
+
+			testutils.MockWithStdOut("mkcert\nnss\n", 0, "brew", "list")
+			testutils.MockWithoutResponse(1, "brew", "invalid")
+
 			if err := runBrewCommand(tt.command); (err != nil) != tt.wantErr {
 				t.Errorf("runBrewCommand() error = %v, wantErr %v", err, tt.wantErr)
 			}
@@ -33,9 +33,6 @@ func Test_runBrewCommand(t *testing.T) {
 }
 
 func Test_brewPackageManager_Install(t *testing.T) {
-	sh.ExecCommand = testutils.FakeExecCommand
-	defer func() { sh.ExecCommand = exec.Command }()
-
 	tests := []struct {
 		name    string
 		pkg     string
@@ -46,6 +43,12 @@ func Test_brewPackageManager_Install(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			testutils.StartCommandLineTest()
+			defer testutils.StopCommandLineTest()
+
+			testutils.MockWithoutResponse(0, "brew", "install", "ok")
+			testutils.MockWithoutResponse(1, "brew", "install", "nok")
+
 			b := &brewPackageManager{}
 			if err := b.Install(tt.pkg); (err != nil) != tt.wantErr {
 				t.Errorf("brewPackageManager.Install() error = %v, wantErr %v", err, tt.wantErr)
@@ -55,9 +58,6 @@ func Test_brewPackageManager_Install(t *testing.T) {
 }
 
 func Test_brewPackageManager_Update(t *testing.T) {
-	sh.ExecCommand = testutils.FakeExecCommand
-	defer func() { sh.ExecCommand = exec.Command }()
-
 	tests := []struct {
 		name    string
 		pkg     string
@@ -69,6 +69,13 @@ func Test_brewPackageManager_Update(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			testutils.StartCommandLineTest()
+			defer testutils.StopCommandLineTest()
+
+			testutils.MockWithoutResponse(0, "brew", "upgrade", "ok")
+			testutils.MockWithoutResponse(1, "brew", "upgrade", "installed")
+			testutils.MockWithoutResponse(2, "brew", "upgrade", "nok")
+
 			b := &brewPackageManager{}
 			if err := b.Update(tt.pkg); (err != nil) != tt.wantErr {
 				t.Errorf("brewPackageManager.Update() error = %v, wantErr %v", err, tt.wantErr)
@@ -78,9 +85,6 @@ func Test_brewPackageManager_Update(t *testing.T) {
 }
 
 func Test_brewPackageManager_Uninstall(t *testing.T) {
-	sh.ExecCommand = testutils.FakeExecCommand
-	defer func() { sh.ExecCommand = exec.Command }()
-
 	tests := []struct {
 		name    string
 		pkg     string
@@ -91,6 +95,12 @@ func Test_brewPackageManager_Uninstall(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			testutils.StartCommandLineTest()
+			defer testutils.StopCommandLineTest()
+
+			testutils.MockWithoutResponse(0, "brew", "uninstall", "ok")
+			testutils.MockWithoutResponse(1, "brew", "uninstall", "nok")
+
 			b := &brewPackageManager{}
 			if err := b.Uninstall(tt.pkg); (err != nil) != tt.wantErr {
 				t.Errorf("brewPackageManager.Uninstall() error = %v, wantErr %v", err, tt.wantErr)
@@ -100,9 +110,6 @@ func Test_brewPackageManager_Uninstall(t *testing.T) {
 }
 
 func Test_brewPackageManager_IsInstalled(t *testing.T) {
-	sh.ExecCommand = testutils.FakeExecCommand
-	defer func() { sh.ExecCommand = exec.Command }()
-
 	tests := []struct {
 		name    string
 		pkg     string
@@ -114,6 +121,10 @@ func Test_brewPackageManager_IsInstalled(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			testutils.StartCommandLineTest()
+			defer testutils.StopCommandLineTest()
+			testutils.MockWithStdOut("mkcert\nnss\n", 0, "brew", "list")
+
 			b := &brewPackageManager{}
 			got, err := b.IsInstalled(tt.pkg)
 			if (err != nil) != tt.wantErr {
@@ -127,31 +138,34 @@ func Test_brewPackageManager_IsInstalled(t *testing.T) {
 	}
 }
 
-func TestHelperProcess(*testing.T) {
+func Test_brewPackageManager_IsAvailable(t *testing.T) {
+	tests := []struct {
+		name              string
+		cmdResponseStatus int
+		want              bool
+	}{
+		{"installed", 0, true},
+		{"not installed", 1, false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			testutils.StartCommandLineTest()
+			defer testutils.StopCommandLineTest()
+			b := &brewPackageManager{}
+			testutils.MockWithoutResponse(tt.cmdResponseStatus, "which", "brew")
+
+			if got := b.IsAvailable(); got != tt.want {
+				t.Errorf("IsAvailable() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestHelperProcess(t *testing.T) {
 	if os.Getenv("GO_WANT_HELPER_PROCESS") != "1" {
 		return
 	}
 	defer os.Exit(0)
 
-	cmd, args := testutils.ExtractMockedCommandAndArgs()
-	switch cmd {
-	case "brew":
-		cmd, args := args[0], args[1:]
-		switch cmd {
-		case "list":
-			fmt.Print("mkcert\nnss\n")
-		case "invalid":
-			os.Exit(1)
-		case "install":
-			fallthrough
-		case "uninstall":
-			fallthrough
-		case "upgrade":
-			if args[0] == "installed" {
-				os.Exit(1)
-			} else if args[0] != "ok" {
-				os.Exit(2)
-			}
-		}
-	}
+	testutils.StandardHelperProcess(t)
 }

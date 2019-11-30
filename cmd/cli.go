@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/hashicorp/go-multierror"
 	"github.com/qaware/minikube-support/pkg/apis"
-	packageManagerOs "github.com/qaware/minikube-support/pkg/packagemanager/os"
 	"github.com/qaware/minikube-support/pkg/plugins"
 	"github.com/spf13/cobra"
 	"os"
@@ -98,5 +97,4 @@ func init() {
 			runCmd.AddCommand(NewRunSingleCommand(plugin))
 		}
 	}
-	packageManagerOs.InitOsPackageManager()
 }

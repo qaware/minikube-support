@@ -4,3 +4,4 @@ minikube-support
 pb/*.go
 /logs/
 *.log
+tmp/

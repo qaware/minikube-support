@@ -16,3 +16,14 @@ func MockWithoutResponse(returnStatus int, cmd string, args ...string) {
 
 	TestProcessResponses = append(TestProcessResponses, test)
 }
+
+func MockWithStdOut(stdOut string, returnStatus int, cmd string, args ...string) {
+	test := TestProcessResponse{
+		Command:        cmd,
+		Args:           args,
+		ResponseStatus: returnStatus,
+		Stdout:         stdOut,
+	}
+
+	TestProcessResponses = append(TestProcessResponses, test)
+}

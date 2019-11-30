@@ -1,4 +1,4 @@
-// +build darwin
+// +build darwin linux
 
 package os
 
@@ -11,15 +11,15 @@ import (
 	"strings"
 )
 
+func init() {
+	packagemanager.RegisterManager(newBrewPackageManager(), 1)
+}
+
 // Implementation for the brew package manager.
 type brewPackageManager struct{}
 
-func newBrewPackageManager() packagemanager.PackageManager {
+func newBrewPackageManager() *brewPackageManager {
 	return &brewPackageManager{}
-}
-
-func InitOsPackageManager() {
-	packagemanager.SetOsPackageManager(newBrewPackageManager())
 }
 
 func (b *brewPackageManager) Install(pkg string) error {
@@ -54,7 +54,16 @@ func (b *brewPackageManager) Uninstall(pkg string) error {
 	return runBrewCommand("uninstall", pkg)
 }
 func (b *brewPackageManager) String() string {
-	return "BrewPackageManager"
+	return "brew"
+}
+
+func (b *brewPackageManager) IsAvailable() bool {
+	_, e := sh.RunCmd("which", "brew")
+	if e == nil {
+		return true
+	}
+	logrus.Debugf("Can not find brew: %s", e)
+	return false
 }
 
 func (brewPackageManager) IsOsPackageManager() bool {
