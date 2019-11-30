@@ -15,19 +15,21 @@ ifeq ($(OS),Windows_NT)
 		ARCH=32
 	endif
 else
-	UNAME_S := $(shell uname -s)
-	ifeq ($(UNAME_S),Linux)
-		OS=linux
-	endif
-	ifeq ($(UNAME_S),Darwin)
-		OS=osx
-	endif
 	UNAME_P := $(shell uname -p)
 	ifeq ($(UNAME_P),x86_64)
 		ARCH=x86_64
 	endif
 	ifneq ($(filter %86,$(UNAME_P)),)
 		ARCH=x86_32
+	endif
+
+	UNAME_S := $(shell uname -s)
+	ifeq ($(UNAME_S),Linux)
+		OS=linux
+	endif
+	ifeq ($(UNAME_S),Darwin)
+		OS=osx
+		ARCH=x86_64
 	endif
 endif
 PROTOC_ZIP:=protoc-$(PROTOC_VERSION)-$(OS)-$(ARCH).zip
