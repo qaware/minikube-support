@@ -86,7 +86,7 @@ Then the built binary is located under [`bin`](bin).
 
 ## Using prebuilt images
 
-Take a look under [Releases](./releases) and download the prebuilt image for your operating system.
+Take a look under [Releases](https://github.com/qaware/minikube-support/releases) and download the prebuilt image for your operating system.
 
 # Contributing
 
