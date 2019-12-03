@@ -64,6 +64,30 @@ minikube-support remove [TOOL]
 
 ![minikube-support install](install_all.png)
 
+# Installing
+
+## Requirements
+
+The `minikube-support`-Tools requires a supported and preinstalled package manager on the system.
+This allows the tools to install the additional helper tools directly using the system's package manger.
+
+Currently the following package managers are supported:
+
+- [**HomeBrew**](https://brew.sh/) (macOS and Linux using [Linuxbrew](https://docs.brew.sh/Homebrew-on-Linux))
+
+## Building from Source
+
+```shell script
+git clone https://github.com/qaware/minikube-support.git
+make build
+```
+
+Then the built binary is located under [`bin`](bin).
+
+## Using prebuilt images
+
+Take a look under [Releases](./releases) and download the prebuilt image for your operating system.
+
 # Contributing
 
 1. Fork it
