@@ -37,7 +37,7 @@ PROTOC_ZIP:=protoc-$(PROTOC_VERSION)-$(OS)-$(ARCH).zip
 all: dns.pb.go
 
 dns.pb.go: dns.proto
-	protoc --go_out=plugins=grpc:. dns.proto
+	$(HOME)/go/bin/protoc --go_out=plugins=grpc:. dns.proto
 
 .PHONY: clean
 clean:
