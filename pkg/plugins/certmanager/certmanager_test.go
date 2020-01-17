@@ -85,6 +85,9 @@ func Test_certManager_Install(t *testing.T) {
 }
 
 func Test_certManager_Update(t *testing.T) {
+	sh.ExecCommand = testutils.FakeExecCommand
+	defer func() { sh.ExecCommand = exec.Command }()
+
 	hook := test.NewGlobal()
 	logrus.SetLevel(logrus.DebugLevel)
 	helmInstallWaitPeriod = 0
@@ -109,6 +112,10 @@ func Test_certManager_Update(t *testing.T) {
 			helmManager := helmFake.NewMockManager(ctrl)
 			ghClient := ghClientFake.NewMockClient(ctrl)
 			handler := fake.NewContextHandler(k8sFake.NewSimpleClientset(), dynamicFake.NewSimpleDynamicClient(scheme.Scheme))
+			testutils.TestProcessResponses = []testutils.TestProcessResponse{
+				{Command: "mkcert", Args: []string{"-CAROOT"}, ResponseStatus: 0, Stdout: "fixtures/"},
+			}
+
 			m := &certManager{
 				manager:        helmManager,
 				contextHandler: handler,
