@@ -1,21 +1,21 @@
+SHELL = /usr/bin/env bash -o pipefail -o errexit -o nounset
 NAME := minikube-support
 ORG := chr-fritz
 ROOT_PACKAGE := github.com/qaware/minikube-support
 #VERSION := $(shell jx-release-version)
 VERSION := 0.1.0-SNAPSHOT
 
-GO := GO15VENDOREXPERIMENT=1 go
-REVISION        := $(shell git rev-parse --short HEAD 2> /dev/null  || echo 'unknown')
+REVISION   := $(shell git rev-parse --short HEAD 2> /dev/null  || echo 'unknown')
 BRANCH     := $(shell git rev-parse --abbrev-ref HEAD 2> /dev/null  || echo 'unknown')
 BUILD_DATE := $(shell date +%Y-%m-%dT%H:%M:%S)
 
 GO_VERSION=$(shell go version | sed -e 's/^[^0-9.]*\([0-9.]*\).*/\1/')
-PACKAGE_DIRS := $(shell $(GO) list ./... | grep -v /vendor/)
-FORMATTED := $(shell $(GO) fmt $(PACKAGE_DIRS))
+PACKAGE_DIRS := $(shell go list ./...)
 
 GOOS ?= $(shell go env GOOS)
 GOARCH ?= $(shell go env GOARCH)
 BUILD_DIR ?= ./bin
+REPORTS_DIR ?= ./reports
 
 BUILDFLAGS := -ldflags \
   " -X '$(ROOT_PACKAGE)/version.Version=$(VERSION)'\
@@ -25,7 +25,19 @@ BUILDFLAGS := -ldflags \
     -X '$(ROOT_PACKAGE)/version.GoVersion=$(GO_VERSION)'\
     -s -w -extldflags '-static'"
 
-all: test $(GOOS)-build
+.PHONY: all
+all: lint test $(GOOS)-build
+	@echo "SUCCESS"
+
+.PHONY: ci
+ci: ci-check ci-build
+
+.PHONY: ci-build
+ci-build: test $(GOOS)-build
+
+.PHONY: ci-check
+ci-check: lint tidy generate imports vet
+	git diff --exit-code
 
 check: fmt test
 
@@ -38,22 +50,30 @@ debug: pb
 	CGO_ENABLED=0 GOARCH=amd64 go build -gcflags "all=-N -l" -o $(BUILD_DIR)/$(NAME)-debug $(ROOT_PACKAGE)
 	dlv --listen=:2345 --headless=true --api-version=2 exec $(BUILD_DIR)/$(NAME)-debug run
 
-fmt:
-	@FORMATTED=`$(GO) fmt $(PACKAGE_DIRS)`
-	@([[ ! -z "$(FORMATTED)" ]] && printf "Fixed unformatted files:\n$(FORMATTED)") || true
+.PHONY: imports
+imports:
+	find . -type f -name '*.go' ! -name '*_mocks.go' -print0 | xargs -0 goimports -w -l
 
+.PHONY: tidy
+tidy:
+	go mod tidy
+
+.PHONY: darwin-build
 darwin-build: pb
 	CGO_ENABLED=0 GOARCH=amd64 GOOS=darwin go build $(BUILDFLAGS) -o $(BUILD_DIR)/$(NAME)-darwin $(ROOT_PACKAGE)
 
+.PHONY: linux-build
 linux-build: pb
 	CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build $(BUILDFLAGS) -o $(BUILD_DIR)/$(NAME)-linux $(ROOT_PACKAGE)
 
+.PHONY: windows-build
 windows-build: pb
 	CGO_ENABLED=0 GOARCH=amd64 GOOS=windows go build $(BUILDFLAGS) -o $(BUILD_DIR)/$(NAME)-windows.exe $(ROOT_PACKAGE)
 
 .PHONY: test
 test: generate pb
-	go test -v $(PACKAGE_DIRS)
+	mkdir -p $(REPORTS_DIR)
+	go test -race $(PACKAGE_DIRS) -coverprofile=$(REPORTS_DIR)/coverage.out -v $(PACKAGE_DIRS) | tee >(go tool test2json > $(REPORTS_DIR)/tests.json)
 
 .PHONY: release
 release: clean test cross
@@ -69,6 +89,19 @@ cross: darwin-build linux-build windows-build
 pb:
 	$(MAKE) -C pb
 
+.PHONY: vet
+vet:
+	mkdir -p $(REPORTS_DIR)
+	go vet -v $(PACKAGE_DIRS) 2> >(tee $(REPORTS_DIR)/vet.out)
+
+.PHONY: lint
+lint:
+	mkdir -p $(REPORTS_DIR)
+	# GOGC default is 100, but we need more aggressive GC to not consume too much memory
+	# might not be necessary in future versions of golangci-lint
+	# https://github.com/golangci/golangci-lint/issues/483
+	GOGC=20 golangci-lint run --disable=typecheck --deadline=5m --out-format checkstyle > $(REPORTS_DIR)/lint.xml || true
+
 .PHONY: generate
 generate:
 	go generate ./...
@@ -77,10 +110,13 @@ generate:
 clean:
 	rm -rf $(BUILD_DIR)
 	rm -rf release
+	rm -rf $(REPORTS_DIR)
 
 .PHONY: buildDeps
 buildDeps:
 	go get -u google.golang.org/grpc
 	go get -u github.com/golang/protobuf/protoc-gen-go
 	go install -i github.com/golang/mock/mockgen
+	go install -i github.com/golangci/golangci-lint/cmd/golangci-lint
+	go install -i golang.org/x/tools/cmd/goimports
 	$(MAKE) -C pb buildDeps

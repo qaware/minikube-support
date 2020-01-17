@@ -4,6 +4,10 @@ go:
 os:
   - linux
   - osx
+addons:
+  sonarcloud:
+    organization: "chr-fritz"
+
 before_install:
   - make buildDeps pb generate
 git:
@@ -12,3 +16,11 @@ git:
 jobs:
   allow_failures:
     - os: linux
+
+script:
+  # Wraps the compilation with the Build Wrapper to generate configuration (used
+  # later by the SonarQube Scanner) into the "bw-output" folder
+  - make ci
+  # And finally run the SonarQube analysis - read the "sonar-project.properties"
+  # file to see the specific configuration
+  -  sonar-scanner

@@ -5,3 +5,4 @@ pb/*.go
 /logs/
 *.log
 tmp/
+reports/
