@@ -3,10 +3,11 @@ package coredns
 import (
 	"bytes"
 	"fmt"
-	"github.com/qaware/minikube-support/pkg/apis"
-	"github.com/qaware/minikube-support/pkg/utils"
 	"net"
 	"time"
+
+	"github.com/qaware/minikube-support/pkg/apis"
+	"github.com/qaware/minikube-support/pkg/utils"
 )
 
 const GrpcPluginName = "coredns-grpc"

@@ -1,12 +1,13 @@
 package cmd
 
 import (
+	"testing"
+
 	"github.com/qaware/minikube-support/pkg/apis"
 	"github.com/qaware/minikube-support/pkg/plugins"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestCreateInstallCommands(t *testing.T) {

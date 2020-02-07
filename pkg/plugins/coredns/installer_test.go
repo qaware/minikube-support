@@ -2,14 +2,15 @@ package coredns
 
 import (
 	"fmt"
-	"github.com/golang/mock/gomock"
-	"github.com/qaware/minikube-support/pkg/github/fake"
-	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"os"
 	"path"
 	"runtime"
 	"testing"
+
+	"github.com/golang/mock/gomock"
+	"github.com/qaware/minikube-support/pkg/github/fake"
+	"github.com/stretchr/testify/assert"
 )
 
 func Test_installer_downloadCoreDns(t *testing.T) {

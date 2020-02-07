@@ -5,9 +5,10 @@
 package fake
 
 import (
-	gomock "github.com/golang/mock/gomock"
 	io "io"
 	reflect "reflect"
+
+	gomock "github.com/golang/mock/gomock"
 )
 
 // MockClient is a mock of Client interface
@@ -35,16 +36,19 @@ func (m *MockClient) EXPECT() *MockClientMockRecorder {
 
 // SetApiToken mocks base method
 func (m *MockClient) SetApiToken(apiToken string) {
+	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "SetApiToken", apiToken)
 }
 
 // SetApiToken indicates an expected call of SetApiToken
 func (mr *MockClientMockRecorder) SetApiToken(apiToken interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetApiToken", reflect.TypeOf((*MockClient)(nil).SetApiToken), apiToken)
 }
 
 // GetLatestReleaseTag mocks base method
 func (m *MockClient) GetLatestReleaseTag(org, repository string) (string, error) {
+	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetLatestReleaseTag", org, repository)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
@@ -53,11 +57,13 @@ func (m *MockClient) GetLatestReleaseTag(org, repository string) (string, error)
 
 // GetLatestReleaseTag indicates an expected call of GetLatestReleaseTag
 func (mr *MockClientMockRecorder) GetLatestReleaseTag(org, repository interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLatestReleaseTag", reflect.TypeOf((*MockClient)(nil).GetLatestReleaseTag), org, repository)
 }
 
 // DownloadReleaseAsset mocks base method
 func (m *MockClient) DownloadReleaseAsset(org, repository, tag, assetName string) (io.ReadCloser, error) {
+	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DownloadReleaseAsset", org, repository, tag, assetName)
 	ret0, _ := ret[0].(io.ReadCloser)
 	ret1, _ := ret[1].(error)
@@ -66,5 +72,6 @@ func (m *MockClient) DownloadReleaseAsset(org, repository, tag, assetName string
 
 // DownloadReleaseAsset indicates an expected call of DownloadReleaseAsset
 func (mr *MockClientMockRecorder) DownloadReleaseAsset(org, repository, tag, assetName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DownloadReleaseAsset", reflect.TypeOf((*MockClient)(nil).DownloadReleaseAsset), org, repository, tag, assetName)
 }

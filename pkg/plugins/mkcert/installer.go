@@ -1,11 +1,12 @@
 package mkcert
 
 import (
+	"os"
+
 	"github.com/qaware/minikube-support/pkg/apis"
 	"github.com/qaware/minikube-support/pkg/packagemanager"
 	"github.com/qaware/minikube-support/pkg/sh"
 	"github.com/sirupsen/logrus"
-	"os"
 )
 
 type mkCertInstaller struct {

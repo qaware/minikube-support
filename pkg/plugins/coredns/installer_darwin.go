@@ -2,13 +2,14 @@ package coredns
 
 import (
 	"fmt"
-	"github.com/kballard/go-shellquote"
-	"github.com/qaware/minikube-support/pkg/sh"
-	"github.com/sirupsen/logrus"
 	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
+
+	"github.com/kballard/go-shellquote"
+	"github.com/qaware/minikube-support/pkg/sh"
+	"github.com/sirupsen/logrus"
 )
 
 const launchctlConfig = "/Library/LaunchDaemons/de.chrfritz.minikube-support.coredns.plist"

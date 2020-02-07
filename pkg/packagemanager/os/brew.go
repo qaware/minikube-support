@@ -3,12 +3,13 @@
 package os
 
 import (
+	"os"
+	"strings"
+
 	"github.com/pkg/errors"
 	"github.com/qaware/minikube-support/pkg/packagemanager"
 	"github.com/qaware/minikube-support/pkg/sh"
 	"github.com/sirupsen/logrus"
-	"os"
-	"strings"
 )
 
 func init() {

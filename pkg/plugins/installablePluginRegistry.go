@@ -2,9 +2,10 @@ package plugins
 
 import (
 	"fmt"
+	"sort"
+
 	"github.com/qaware/minikube-support/pkg/apis"
 	"github.com/sirupsen/logrus"
-	"sort"
 )
 
 // The plugin registry.

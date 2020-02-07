@@ -3,12 +3,13 @@ package coredns
 import (
 	"context"
 	"fmt"
+	"net"
+	"time"
+
 	"github.com/miekg/dns"
 	"github.com/qaware/minikube-support/pb"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
-	"net"
-	"time"
 )
 
 // server is a small grpc service that answers to dns queries over grpc from CoreDNS.

@@ -5,8 +5,9 @@ package packagemanager
 import (
 	"container/heap"
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"sync"
+
+	"github.com/sirupsen/logrus"
 )
 
 // PackageManager is a simple abstraction about the different package managers for the different operating systems.

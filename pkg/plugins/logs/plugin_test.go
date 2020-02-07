@@ -1,9 +1,10 @@
 package logs
 
 import (
-	"github.com/stretchr/testify/assert"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 
 	"github.com/qaware/minikube-support/pkg/apis"
 	"github.com/sirupsen/logrus"

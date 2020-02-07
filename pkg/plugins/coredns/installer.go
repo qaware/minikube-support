@@ -4,16 +4,17 @@ import (
 	"archive/tar"
 	"compress/gzip"
 	"fmt"
-	"github.com/hashicorp/go-multierror"
-	"github.com/qaware/minikube-support/pkg/apis"
-	"github.com/qaware/minikube-support/pkg/github"
-	"github.com/qaware/minikube-support/pkg/utils/sudos"
-	"github.com/sirupsen/logrus"
 	"io"
 	"os"
 	"path"
 	"runtime"
 	"strings"
+
+	"github.com/hashicorp/go-multierror"
+	"github.com/qaware/minikube-support/pkg/apis"
+	"github.com/qaware/minikube-support/pkg/github"
+	"github.com/qaware/minikube-support/pkg/utils/sudos"
+	"github.com/sirupsen/logrus"
 )
 
 type installer struct {

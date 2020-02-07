@@ -1,10 +1,11 @@
 package cmd
 
 import (
+	"sort"
+
 	"github.com/qaware/minikube-support/pkg/apis"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"sort"
 )
 
 type UninstallOptions struct {

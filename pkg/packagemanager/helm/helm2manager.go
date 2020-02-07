@@ -2,13 +2,14 @@ package helm
 
 import (
 	"fmt"
+	"os"
+	"sync"
+
 	"github.com/kballard/go-shellquote"
 	"github.com/qaware/minikube-support/pkg/kubernetes"
 	"github.com/qaware/minikube-support/pkg/sh"
 	"github.com/qaware/minikube-support/pkg/utils"
 	"github.com/sirupsen/logrus"
-	"os"
-	"sync"
 )
 
 type helm2Manager struct {

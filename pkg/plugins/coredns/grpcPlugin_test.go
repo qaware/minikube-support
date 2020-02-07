@@ -1,10 +1,11 @@
 package coredns
 
 import (
-	"github.com/stretchr/testify/assert"
 	"net"
 	"reflect"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 
 	"github.com/qaware/minikube-support/pkg/apis"
 )

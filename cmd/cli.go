@@ -2,11 +2,12 @@ package cmd
 
 import (
 	"fmt"
+	"os"
+
 	"github.com/hashicorp/go-multierror"
 	"github.com/qaware/minikube-support/pkg/apis"
 	"github.com/qaware/minikube-support/pkg/plugins"
 	"github.com/spf13/cobra"
-	"os"
 )
 
 // RootCommandOptions stores the the values for global command flags like the kubeconfig and context name.

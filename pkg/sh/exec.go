@@ -1,11 +1,12 @@
 package sh
 
 import (
-	"github.com/sirupsen/logrus"
 	"os"
 	"os/exec"
 	"strings"
 	"sync"
+
+	"github.com/sirupsen/logrus"
 )
 
 // Alias for os/exec.Command to allow mocking the command executions in tests.

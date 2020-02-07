@@ -1,11 +1,12 @@
 package coredns
 
 import (
-	"github.com/miekg/dns"
-	"github.com/stretchr/testify/assert"
 	"net"
 	"reflect"
 	"testing"
+
+	"github.com/miekg/dns"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/qaware/minikube-support/pkg/apis"
 )

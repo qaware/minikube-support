@@ -3,6 +3,9 @@ package k8sdns
 import (
 	"bytes"
 	"fmt"
+	"strings"
+	"text/tabwriter"
+
 	"github.com/hashicorp/go-multierror"
 	"github.com/qaware/minikube-support/pkg/apis"
 	"github.com/qaware/minikube-support/pkg/kubernetes"
@@ -11,8 +14,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
-	"strings"
-	"text/tabwriter"
 )
 
 type k8sDns struct {

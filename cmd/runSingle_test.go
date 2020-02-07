@@ -1,12 +1,13 @@
 package cmd
 
 import (
-	"github.com/qaware/minikube-support/pkg/testutils"
-	"github.com/sirupsen/logrus"
-	"github.com/sirupsen/logrus/hooks/test"
 	"syscall"
 	"testing"
 	"time"
+
+	"github.com/qaware/minikube-support/pkg/testutils"
+	"github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus/hooks/test"
 
 	"github.com/qaware/minikube-support/pkg/apis"
 	"github.com/spf13/cobra"

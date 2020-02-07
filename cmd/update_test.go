@@ -1,9 +1,10 @@
 package cmd
 
 import (
+	"testing"
+
 	"github.com/qaware/minikube-support/pkg/plugins"
 	"github.com/stretchr/testify/assert"
-	"testing"
 
 	"github.com/spf13/cobra"
 )

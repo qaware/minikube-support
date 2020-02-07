@@ -1,8 +1,9 @@
 package logs
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestBuffer_WriteGet(t *testing.T) {

@@ -1,13 +1,14 @@
 package minikube
 
 import (
+	"strings"
+	"time"
+
 	"github.com/qaware/minikube-support/pkg/apis"
 	"github.com/qaware/minikube-support/pkg/kubernetes"
 	"github.com/qaware/minikube-support/pkg/plugins/coredns"
 	"github.com/qaware/minikube-support/pkg/sh"
 	"github.com/sirupsen/logrus"
-	"strings"
-	"time"
 )
 
 // ip is a simple plugin which adds a new resource entry for "vm.minikube." to the minikube ip address.

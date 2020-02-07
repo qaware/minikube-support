@@ -2,6 +2,9 @@ package certmanager
 
 import (
 	"errors"
+	"os/exec"
+	"testing"
+
 	"github.com/golang/mock/gomock"
 	"github.com/magiconair/properties/assert"
 	"github.com/qaware/minikube-support/pkg/github"
@@ -22,8 +25,6 @@ import (
 	k8sFake "k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/kubernetes/scheme"
 	testing2 "k8s.io/client-go/testing"
-	"os/exec"
-	"testing"
 )
 
 func TestNewCertManager(t *testing.T) {

@@ -2,12 +2,13 @@ package mkcert
 
 import (
 	"fmt"
-	"github.com/qaware/minikube-support/pkg/packagemanager"
-	"github.com/qaware/minikube-support/pkg/sh"
-	"github.com/qaware/minikube-support/pkg/testutils"
 	"os"
 	"os/exec"
 	"testing"
+
+	"github.com/qaware/minikube-support/pkg/packagemanager"
+	"github.com/qaware/minikube-support/pkg/sh"
+	"github.com/qaware/minikube-support/pkg/testutils"
 )
 
 func Test_mkCertInstaller_Install(t *testing.T) {

@@ -3,10 +3,11 @@ package packagemanager
 import (
 	"container/heap"
 	"errors"
+	"testing"
+
 	"github.com/golang/mock/gomock"
 	"github.com/magiconair/properties/assert"
 	"github.com/qaware/minikube-support/pkg/packagemanager/fake"
-	"testing"
 )
 
 func Test_findOsPackageManager(t *testing.T) {

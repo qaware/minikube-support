@@ -2,10 +2,11 @@ package cmd
 
 import (
 	"bytes"
-	"github.com/pkg/errors"
-	"github.com/spf13/cobra"
 	"io"
 	"os"
+
+	"github.com/pkg/errors"
+	"github.com/spf13/cobra"
 )
 
 var (

@@ -1,9 +1,10 @@
 package plugins
 
 import (
-	"github.com/qaware/minikube-support/pkg/apis"
 	"reflect"
 	"testing"
+
+	"github.com/qaware/minikube-support/pkg/apis"
 )
 
 func (p *DummyPlugin) Start(chan *apis.MonitoringMessage) (boxName string, err error) {

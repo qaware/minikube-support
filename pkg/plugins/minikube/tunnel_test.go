@@ -2,11 +2,6 @@ package minikube
 
 import (
 	"fmt"
-	"github.com/qaware/minikube-support/pkg/apis"
-	"github.com/qaware/minikube-support/pkg/kubernetes/fake"
-	"github.com/qaware/minikube-support/pkg/sh"
-	"github.com/qaware/minikube-support/pkg/testutils"
-	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -14,6 +9,12 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/qaware/minikube-support/pkg/apis"
+	"github.com/qaware/minikube-support/pkg/kubernetes/fake"
+	"github.com/qaware/minikube-support/pkg/sh"
+	"github.com/qaware/minikube-support/pkg/testutils"
+	"github.com/stretchr/testify/assert"
 )
 
 func Test_initScanner(t *testing.T) {

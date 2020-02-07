@@ -3,9 +3,10 @@
 package os
 
 import (
-	"github.com/qaware/minikube-support/pkg/testutils"
 	"os"
 	"testing"
+
+	"github.com/qaware/minikube-support/pkg/testutils"
 )
 
 func Test_runBrewCommand(t *testing.T) {

@@ -1,13 +1,14 @@
 package kubernetes
 
 import (
+	"os"
+	"os/exec"
+	"testing"
+
 	"github.com/qaware/minikube-support/pkg/sh"
 	"github.com/qaware/minikube-support/pkg/testutils"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/client-go/rest"
-	"os"
-	"os/exec"
-	"testing"
 )
 
 func Test_contextHandler_GetClientSet(t *testing.T) {

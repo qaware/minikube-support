@@ -2,13 +2,14 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/qaware/minikube-support/pkg/sh"
-	"github.com/qaware/minikube-support/pkg/testutils"
 	"os/exec"
 	"reflect"
 	"syscall"
 	"testing"
 	"time"
+
+	"github.com/qaware/minikube-support/pkg/sh"
+	"github.com/qaware/minikube-support/pkg/testutils"
 
 	"github.com/qaware/minikube-support/pkg/apis"
 	"github.com/spf13/cobra"

@@ -1,10 +1,11 @@
 package testutils
 
 import (
-	"github.com/sirupsen/logrus/hooks/test"
-	"github.com/stretchr/testify/assert"
 	"strings"
 	"testing"
+
+	"github.com/sirupsen/logrus/hooks/test"
+	"github.com/stretchr/testify/assert"
 )
 
 // CheckLogEntry checks the latest logged entry if the message begin with the given prefix.

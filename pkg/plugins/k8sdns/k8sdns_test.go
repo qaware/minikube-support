@@ -1,12 +1,13 @@
 package k8sdns
 
 import (
+	"sort"
+	"testing"
+
 	"github.com/qaware/minikube-support/pkg/apis"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
 	v1meta "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"sort"
-	"testing"
 
 	"k8s.io/api/extensions/v1beta1"
 )

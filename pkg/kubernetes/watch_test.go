@@ -2,15 +2,16 @@ package kubernetes
 
 import (
 	"errors"
+	"reflect"
+	"testing"
+	"time"
+
 	"github.com/golang/mock/gomock"
 	"github.com/qaware/minikube-support/pkg/kubernetes/fake"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
-	"reflect"
-	"testing"
-	"time"
 )
 
 func TestNewWatcher(t *testing.T) {

@@ -1,9 +1,10 @@
 package logs
 
 import (
+	"strings"
+
 	"github.com/qaware/minikube-support/pkg/apis"
 	"github.com/sirupsen/logrus"
-	"strings"
 )
 
 // plugin is the internal structure for the logs plugin.

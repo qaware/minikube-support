@@ -2,6 +2,11 @@ package certmanager
 
 import (
 	"fmt"
+	"io/ioutil"
+	"path"
+	"strings"
+	"time"
+
 	"github.com/hashicorp/go-multierror"
 	"github.com/qaware/minikube-support/pkg/apis"
 	"github.com/qaware/minikube-support/pkg/github"
@@ -9,15 +14,11 @@ import (
 	"github.com/qaware/minikube-support/pkg/packagemanager/helm"
 	"github.com/qaware/minikube-support/pkg/sh"
 	"github.com/sirupsen/logrus"
-	"io/ioutil"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"path"
-	"strings"
-	"time"
 )
 
 type certManager struct {

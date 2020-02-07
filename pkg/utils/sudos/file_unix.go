@@ -4,9 +4,10 @@ package sudos
 
 import (
 	"fmt"
+	"strconv"
+
 	"github.com/pkg/errors"
 	"github.com/qaware/minikube-support/pkg/sh"
-	"strconv"
 )
 
 // MkdirAll does the same as os.MkdirAll() but it will be executed as sub process with root rights (sudo)

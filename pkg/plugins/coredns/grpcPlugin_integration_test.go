@@ -3,13 +3,14 @@ package coredns
 import (
 	"context"
 	"fmt"
+	"reflect"
+	"testing"
+
 	"github.com/miekg/dns"
 	"github.com/qaware/minikube-support/pb"
 	"github.com/qaware/minikube-support/pkg/apis"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
-	"reflect"
-	"testing"
 )
 
 func TestGrpcPlugin(t *testing.T) {

@@ -1,9 +1,10 @@
 package logging
 
 import (
+	"testing"
+
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func Test_loggerConfig_Initialize(t *testing.T) {

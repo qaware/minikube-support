@@ -4,12 +4,6 @@ package coredns
 
 import (
 	"fmt"
-	"github.com/golang/mock/gomock"
-	"github.com/kballard/go-shellquote"
-	"github.com/qaware/minikube-support/pkg/github/fake"
-	"github.com/qaware/minikube-support/pkg/sh"
-	"github.com/qaware/minikube-support/pkg/testutils"
-	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -17,6 +11,13 @@ import (
 	"runtime"
 	"strings"
 	"testing"
+
+	"github.com/golang/mock/gomock"
+	"github.com/kballard/go-shellquote"
+	"github.com/qaware/minikube-support/pkg/github/fake"
+	"github.com/qaware/minikube-support/pkg/sh"
+	"github.com/qaware/minikube-support/pkg/testutils"
+	"github.com/stretchr/testify/assert"
 )
 
 func Test_installer_Install(t *testing.T) {

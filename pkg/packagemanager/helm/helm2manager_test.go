@@ -1,14 +1,15 @@
 package helm
 
 import (
+	"os/exec"
+	"testing"
+
 	"github.com/qaware/minikube-support/pkg/kubernetes/fake"
 	"github.com/qaware/minikube-support/pkg/sh"
 	"github.com/qaware/minikube-support/pkg/testutils"
 	"github.com/sirupsen/logrus"
 	"github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/assert"
-	"os/exec"
-	"testing"
 )
 
 var global = test.NewGlobal()

@@ -1,10 +1,11 @@
 package helm
 
 import (
+	"strings"
+
 	"github.com/pkg/errors"
 	"github.com/qaware/minikube-support/pkg/kubernetes"
 	"github.com/qaware/minikube-support/pkg/sh"
-	"strings"
 )
 
 //go:generate mockgen -destination=fake/mocks.go -package=fake -source=manager.go

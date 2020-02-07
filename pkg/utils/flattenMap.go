@@ -5,8 +5,9 @@ package utils
 
 import (
 	"fmt"
-	"github.com/hashicorp/go-multierror"
 	"reflect"
+
+	"github.com/hashicorp/go-multierror"
 )
 
 // Flatten takes a structure and turns into a flat map[string]string.

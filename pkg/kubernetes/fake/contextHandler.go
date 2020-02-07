@@ -2,6 +2,7 @@ package fake
 
 import (
 	"fmt"
+
 	"github.com/qaware/minikube-support/pkg/testutils"
 	"k8s.io/client-go/dynamic"
 	dyntestclient "k8s.io/client-go/dynamic/fake"

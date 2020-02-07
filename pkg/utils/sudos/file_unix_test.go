@@ -3,10 +3,11 @@
 package sudos
 
 import (
-	"github.com/qaware/minikube-support/pkg/sh"
-	"github.com/qaware/minikube-support/pkg/testutils"
 	"os/exec"
 	"testing"
+
+	"github.com/qaware/minikube-support/pkg/sh"
+	"github.com/qaware/minikube-support/pkg/testutils"
 )
 
 func TestChown(t *testing.T) {

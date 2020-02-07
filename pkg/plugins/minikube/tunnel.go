@@ -4,14 +4,15 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"github.com/qaware/minikube-support/pkg/apis"
-	"github.com/qaware/minikube-support/pkg/kubernetes"
-	"github.com/qaware/minikube-support/pkg/sh"
-	"github.com/sirupsen/logrus"
 	"io"
 	"os"
 	"os/exec"
 	"syscall"
+
+	"github.com/qaware/minikube-support/pkg/apis"
+	"github.com/qaware/minikube-support/pkg/kubernetes"
+	"github.com/qaware/minikube-support/pkg/sh"
+	"github.com/sirupsen/logrus"
 )
 
 type tunnel struct {

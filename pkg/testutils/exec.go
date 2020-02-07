@@ -4,12 +4,13 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/qaware/minikube-support/pkg/sh"
 	"os"
 	"os/exec"
 	"reflect"
 	"testing"
 	"time"
+
+	"github.com/qaware/minikube-support/pkg/sh"
 )
 
 // StartCommandLineTest initializes everything that is needed for commandline tests.

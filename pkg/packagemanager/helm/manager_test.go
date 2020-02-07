@@ -1,12 +1,13 @@
 package helm
 
 import (
+	"os/exec"
+	"testing"
+
 	"github.com/qaware/minikube-support/pkg/kubernetes/fake"
 	"github.com/qaware/minikube-support/pkg/sh"
 	"github.com/qaware/minikube-support/pkg/testutils"
 	"github.com/stretchr/testify/assert"
-	"os/exec"
-	"testing"
 )
 
 func TestNewHelmManager(t *testing.T) {

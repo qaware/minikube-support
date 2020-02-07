@@ -1,9 +1,10 @@
 package k8sdns
 
 import (
+	"reflect"
+
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/api/extensions/v1beta1"
-	"reflect"
 )
 
 // entry is a helper structure for intern handling of updated ingresses and services.

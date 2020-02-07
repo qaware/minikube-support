@@ -2,15 +2,16 @@ package kubernetes
 
 import (
 	"fmt"
+	"path/filepath"
+	"strings"
+	"sync"
+
 	"github.com/qaware/minikube-support/pkg/sh"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/homedir"
-	"path/filepath"
-	"strings"
-	"sync"
 )
 
 // ContextHandler is a small interface to encapsulate everything related with

@@ -9,9 +9,10 @@ import (
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	k8sFake "k8s.io/client-go/kubernetes/fake"
 	"os/exec"
 	"testing"
+
+	k8sFake "k8s.io/client-go/kubernetes/fake"
 )
 
 func Test_helm3Manager_Install(t *testing.T) {

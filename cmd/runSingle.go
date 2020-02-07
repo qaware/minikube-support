@@ -2,12 +2,13 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/qaware/minikube-support/pkg/apis"
-	"github.com/sirupsen/logrus"
-	"github.com/spf13/cobra"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/qaware/minikube-support/pkg/apis"
+	"github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
 )
 
 // RunSingleOptions contains all options and information that are needed to run a single plugin from the command line.
