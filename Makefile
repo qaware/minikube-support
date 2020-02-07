@@ -92,7 +92,7 @@ pb:
 .PHONY: vet
 vet:
 	mkdir -p $(REPORTS_DIR)
-	go vet -v $(PACKAGE_DIRS) 2> >(tee $(REPORTS_DIR)/vet.out)
+	go vet -v $(PACKAGE_DIRS) 2> >(tee $(REPORTS_DIR)/vet.out) || true
 
 .PHONY: lint
 lint:
