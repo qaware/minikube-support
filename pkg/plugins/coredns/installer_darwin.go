@@ -32,9 +32,7 @@ func (i *installer) installSpecific() error {
 
 	return i.writeResolverConfig()
 }
-func (i *installer) updateSpecific() error {
-	return nil
-}
+
 func (i *installer) uninstallSpecific() error {
 	_, e := sh.RunSudoCmd("launchctl", "unload", launchctlConfig)
 	if e != nil {

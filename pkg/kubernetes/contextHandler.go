@@ -100,7 +100,7 @@ func (h *contextHandler) GetPredefinedContextName() string {
 }
 
 func (h *contextHandler) Kubectl(command string, args ...string) (string, error) {
-	prefix := append([]string{command})
+	prefix := []string{command}
 	if h.GetPredefinedContextName() != "" {
 		prefix = append(prefix, "--context", h.GetPredefinedContextName())
 	}

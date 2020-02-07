@@ -17,7 +17,6 @@ import (
 
 type tunnel struct {
 	command        *exec.Cmd
-	msgChannel     chan *apis.MonitoringMessage
 	contextHandler kubernetes.ContextHandler
 }
 

@@ -27,7 +27,6 @@ type certManager struct {
 	ghClient       github.Client
 	namespace      string
 	values         map[string]interface{}
-	server         string
 }
 
 const PluginName = "certManager"

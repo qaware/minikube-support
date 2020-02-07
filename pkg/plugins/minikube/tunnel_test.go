@@ -134,12 +134,12 @@ func TestHelperProcess(*testing.T) {
 			switch cmd {
 			case "tunnel":
 				bytes, _ := ioutil.ReadFile("minikube-tunnel.txt")
-				_, _ = fmt.Fprintf(os.Stdout, string(bytes))
+				_, _ = fmt.Fprint(os.Stdout, string(bytes))
 				time.Sleep(1 * time.Second)
-				_, _ = fmt.Fprintf(os.Stdout, string(bytes))
+				_, _ = fmt.Fprint(os.Stdout, string(bytes))
 			}
 		case "echo":
-			_, _ = fmt.Fprintf(os.Stdout, strings.Join(args, " "))
+			_, _ = fmt.Fprint(os.Stdout, strings.Join(args, " "))
 		}
 	case "minikube":
 		cmd, _ := args[0], args[1:]

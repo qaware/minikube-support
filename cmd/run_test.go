@@ -30,18 +30,18 @@ func TestRunOptions_Run(t *testing.T) {
 			"all ok",
 			[]apis.StartStopPlugin{&DummyPlugin{}},
 			[]string{"dummy"},
-			[]apis.MonitoringMessage{{"dummy", "Starting..."}},
+			[]apis.MonitoringMessage{{Box: "dummy", Message: "Starting..."}},
 		}, {
 			"one start fails",
 			[]apis.StartStopPlugin{&DummyPlugin{failStart: true},
 				&DummyPlugin{name: "dummy1"}},
 			[]string{"dummy1"},
-			[]apis.MonitoringMessage{{"dummy1", "Starting..."}},
+			[]apis.MonitoringMessage{{Box: "dummy1", Message: "Starting..."}},
 		}, {
 			"one start fails",
 			[]apis.StartStopPlugin{&DummyPlugin{failStop: true}},
 			[]string{"dummy"},
-			[]apis.MonitoringMessage{{"dummy", "Starting..."}},
+			[]apis.MonitoringMessage{{Box: "dummy", Message: "Starting..."}},
 		},
 	}
 	for _, tt := range tests {
@@ -81,7 +81,7 @@ func TestRunOptions_startPlugins(t *testing.T) {
 			}
 			go options.startPlugins()
 			i := 0
-			for _ = range options.messageChannel {
+			for range options.messageChannel {
 				i++
 				if i == len(tt.activePlugins) {
 					break

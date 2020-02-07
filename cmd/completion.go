@@ -207,10 +207,13 @@ __minikube-support_convert_bash_to_zsh() {
 	-e "s/\\\$(type${RWORD}/\$(__minikube-support_type/g" \
 	<<'BASH_COMPLETION_EOF'
 `
-	out.Write([]byte(zshInitialization))
+	_, _ = out.Write([]byte(zshInitialization))
 	buf := new(bytes.Buffer)
 	e = cmd.GenBashCompletion(buf)
-	out.Write(buf.Bytes())
+	if e != nil {
+		return e
+	}
+	_, _ = out.Write(buf.Bytes())
 
 	zshTail := `
 BASH_COMPLETION_EOF
@@ -219,6 +222,6 @@ BASH_COMPLETION_EOF
 __minikube-support_bash_source <(__minikube-support_convert_bash_to_zsh)
 _complete minikube-support 2>/dev/null
 `
-	out.Write([]byte(zshTail))
+	_, _ = out.Write([]byte(zshTail))
 	return nil
 }

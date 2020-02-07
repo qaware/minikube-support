@@ -37,7 +37,7 @@ func TestRunSingleOptions_Run(t *testing.T) {
 			time.Sleep(10 * time.Millisecond)
 			testutils.CheckLogEntry(t, hook, tt.startupPrefix)
 
-			syscall.Kill(syscall.Getpid(), syscall.SIGINT)
+			_ = syscall.Kill(syscall.Getpid(), syscall.SIGINT)
 			time.Sleep(10 * time.Millisecond)
 			testutils.CheckLogEntry(t, hook, tt.stopPrefix)
 		})

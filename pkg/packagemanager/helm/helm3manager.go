@@ -102,7 +102,7 @@ func (h *helm3Manager) Uninstall(release string, purge bool) {
 }
 
 func (h *helm3Manager) runCommand(command string, args ...string) (string, error) {
-	prefix := append([]string{command})
+	prefix := []string{command}
 	if h.context.GetContextName() != "" {
 		prefix = append(prefix, "--kube-context", h.context.GetContextName())
 	}

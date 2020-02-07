@@ -1,7 +1,6 @@
 package k8sdns
 
 import (
-	"fmt"
 	"reflect"
 	"testing"
 )
@@ -121,15 +120,4 @@ func Test_ingressEntry_getRemovedHostNames(t *testing.T) {
 			}
 		})
 	}
-}
-
-// Improves the debug output when tests fail
-func (e *entry) debug() string {
-	if e == nil {
-		return "<nil>"
-	}
-	return fmt.Sprintf(
-		"%s %s {hostNames=%s, targetIps=%s, targetHosts=%s}",
-		e.typ,
-		e.String(), e.hostNames, e.targetIps, e.targetHosts)
 }

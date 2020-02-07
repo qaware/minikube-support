@@ -137,7 +137,7 @@ func (m *helm2Manager) UpdateRepository() error {
 }
 
 func (m *helm2Manager) runCommand(command string, args ...string) (string, error) {
-	prefix := append([]string{command})
+	prefix := []string{command}
 	if m.context.GetContextName() != "" {
 		prefix = append(prefix, "--kube-context", m.context.GetContextName())
 	}
