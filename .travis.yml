@@ -23,4 +23,6 @@ script:
   - make ci
   # And finally run the SonarQube analysis - read the "sonar-project.properties"
   # file to see the specific configuration
-  -  sonar-scanner
+  # SonarQube analysis will only run on macOS as it is already fully implemented.
+  - if [ "$TRAVIS_OS_NAME" = "osx" ]; then sonar-scanner; fi
+
