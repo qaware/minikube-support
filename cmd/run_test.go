@@ -54,7 +54,7 @@ func TestRunOptions_Run(t *testing.T) {
 				contextName:    func() string { return "" },
 			}
 			go options.Run(&cobra.Command{}, []string{})
-			time.Sleep(100 * time.Millisecond)
+			time.Sleep(200 * time.Millisecond)
 			_ = syscall.Kill(syscall.Getpid(), syscall.SIGINT)
 
 			assert.Equal(t, tt.activePlugins, options.activePlugins)
