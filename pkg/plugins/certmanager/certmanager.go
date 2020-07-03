@@ -83,6 +83,7 @@ func (m *certManager) Update() {
 
 	m.values["ingressShim.defaultIssuerName"] = issuerName
 	m.values["ingressShim.defaultIssuerKind"] = "ClusterIssuer"
+	m.values["ingressShim.defaultIssuerGroup"] = "cert-manager.io"
 	m.values["webhook.enabled"] = false
 
 	m.manager.Install("jetstack/cert-manager", releaseName, m.namespace, m.values, true)
