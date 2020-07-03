@@ -25,7 +25,7 @@ func Test_helm3Manager_Install(t *testing.T) {
 		namespace      string
 		wait           bool
 		values         map[string]interface{}
-		expectedArgs   []string
+		expectedArgs   [][]string
 		nsExists       bool
 		response       string
 		responseStatus int
@@ -38,7 +38,7 @@ func Test_helm3Manager_Install(t *testing.T) {
 			"test",
 			false,
 			map[string]interface{}{},
-			[]string{"upgrade", "--install", "--force", "--namespace", "test", "test", "dummy/test"},
+			[][]string{{"upgrade", "--install", "--force", "--namespace", "test", "test", "dummy/test"}},
 			true,
 			"ok installed",
 			0,
@@ -50,7 +50,7 @@ func Test_helm3Manager_Install(t *testing.T) {
 			"test",
 			false,
 			map[string]interface{}{},
-			[]string{"upgrade", "--install", "--force", "--namespace", "test", "test", "dummy/test"},
+			[][]string{{"upgrade", "--install", "--force", "--namespace", "test", "test", "dummy/test"}},
 			false,
 			"ok installed",
 			0,
@@ -62,7 +62,7 @@ func Test_helm3Manager_Install(t *testing.T) {
 			"test",
 			true,
 			map[string]interface{}{},
-			[]string{"upgrade", "--install", "--force", "--namespace", "test", "test", "dummy/test", "--wait"},
+			[][]string{{"upgrade", "--install", "--force", "--namespace", "test", "test", "dummy/test", "--wait"}},
 			true,
 			"ok installed",
 			0,
@@ -74,7 +74,10 @@ func Test_helm3Manager_Install(t *testing.T) {
 			"test",
 			false,
 			map[string]interface{}{"v1": []map[string]interface{}{{"h": 2, "b": "def"}}},
-			[]string{"upgrade", "--install", "--force", "--namespace", "test", "test", "dummy/test", "--set", "v1\\[0].h=2", "--set", "v1\\[0].b=def"},
+			[][]string{
+				{"upgrade", "--install", "--force", "--namespace", "test", "test", "dummy/test", "--set", "v1\\[0].h=2", "--set", "v1\\[0].b=def"},
+				{"upgrade", "--install", "--force", "--namespace", "test", "test", "dummy/test", "--set", "v1\\[0].b=def", "--set", "v1\\[0].h=2"},
+			},
 			true,
 			"ok installed",
 			0,
@@ -86,7 +89,7 @@ func Test_helm3Manager_Install(t *testing.T) {
 			"test",
 			false,
 			map[string]interface{}{},
-			[]string{"upgrade", "--install", "--force", "--namespace", "test", "", ""},
+			[][]string{{"upgrade", "--install", "--force", "--namespace", "test", "", ""}},
 			true,
 			"no release and name given",
 			1,
@@ -109,9 +112,11 @@ func Test_helm3Manager_Install(t *testing.T) {
 				context: fake.NewContextHandler(fakeClientSet, nil),
 			}
 
-			testutils.TestProcessResponses = []testutils.TestProcessResponse{
-				{Command: "helm", Args: tt.expectedArgs, ResponseStatus: tt.responseStatus, Stdout: tt.response},
-				{Command: "helm", Args: []string{"version", "-s"}, ResponseStatus: 0, Stdout: ""},
+			testutils.TestProcessResponses =
+				[]testutils.TestProcessResponse{{Command: "helm", Args: []string{"version", "-s"}, ResponseStatus: 0, Stdout: ""}}
+			for _, args := range tt.expectedArgs {
+				testutils.TestProcessResponses = append(testutils.TestProcessResponses,
+					testutils.TestProcessResponse{Command: "helm", Args: args, ResponseStatus: tt.responseStatus, Stdout: tt.response})
 			}
 
 			m.Install(tt.chart, tt.release, tt.namespace, tt.values, tt.wait)

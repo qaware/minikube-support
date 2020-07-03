@@ -58,7 +58,7 @@ func Test_helm2Manager_Install(t *testing.T) {
 		wait           bool
 		values         map[string]interface{}
 		initialized    bool
-		expectedArgs   []string
+		expectedArgs   [][]string
 		response       string
 		responseStatus int
 		lastEntryLevel logrus.Level
@@ -71,7 +71,7 @@ func Test_helm2Manager_Install(t *testing.T) {
 			false,
 			map[string]interface{}{},
 			true,
-			[]string{"upgrade", "--install", "--force", "--namespace", "test", "test", "dummy/test"},
+			[][]string{{"upgrade", "--install", "--force", "--namespace", "test", "test", "dummy/test"}},
 			"ok installed",
 			0,
 			logrus.InfoLevel,
@@ -83,7 +83,7 @@ func Test_helm2Manager_Install(t *testing.T) {
 			true,
 			map[string]interface{}{},
 			true,
-			[]string{"upgrade", "--install", "--force", "--namespace", "test", "test", "dummy/test", "--wait"},
+			[][]string{{"upgrade", "--install", "--force", "--namespace", "test", "test", "dummy/test", "--wait"}},
 			"ok installed",
 			0,
 			logrus.InfoLevel,
@@ -95,7 +95,7 @@ func Test_helm2Manager_Install(t *testing.T) {
 			false,
 			map[string]interface{}{},
 			false,
-			[]string{"upgrade", "--install", "--force", "--namespace", "test", "test", "dummy/test"},
+			[][]string{{"upgrade", "--install", "--force", "--namespace", "test", "test", "dummy/test"}},
 			"ok installed",
 			0,
 			logrus.InfoLevel,
@@ -107,7 +107,10 @@ func Test_helm2Manager_Install(t *testing.T) {
 			false,
 			map[string]interface{}{"v1": []map[string]interface{}{{"h": 2, "b": "def"}}},
 			true,
-			[]string{"upgrade", "--install", "--force", "--namespace", "test", "test", "dummy/test", "--set", "v1\\[0].h=2", "--set", "v1\\[0].b=def"},
+			[][]string{
+				{"upgrade", "--install", "--force", "--namespace", "test", "test", "dummy/test", "--set", "v1\\[0].h=2", "--set", "v1\\[0].b=def"},
+				{"upgrade", "--install", "--force", "--namespace", "test", "test", "dummy/test", "--set", "v1\\[0].b=def", "--set", "v1\\[0].h=2"},
+			},
 			"ok installed",
 			0,
 			logrus.InfoLevel,
@@ -119,7 +122,7 @@ func Test_helm2Manager_Install(t *testing.T) {
 			false,
 			map[string]interface{}{},
 			true,
-			[]string{"upgrade", "--install", "--force", "--namespace", "test", "", ""},
+			[][]string{{"upgrade", "--install", "--force", "--namespace", "test", "", ""}},
 			"no release and name given",
 			1,
 			logrus.ErrorLevel,
@@ -133,8 +136,11 @@ func Test_helm2Manager_Install(t *testing.T) {
 			}
 
 			testutils.TestProcessResponses = []testutils.TestProcessResponse{
-				{Command: "helm", Args: tt.expectedArgs, ResponseStatus: tt.responseStatus, Stdout: tt.response},
 				{Command: "helm", Args: []string{"version", "-s"}, ResponseStatus: 0, Stdout: ""},
+			}
+			for _, args := range tt.expectedArgs {
+				testutils.TestProcessResponses = append(testutils.TestProcessResponses,
+					testutils.TestProcessResponse{Command: "helm", Args: args, ResponseStatus: tt.responseStatus, Stdout: tt.response})
 			}
 
 			m.Install(tt.chart, tt.release, tt.namespace, tt.values, tt.wait)
