@@ -129,7 +129,7 @@ func Test_certManager_Update(t *testing.T) {
 				GetLatestReleaseTag("jetstack", "cert-manager").
 				Return(tt.latestVersion, tt.latestVersionError)
 
-			handler.MockKubectl("apply", []string{"-f", "https://raw.githubusercontent.com/jetstack/cert-manager/" + tt.latestVersion + "/deploy/manifests/00-crds.yaml"}, "", tt.kApplyStatus)
+			handler.MockKubectl("apply", []string{"-f", "https://github.com/jetstack/cert-manager/releases/download/" + tt.latestVersion + "/cert-manager.crds.yaml"}, "", tt.kApplyStatus)
 			helmManager.EXPECT().
 				UpdateRepository().
 				Return(tt.repoUpdateError).

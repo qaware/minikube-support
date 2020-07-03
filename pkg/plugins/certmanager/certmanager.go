@@ -68,7 +68,7 @@ func (m *certManager) Update() {
 		return
 	}
 
-	downloadUrl := "https://raw.githubusercontent.com/jetstack/cert-manager/" + version + "/deploy/manifests/00-crds.yaml"
+	downloadUrl := "https://github.com/jetstack/cert-manager/releases/download/" + version + "/cert-manager.crds.yaml"
 
 	response, e := m.contextHandler.Kubectl("apply", "-f", downloadUrl)
 	if e != nil {
