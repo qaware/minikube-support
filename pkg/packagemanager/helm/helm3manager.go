@@ -1,6 +1,7 @@
 package helm
 
 import (
+	"context"
 	"fmt"
 	"os"
 
@@ -122,6 +123,7 @@ func (h *helm3Manager) runCommand(command string, args ...string) (string, error
 }
 
 func (h *helm3Manager) ensureNamespaceExists(namespace string) error {
+	ctx := context.Background()
 	clientSet, e := h.context.GetClientSet()
 	if e != nil {
 		return e
@@ -129,7 +131,7 @@ func (h *helm3Manager) ensureNamespaceExists(namespace string) error {
 	logrus.Debugf("Check if namespace '%s' exits.", namespace)
 	ns, e := clientSet.CoreV1().
 		Namespaces().
-		Get(namespace, metav1.GetOptions{})
+		Get(ctx, namespace, metav1.GetOptions{})
 
 	if e == nil {
 		logrus.Tracef("Namespace '%s' exits: %s", namespace, ns)
@@ -143,9 +145,13 @@ func (h *helm3Manager) ensureNamespaceExists(namespace string) error {
 	logrus.Debugf("Creating namespace '%s'.", namespace)
 	_, e = clientSet.CoreV1().
 		Namespaces().
-		Create(&v1.Namespace{
-			TypeMeta:   metav1.TypeMeta{Kind: "Namespace", APIVersion: "v1"},
-			ObjectMeta: metav1.ObjectMeta{Name: namespace},
-		})
+		Create(
+			ctx,
+			&v1.Namespace{
+				TypeMeta:   metav1.TypeMeta{Kind: "Namespace", APIVersion: "v1"},
+				ObjectMeta: metav1.ObjectMeta{Name: namespace},
+			},
+			metav1.CreateOptions{},
+		)
 	return e
 }

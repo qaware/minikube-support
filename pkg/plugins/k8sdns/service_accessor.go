@@ -1,6 +1,7 @@
 package k8sdns
 
 import (
+	"context"
 	"fmt"
 
 	v1 "k8s.io/api/core/v1"
@@ -20,7 +21,7 @@ func (s serviceAccessor) PreFetch() ([]runtime.Object, metav1.ListInterface, err
 	services := s.clientSet.
 		CoreV1().
 		Services(v1.NamespaceAll)
-	serviceList, e := services.List(metav1.ListOptions{})
+	serviceList, e := services.List(context.Background(), metav1.ListOptions{})
 	if e != nil {
 		return nil, nil, fmt.Errorf("can not list services: %s", e)
 	}
@@ -37,7 +38,7 @@ func (s serviceAccessor) Watch(options metav1.ListOptions) (watch.Interface, err
 	services := s.clientSet.
 		CoreV1().
 		Services(v1.NamespaceAll)
-	return services.Watch(options)
+	return services.Watch(context.Background(), options)
 }
 
 // ConvertToEntry converts a k8s service into the entry by flatten everything.

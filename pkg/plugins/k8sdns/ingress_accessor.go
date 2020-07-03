@@ -1,6 +1,7 @@
 package k8sdns
 
 import (
+	"context"
 	"fmt"
 
 	"k8s.io/api/extensions/v1beta1"
@@ -21,7 +22,7 @@ func (i ingressAccessor) PreFetch() ([]runtime.Object, v1.ListInterface, error) 
 	ingresses := i.clientSet.
 		ExtensionsV1beta1().
 		Ingresses(v1.NamespaceAll)
-	ingressList, e := ingresses.List(metav1.ListOptions{})
+	ingressList, e := ingresses.List(context.Background(), metav1.ListOptions{})
 	if e != nil {
 		return nil, nil, fmt.Errorf("can not list ingresses: %s", e)
 	}
@@ -39,7 +40,7 @@ func (i ingressAccessor) Watch(options v1.ListOptions) (watch.Interface, error) 
 		ExtensionsV1beta1().
 		Ingresses(v1.NamespaceAll)
 
-	return ingresses.Watch(options)
+	return ingresses.Watch(context.Background(), options)
 }
 
 // ConvertToEntry converts a k8s ingress into the entry by flatten everything.

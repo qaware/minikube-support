@@ -1,6 +1,7 @@
 package certmanager
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"path"
@@ -27,6 +28,7 @@ type certManager struct {
 	ghClient       github.Client
 	namespace      string
 	values         map[string]interface{}
+	ctx            context.Context
 }
 
 const PluginName = "certManager"
@@ -43,6 +45,7 @@ func NewCertManager(manager helm.Manager, handler kubernetes.ContextHandler, ghC
 		ghClient:       ghClient,
 		values:         map[string]interface{}{},
 		namespace:      "mks",
+		ctx:            context.Background(),
 	}
 }
 
@@ -113,11 +116,11 @@ func (m *certManager) Uninstall(purge bool) {
 	e = clientSet.
 		CoreV1().
 		Secrets(m.namespace).
-		Delete(issuerName, &metav1.DeleteOptions{})
+		Delete(m.ctx, issuerName, metav1.DeleteOptions{})
 	err = multierror.Append(err, e)
 
 	e = client.Resource(groupVersion.WithResource("clusterissuers")).
-		Delete(issuerName, &metav1.DeleteOptions{})
+		Delete(m.ctx, issuerName, metav1.DeleteOptions{})
 	err = multierror.Append(err, e)
 
 	if err.Len() > 0 {
@@ -163,11 +166,11 @@ func (m *certManager) applyCertSecret() error {
 		},
 	}
 
-	_, e = secretInterface.Get(issuerName, metav1.GetOptions{})
+	_, e = secretInterface.Get(m.ctx, issuerName, metav1.GetOptions{})
 	if errors.IsNotFound(e) {
-		_, e = secretInterface.Create(secret)
+		_, e = secretInterface.Create(m.ctx, secret, metav1.CreateOptions{})
 	} else if e == nil {
-		_, e = secretInterface.Update(secret)
+		_, e = secretInterface.Update(m.ctx, secret, metav1.UpdateOptions{})
 	}
 
 	if e != nil {
@@ -190,13 +193,13 @@ func (m *certManager) applyClusterIssuer() error {
 	issuer.SetName(issuerName)
 
 	clusterIssuerInterface := client.Resource(groupVersion.WithResource("clusterissuers"))
-	old, e := clusterIssuerInterface.Get(issuerName, metav1.GetOptions{})
+	old, e := clusterIssuerInterface.Get(m.ctx, issuerName, metav1.GetOptions{})
 	if errors.IsNotFound(e) {
-		_, e = clusterIssuerInterface.Create(issuer, metav1.CreateOptions{})
+		_, e = clusterIssuerInterface.Create(m.ctx, issuer, metav1.CreateOptions{})
 	} else if e == nil {
 		resourceVersion := old.GetResourceVersion()
 		issuer.SetResourceVersion(resourceVersion)
-		_, e = clusterIssuerInterface.Update(issuer, metav1.UpdateOptions{})
+		_, e = clusterIssuerInterface.Update(m.ctx, issuer, metav1.UpdateOptions{})
 	}
 
 	if e != nil {
