@@ -131,6 +131,7 @@ func Test_helm3Manager_Uninstall(t *testing.T) {
 	tests := []struct {
 		name           string
 		release        string
+		namespace      string
 		purge          bool
 		expectedArgs   []string
 		response       string
@@ -140,24 +141,27 @@ func Test_helm3Manager_Uninstall(t *testing.T) {
 		{
 			"success no purge",
 			"test",
+			"mks",
 			false,
-			[]string{"uninstall", "--keep-history", "test"},
+			[]string{"uninstall", "--namespace", "mks", "--keep-history", "test"},
 			"ok removed",
 			0,
 			logrus.InfoLevel,
 		}, {
 			"success purge",
 			"test",
+			"mks",
 			true,
-			[]string{"uninstall", "test"},
+			[]string{"uninstall", "--namespace", "mks", "test"},
 			"ok removed",
 			0,
 			logrus.InfoLevel,
 		}, {
 			"not found",
 			"test",
+			"mks",
 			false,
-			[]string{"uninstall", "--keep-history", "test"},
+			[]string{"uninstall", "--namespace", "mks", "--keep-history", "test"},
 			"not found",
 			1,
 			logrus.ErrorLevel,
@@ -172,7 +176,7 @@ func Test_helm3Manager_Uninstall(t *testing.T) {
 				{Command: "helm", Args: tt.expectedArgs, ResponseStatus: tt.responseStatus, Stdout: tt.response},
 				{Command: "helm", Args: []string{"version", "-s"}, ResponseStatus: 0, Stdout: ""},
 			}
-			m.Uninstall(tt.release, tt.purge)
+			m.Uninstall(tt.release, tt.namespace, tt.purge)
 			lastEntry := global.LastEntry()
 			if lastEntry.Level != tt.lastEntryLevel {
 				t.Errorf("Expected log level of last entry %s but was %s", tt.lastEntryLevel, lastEntry.Level)

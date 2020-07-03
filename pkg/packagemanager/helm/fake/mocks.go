@@ -5,9 +5,8 @@
 package fake
 
 import (
-	reflect "reflect"
-
 	gomock "github.com/golang/mock/gomock"
+	reflect "reflect"
 )
 
 // MockManager is a mock of Manager interface
@@ -88,13 +87,13 @@ func (mr *MockManagerMockRecorder) Install(chart, release, namespace, values, wa
 }
 
 // Uninstall mocks base method
-func (m *MockManager) Uninstall(release string, purge bool) {
+func (m *MockManager) Uninstall(release, namespace string, purge bool) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "Uninstall", release, purge)
+	m.ctrl.Call(m, "Uninstall", release, namespace, purge)
 }
 
 // Uninstall indicates an expected call of Uninstall
-func (mr *MockManagerMockRecorder) Uninstall(release, purge interface{}) *gomock.Call {
+func (mr *MockManagerMockRecorder) Uninstall(release, namespace, purge interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Uninstall", reflect.TypeOf((*MockManager)(nil).Uninstall), release, purge)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Uninstall", reflect.TypeOf((*MockManager)(nil).Uninstall), release, namespace, purge)
 }

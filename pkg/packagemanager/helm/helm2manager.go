@@ -82,7 +82,7 @@ func (m *helm2Manager) Install(chart string, release string, namespace string, v
 	logrus.Debug(response)
 }
 
-func (m *helm2Manager) Uninstall(release string, purge bool) {
+func (m *helm2Manager) Uninstall(release string, _ string, purge bool) {
 	if !m.initialized {
 		if e := m.Init(); e != nil {
 			logrus.Errorf("Can not uninstall helm chart: %s", e)

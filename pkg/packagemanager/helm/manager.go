@@ -15,7 +15,7 @@ type Manager interface {
 	AddRepository(name string, url string) error
 	UpdateRepository() error
 	Install(chart string, release string, namespace string, values map[string]interface{}, wait bool)
-	Uninstall(release string, purge bool)
+	Uninstall(release string, namespace string, purge bool)
 }
 
 func NewHelmManager(context kubernetes.ContextHandler) (Manager, error) {

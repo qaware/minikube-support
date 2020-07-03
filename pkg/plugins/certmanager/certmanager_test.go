@@ -237,7 +237,7 @@ func Test_certManager_Uninstall(t *testing.T) {
 			manager := helmFake.NewMockManager(ctrl)
 			m := NewCertManager(manager, tt.handler, github.NewClient())
 			if tt.expectHelmUninstall {
-				manager.EXPECT().Uninstall(releaseName, tt.purge)
+				manager.EXPECT().Uninstall(releaseName, "mks", tt.purge)
 			}
 			m.Uninstall(tt.purge)
 

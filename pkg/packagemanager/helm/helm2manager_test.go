@@ -209,7 +209,7 @@ func Test_helm2Manager_Uninstall(t *testing.T) {
 				{Command: "helm", Args: tt.expectedArgs, ResponseStatus: tt.responseStatus, Stdout: tt.response},
 				{Command: "helm", Args: []string{"version", "-s"}, ResponseStatus: 0, Stdout: ""},
 			}
-			m.Uninstall(tt.release, tt.purge)
+			m.Uninstall(tt.release, "", tt.purge)
 			lastEntry := global.LastEntry()
 			if lastEntry.Level != tt.lastEntryLevel {
 				t.Errorf("Expected log level of last entry %s but was %s", tt.lastEntryLevel, lastEntry.Level)

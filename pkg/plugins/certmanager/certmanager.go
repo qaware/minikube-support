@@ -105,7 +105,7 @@ func (m *certManager) Uninstall(purge bool) {
 		return
 	}
 
-	m.manager.Uninstall(releaseName, purge)
+	m.manager.Uninstall(releaseName, m.namespace, purge)
 
 	clientSet, e := m.contextHandler.GetClientSet()
 	if e != nil {

@@ -84,14 +84,14 @@ func (h *helm3Manager) Install(chart string, release string, namespace string, v
 	logrus.Debug(response)
 }
 
-func (h *helm3Manager) Uninstall(release string, purge bool) {
+func (h *helm3Manager) Uninstall(release string, namespace string, purge bool) {
 	var e error
 	var response string
 
 	if purge {
-		response, e = h.runCommand("uninstall", release)
+		response, e = h.runCommand("uninstall", "--namespace", namespace, release)
 	} else {
-		response, e = h.runCommand("uninstall", "--keep-history", release)
+		response, e = h.runCommand("uninstall", "--namespace", namespace, "--keep-history", release)
 	}
 
 	if e != nil {

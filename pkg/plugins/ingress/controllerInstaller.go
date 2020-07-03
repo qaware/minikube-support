@@ -36,7 +36,7 @@ func (i *controllerInstaller) Update() {
 }
 
 func (i *controllerInstaller) Uninstall(purge bool) {
-	i.manager.Uninstall(i.releaseName, purge)
+	i.manager.Uninstall(i.releaseName, i.namespace, purge)
 }
 
 func (*controllerInstaller) Phase() apis.Phase {
