@@ -3,6 +3,7 @@ package ingress
 import (
 	"github.com/qaware/minikube-support/pkg/apis"
 	"github.com/qaware/minikube-support/pkg/packagemanager/helm"
+	"github.com/sirupsen/logrus"
 )
 
 type controllerInstaller struct {
@@ -26,13 +27,21 @@ func (*controllerInstaller) String() string {
 }
 
 func (i *controllerInstaller) Install() {
+	if e := i.manager.AddRepository("ingress-nginx", "https://kubernetes.github.io/ingress-nginx"); e != nil {
+		logrus.Errorf("Unable to add nginx-ingress repository: %s", e)
+		return
+	}
 	i.Update()
 }
 
 func (i *controllerInstaller) Update() {
+	if e := i.manager.UpdateRepository(); e != nil {
+		logrus.Errorf("Unable to update helm repositories %s", e)
+		return
+	}
 	i.values["controller.publishService.enabled"] = "true"
 
-	i.manager.Install("stable/nginx-ingress", i.releaseName, i.namespace, i.values, false)
+	i.manager.Install("ingress-nginx/ingress-nginx", i.releaseName, i.namespace, i.values, false)
 }
 
 func (i *controllerInstaller) Uninstall(purge bool) {
