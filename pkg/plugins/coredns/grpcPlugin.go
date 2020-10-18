@@ -70,11 +70,13 @@ func (p *grpcPlugin) Start(monitoringChannel chan *apis.MonitoringMessage) (boxN
 // and sends them using the monitoring channel.
 func (p *grpcPlugin) listRRsForUI() {
 	rrs := p.server.ListRRs()
-	buf := bytes.Buffer{}
-	for _, v := range rrs {
-		buf.WriteString(v.String())
-		buf.WriteByte('\n')
+	rrStrings := make([]string, len(rrs))
+	for i, v := range rrs {
+		rrStrings[i] = v.String() + "\n"
 	}
+
+	buf := bytes.Buffer{}
+	_ = utils.WriteSorted(rrStrings, &buf)
 	p.monitoringChannel <- &apis.MonitoringMessage{
 		Box:     GrpcPluginName,
 		Message: buf.String(),

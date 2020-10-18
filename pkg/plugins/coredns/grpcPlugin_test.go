@@ -39,11 +39,12 @@ func Test_grpcPlugin_listRRsForUI(t *testing.T) {
 		server:            NewServer(),
 		monitoringChannel: make(chan *apis.MonitoringMessage),
 	}
+	assert.NoError(t, p.server.AddAAAA("localhost", net.ParseIP("::1")))
 	assert.NoError(t, p.server.AddA("localhost", net.ParseIP("127.0.0.1")))
 	go p.listRRsForUI()
 	msg := <-p.monitoringChannel
 	assert.Equal(t, GrpcPluginName, msg.Box)
-	assert.Equal(t, "localhost.	10	IN	A	127.0.0.1\n", msg.Message)
+	assert.Equal(t, "localhost.	10	IN	A	127.0.0.1\nlocalhost.	10	IN	AAAA	::1\n", msg.Message)
 }
 
 type testPlugin struct{}
