@@ -1,7 +1,6 @@
 package coredns
 
 import (
-	"bytes"
 	"fmt"
 	"net"
 	"time"
@@ -75,12 +74,12 @@ func (p *grpcPlugin) listRRsForUI() {
 		rrStrings[i] = v.String() + "\n"
 	}
 
-	buf := bytes.Buffer{}
-	_ = utils.WriteSorted(rrStrings, &buf)
-	p.monitoringChannel <- &apis.MonitoringMessage{
-		Box:     GrpcPluginName,
-		Message: buf.String(),
+	table, e := utils.FormatAsTable(rrStrings, "Name\tTTL\tTyp\tRR\tValue\n")
+	if e != nil {
+		return
 	}
+
+	p.monitoringChannel <- &apis.MonitoringMessage{Box: GrpcPluginName, Message: table}
 }
 
 // Stop terminates the server instance.
