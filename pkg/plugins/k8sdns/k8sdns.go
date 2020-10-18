@@ -1,20 +1,17 @@
 package k8sdns
 
 import (
-	"bytes"
 	"fmt"
-	"github.com/qaware/minikube-support/pkg/utils"
-	"strings"
-	"text/tabwriter"
-
 	"github.com/hashicorp/go-multierror"
 	"github.com/qaware/minikube-support/pkg/apis"
 	"github.com/qaware/minikube-support/pkg/kubernetes"
 	"github.com/qaware/minikube-support/pkg/plugins/coredns"
+	"github.com/qaware/minikube-support/pkg/utils"
 	"github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
+	"strings"
 )
 
 type k8sDns struct {
@@ -226,12 +223,6 @@ func (k8s *k8sDns) DeletedEvent(obj runtime.Object) error {
 
 // PostEvent generates a short overview about the currently handled ingresses and services.
 func (k8s *k8sDns) PostEvent() error {
-	var errors *multierror.Error
-	buffer := new(bytes.Buffer)
-	writer := tabwriter.NewWriter(buffer, 0, 0, 1, ' ', tabwriter.Debug)
-	_, e := fmt.Fprintf(writer, "Name\t Namespace\t Typ\t Hostname\t Targets\n")
-	errors = multierror.Append(errors, e)
-
 	var entryStrings []string
 	for _, entry := range k8s.currentEntries {
 		entryStrings = append(entryStrings, fmt.Sprintf("%s\t %s\t %s\t %s\t %s\n",
@@ -242,11 +233,11 @@ func (k8s *k8sDns) PostEvent() error {
 			strings.Join(entry.targetIps, ",")))
 	}
 
-	errors = multierror.Append(errors, utils.WriteSorted(entryStrings, writer))
-	errors = multierror.Append(errors, writer.Flush())
-
-	if errors.Len() == 0 {
-		k8s.messageChannel <- &apis.MonitoringMessage{Box: k8s.String(), Message: buffer.String()}
+	table, e := utils.FormatAsTable(entryStrings, "Name\t Namespace\t Typ\t Hostname\t Targets\n")
+	if e != nil {
+		return e
 	}
-	return errors.ErrorOrNil()
+
+	k8s.messageChannel <- &apis.MonitoringMessage{Box: k8s.String(), Message: table}
+	return nil
 }
