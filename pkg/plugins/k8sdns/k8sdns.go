@@ -3,6 +3,7 @@ package k8sdns
 import (
 	"bytes"
 	"fmt"
+	"github.com/qaware/minikube-support/pkg/utils"
 	"strings"
 	"text/tabwriter"
 
@@ -231,20 +232,19 @@ func (k8s *k8sDns) PostEvent() error {
 	_, e := fmt.Fprintf(writer, "Name\t Namespace\t Typ\t Hostname\t Targets\n")
 	errors = multierror.Append(errors, e)
 
+	var entryStrings []string
 	for _, entry := range k8s.currentEntries {
-
-		_, e := fmt.Fprintf(writer,
-			"%s\t %s\t %s\t %s\t %s\n",
+		entryStrings = append(entryStrings, fmt.Sprintf("%s\t %s\t %s\t %s\t %s\n",
 			entry.name,
 			entry.namespace,
 			entry.typ,
 			strings.Join(entry.hostNames, ","),
-			strings.Join(entry.targetIps, ","))
-
-		errors = multierror.Append(errors, e)
+			strings.Join(entry.targetIps, ",")))
 	}
 
+	errors = multierror.Append(errors, utils.WriteSorted(entryStrings, writer))
 	errors = multierror.Append(errors, writer.Flush())
+
 	if errors.Len() == 0 {
 		k8s.messageChannel <- &apis.MonitoringMessage{Box: k8s.String(), Message: buffer.String()}
 	}

@@ -315,6 +315,23 @@ func Test_k8sIngress_PostEvent(t *testing.T) {
 			}},
 			"Name | Namespace | Typ     | Hostname | Targets\ntest | test      | Service | host.abc | ip\n",
 			false,
+		}, {
+			"one service, one ingress",
+			map[string]*entry{"test.abc": {
+				name:      "test",
+				namespace: "test",
+				typ:       "Service",
+				hostNames: []string{"host.abc"},
+				targetIps: []string{"ip"},
+			}, "test1.abc": {
+				name:      "test",
+				namespace: "test",
+				typ:       "Ingress",
+				hostNames: []string{"host1.abc"},
+				targetIps: []string{"ip"},
+			}},
+			"Name | Namespace | Typ     | Hostname  | Targets\ntest | test      | Ingress | host1.abc | ip\ntest | test      | Service | host.abc  | ip\n",
+			false,
 		},
 	}
 	for _, tt := range tests {
