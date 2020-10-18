@@ -4,6 +4,9 @@ package sudos
 
 import (
 	"fmt"
+	"github.com/kballard/go-shellquote"
+	"github.com/sirupsen/logrus"
+	"os"
 	"strconv"
 
 	"github.com/pkg/errors"
@@ -39,6 +42,37 @@ func RemoveAll(path string) error {
 	resp, e := sh.RunSudoCmd("rm", "-R", path)
 	if e != nil {
 		return errors.Wrapf(e, "can not remove %s recursive: %s", path, resp)
+	}
+	return nil
+}
+
+func WriteFileAsRoot(path string, content []byte) error {
+	command := sh.ExecSudoCommand("/bin/sh", "-c", shellquote.Join("sed", "-n", "w "+path))
+	command.Env = append(command.Env, os.Environ()...)
+	defer func() {
+		if e := command.Wait(); e != nil {
+			logrus.Errorf("Unable to wait for writing %s: %s", path, e)
+		}
+	}()
+
+	writer, e := command.StdinPipe()
+	if e != nil {
+		return fmt.Errorf("write content into %s failed: %s", path, e)
+	}
+
+	_, e = writer.Write(content)
+	if e != nil {
+		return fmt.Errorf("write content into %s failed: %s", path, e)
+	}
+
+	e = command.Start()
+	if e != nil {
+		return fmt.Errorf("write content into %s failed: %s", path, e)
+	}
+
+	e = writer.Close()
+	if e != nil {
+		return fmt.Errorf("write content into %s failed: %s", path, e)
 	}
 	return nil
 }

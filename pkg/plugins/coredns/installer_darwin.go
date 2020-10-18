@@ -2,14 +2,12 @@ package coredns
 
 import (
 	"fmt"
+	"github.com/qaware/minikube-support/pkg/utils/sudos"
 	"io/ioutil"
-	"os"
 	"path"
 	"path/filepath"
 
-	"github.com/kballard/go-shellquote"
 	"github.com/qaware/minikube-support/pkg/sh"
-	"github.com/sirupsen/logrus"
 )
 
 const launchctlConfig = "/Library/LaunchDaemons/de.chrfritz.minikube-support.coredns.plist"
@@ -104,41 +102,10 @@ func (i *installer) writeLaunchCtlConfig() error {
 </plist>
 `
 
-	return i.writeFileAsRoot(launchctlConfig, []byte(config))
+	return sudos.WriteFileAsRoot(launchctlConfig, []byte(config))
 }
 
 func (i *installer) writeResolverConfig() error {
 	config := "nameserver ::1"
-	return i.writeFileAsRoot(dotMinikubeResolverPath, []byte(config))
-}
-
-func (i *installer) writeFileAsRoot(path string, content []byte) error {
-	command := sh.ExecSudoCommand("/bin/sh", "-c", shellquote.Join("sed", "-n", "w "+path))
-	command.Env = append(command.Env, os.Environ()...)
-	defer func() {
-		if e := command.Wait(); e != nil {
-			logrus.Errorf("Unable to wait for writing %s: %s", path, e)
-		}
-	}()
-
-	writer, e := command.StdinPipe()
-	if e != nil {
-		return fmt.Errorf("write content into %s failed: %s", path, e)
-	}
-
-	_, e = writer.Write(content)
-	if e != nil {
-		return fmt.Errorf("write content into %s failed: %s", path, e)
-	}
-
-	e = command.Start()
-	if e != nil {
-		return fmt.Errorf("write content into %s failed: %s", path, e)
-	}
-
-	e = writer.Close()
-	if e != nil {
-		return fmt.Errorf("write content into %s failed: %s", path, e)
-	}
-	return nil
+	return sudos.WriteFileAsRoot(dotMinikubeResolverPath, []byte(config))
 }
