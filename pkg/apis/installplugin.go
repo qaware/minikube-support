@@ -61,3 +61,10 @@ func (l InstallablePluginList) Less(i, j int) bool {
 func (l InstallablePluginList) Swap(i, j int) {
 	l[i], l[j] = l[j], l[i]
 }
+
+// IsLocalPlugin checks if the given plugin is a plugin that will be installed on the local system or configures the
+// local system. In this case it returns true. Otherwise false.
+func IsLocalPlugin(plugin InstallablePlugin) bool {
+	phase := plugin.Phase()
+	return phase == LOCAL_TOOLS_INSTALL || phase == LOCAL_TOOLS_CONFIG
+}

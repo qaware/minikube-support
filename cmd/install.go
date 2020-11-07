@@ -7,7 +7,8 @@ import (
 )
 
 type InstallOptions struct {
-	registry apis.InstallablePluginRegistry
+	registry            apis.InstallablePluginRegistry
+	includeLocalPlugins bool
 }
 
 func NewInstallOptions(registry apis.InstallablePluginRegistry) *InstallOptions {
@@ -24,6 +25,9 @@ func NewInstallCommand(registry apis.InstallablePluginRegistry) *cobra.Command {
 		Short: "Installs all or one of the available plugins.",
 		Run:   options.Run,
 	}
+	flags := command.Flags()
+	flags.BoolVarP(&options.includeLocalPlugins, "installLocal", "l", false, "Install cluster and local plugins.")
+
 	command.AddCommand(createInstallCommands(options.registry)...)
 	return command
 
@@ -32,6 +36,10 @@ func NewInstallCommand(registry apis.InstallablePluginRegistry) *cobra.Command {
 func (i *InstallOptions) Run(cmd *cobra.Command, args []string) {
 	for _, plugin := range i.registry.ListPlugins() {
 		logrus.Info("Install plugin:", plugin)
+		if !i.includeLocalPlugins && apis.IsLocalPlugin(plugin) {
+			continue
+		}
+
 		plugin.Install()
 	}
 }
