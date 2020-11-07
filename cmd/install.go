@@ -22,11 +22,13 @@ func NewInstallCommand(registry apis.InstallablePluginRegistry) *cobra.Command {
 
 	command := &cobra.Command{
 		Use:   "install",
-		Short: "Installs all or one of the available plugins.",
-		Run:   options.Run,
+		Short: "Installs the available cluster plugins.",
+		Long: "The install command installs at least all cluster plugins. If you add the -l or --installLocal flag it " +
+			"will also install the local plugins.",
+		Run: options.Run,
 	}
 	flags := command.Flags()
-	flags.BoolVarP(&options.includeLocalPlugins, "installLocal", "l", false, "Install cluster and local plugins.")
+	flags.BoolVarP(&options.includeLocalPlugins, "installLocal", "l", false, "Also install the local plugins.")
 
 	command.AddCommand(createInstallCommands(options.registry)...)
 	return command
