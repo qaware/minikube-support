@@ -15,7 +15,7 @@ func createInstallCommands(registry apis.InstallablePluginRegistry) []*cobra.Com
 	runner := func(plugin apis.InstallablePlugin, cmd *cobra.Command, args []string) {
 		plugin.Install()
 	}
-	return createCommands("Installs the %s plugin.", runner, registry)
+	return createCommands("Installs the %s %s plugin.", runner, registry)
 }
 
 // Create the update command for all registered plugins.
@@ -23,7 +23,7 @@ func CreateUpdateCommands(registry apis.InstallablePluginRegistry) []*cobra.Comm
 	runner := func(plugin apis.InstallablePlugin, cmd *cobra.Command, args []string) {
 		plugin.Update()
 	}
-	return createCommands("Updates the %s plugin.", runner, registry)
+	return createCommands("Updates the %s %s plugin.", runner, registry)
 }
 
 // Create the uninstall command for all registered plugins.
@@ -35,7 +35,7 @@ func createUninstallCommands(registry apis.InstallablePluginRegistry) []*cobra.C
 		}
 		plugin.Uninstall(purge)
 	}
-	return createCommands("Uninstall the %s plugin.", runner, registry)
+	return createCommands("Uninstall the %s %s plugin.", runner, registry)
 }
 
 // Create the commands for all registered plugins with the given description format and runner function.
@@ -50,9 +50,13 @@ func createCommands(short string, runner runnerFunc, registry apis.InstallablePl
 
 // Create the command instance for a single plugin with the given description format and runner function.
 func createCommand(plugin apis.InstallablePlugin, short string, runner runnerFunc) *cobra.Command {
+	local := "cluster"
+	if apis.IsLocalPlugin(plugin) {
+		local = "local"
+	}
 	return &cobra.Command{
 		Use:   plugin.String(),
-		Short: fmt.Sprintf(short, plugin),
+		Short: fmt.Sprintf(short, plugin, local),
 		Run: func(cmd *cobra.Command, args []string) {
 			runner(plugin, cmd, args)
 		},

@@ -11,8 +11,8 @@ import (
 )
 
 func TestCreateInstallCommands(t *testing.T) {
-	plugin, registry := initTestRegistry()
-	plugin.checkCommand(t, createInstallCommands(registry), "Installs the dummy plugin.", true, false, false)
+	plugin, registry := initTestRegistry(apis.LOCAL_TOOLS_INSTALL)
+	plugin.checkCommand(t, createInstallCommands(registry), "Installs the dummy local plugin.", true, false, false)
 }
 
 func (p *DummyPlugin) checkCommand(t *testing.T, cmds []*cobra.Command, short string, installCalled bool, updateCalled bool, uninstallCalled bool) {
@@ -28,8 +28,8 @@ func (p *DummyPlugin) checkCommand(t *testing.T, cmds []*cobra.Command, short st
 }
 
 func TestCreateUpdateCommands(t *testing.T) {
-	plugin, registry := initTestRegistry()
-	plugin.checkCommand(t, CreateUpdateCommands(registry), "Updates the dummy plugin.", false, true, false)
+	plugin, registry := initTestRegistry(apis.LOCAL_TOOLS_INSTALL)
+	plugin.checkCommand(t, CreateUpdateCommands(registry), "Updates the dummy local plugin.", false, true, false)
 }
 
 func TestCreateUninstallCommands(t *testing.T) {
@@ -51,25 +51,25 @@ func TestCreateUninstallCommands(t *testing.T) {
 				}
 			}()
 
-			plugin, registry := initTestRegistry()
+			plugin, registry := initTestRegistry(apis.CLUSTER_TOOLS_INSTALL)
 			commands := createUninstallCommands(registry)
 			tt.flag(commands[0].Flags())
-			plugin.checkCommand(t, commands, "Uninstall the dummy plugin.", false, false, true)
+			plugin.checkCommand(t, commands, "Uninstall the dummy cluster plugin.", false, false, true)
 			assert.Equal(t, tt.purge, plugin.purge)
 		})
 	}
 }
 
 func TestGetInstallablePlugins(t *testing.T) {
-	_, registry := initTestRegistry()
+	_, registry := initTestRegistry(apis.CLUSTER_TOOLS_INSTALL)
 	if got := registry.ListPlugins(); len(got) != 1 {
 		t.Errorf("len(GetInstallablePlugins()) = %v, want %v", got, 1)
 	}
 }
 
-func initTestRegistry() (*DummyPlugin, apis.InstallablePluginRegistry) {
+func initTestRegistry(phase apis.Phase) (*DummyPlugin, apis.InstallablePluginRegistry) {
 	installPlugins := plugins.NewInstallablePluginRegistry()
-	plugin := &DummyPlugin{}
+	plugin := &DummyPlugin{phase: phase}
 	installPlugins.AddPlugins(plugin)
 	return plugin, installPlugins
 }
