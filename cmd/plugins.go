@@ -49,7 +49,7 @@ func initPlugins(options *RootCommandOptions) {
 		mkcert.CreateMkcertInstallerPlugin(),
 		ingress.NewControllerInstaller(helmManager),
 		certManager,
-		coredns.NewInstaller("/opt/mks/coredns", ghClient),
+		coredns.NewInstaller(plugins.PluginInstallPrefix+"coredns", ghClient),
 	)
 
 	options.startStopPluginRegistry.AddPlugins(
