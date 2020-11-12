@@ -35,7 +35,7 @@ const PluginName = "certManager"
 const issuerName = "ca-issuer"
 const releaseName = "cert-manager"
 
-var groupVersion = schema.GroupVersion{Group: "cert-manager.io", Version: "v1alpha2"}
+var groupVersion = schema.GroupVersion{Group: "cert-manager.io", Version: "v1"}
 var helmInstallWaitPeriod = 20 * time.Second
 
 func NewCertManager(manager helm.Manager, handler kubernetes.ContextHandler, ghClient github.Client) apis.InstallablePlugin {
@@ -84,7 +84,6 @@ func (m *certManager) Update() {
 	m.values["ingressShim.defaultIssuerName"] = issuerName
 	m.values["ingressShim.defaultIssuerKind"] = "ClusterIssuer"
 	m.values["ingressShim.defaultIssuerGroup"] = "cert-manager.io"
-	m.values["webhook.enabled"] = false
 
 	m.manager.Install("jetstack/cert-manager", releaseName, m.namespace, m.values, true)
 

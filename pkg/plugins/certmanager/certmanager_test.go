@@ -172,7 +172,7 @@ func Test_certManager_Uninstall(t *testing.T) {
 					Namespace: "mks",
 					Name:      issuerName,
 				}}), dynamicFake.NewSimpleDynamicClient(scheme.Scheme, &unstructured.Unstructured{
-				Object: map[string]interface{}{"apiVersion": "cert-manager.io/v1alpha2", "kind": "ClusterIssuer", "metadata": map[string]interface{}{"name": issuerName}}})),
+				Object: map[string]interface{}{"apiVersion": "cert-manager.io/v1", "kind": "ClusterIssuer", "metadata": map[string]interface{}{"name": issuerName}}})),
 			true,
 			true,
 			true,
@@ -189,7 +189,7 @@ func Test_certManager_Uninstall(t *testing.T) {
 					Namespace: "mks",
 					Name:      issuerName,
 				}}), dynamicFake.NewSimpleDynamicClient(scheme.Scheme, &unstructured.Unstructured{
-				Object: map[string]interface{}{"apiVersion": "cert-manager.io/v1alpha2", "kind": "ClusterIssuer", "metadata": map[string]interface{}{"name": issuerName}}})),
+				Object: map[string]interface{}{"apiVersion": "cert-manager.io/v1", "kind": "ClusterIssuer", "metadata": map[string]interface{}{"name": issuerName}}})),
 			true,
 			true,
 			true,
@@ -198,7 +198,7 @@ func Test_certManager_Uninstall(t *testing.T) {
 		{"no secret",
 			false,
 			fake.NewContextHandler(k8sFake.NewSimpleClientset(), dynamicFake.NewSimpleDynamicClient(scheme.Scheme, &unstructured.Unstructured{
-				Object: map[string]interface{}{"apiVersion": "cert-manager.io/v1alpha2", "kind": "ClusterIssuer", "metadata": map[string]interface{}{"name": issuerName}}})),
+				Object: map[string]interface{}{"apiVersion": "cert-manager.io/v1", "kind": "ClusterIssuer", "metadata": map[string]interface{}{"name": issuerName}}})),
 			true,
 			true,
 			true,
@@ -332,7 +332,7 @@ func Test_certManager_applyClusterIssuer(t *testing.T) {
 	}{
 		{"ok, create", dynamicFake.NewSimpleDynamicClient(scheme.Scheme), "create", false},
 		{"ok, update", dynamicFake.NewSimpleDynamicClient(scheme.Scheme, &unstructured.Unstructured{
-			Object: map[string]interface{}{"apiVersion": "cert-manager.io/v1alpha2", "kind": "ClusterIssuer", "metadata": map[string]interface{}{"name": issuerName}},
+			Object: map[string]interface{}{"apiVersion": "cert-manager.io/v1", "kind": "ClusterIssuer", "metadata": map[string]interface{}{"name": issuerName}},
 		}), "update", false},
 		{"no client", nil, "create", true},
 	}
