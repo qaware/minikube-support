@@ -4,9 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"k8s.io/api/extensions/v1beta1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	networkingV1 "k8s.io/api/networking/v1"
+	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes"
@@ -18,11 +17,11 @@ type ingressAccessor struct {
 }
 
 // PreFetch returns a list of all ingresses and the corresponding list interface.
-func (i ingressAccessor) PreFetch() ([]runtime.Object, v1.ListInterface, error) {
+func (i ingressAccessor) PreFetch() ([]runtime.Object, metaV1.ListInterface, error) {
 	ingresses := i.clientSet.
-		ExtensionsV1beta1().
-		Ingresses(v1.NamespaceAll)
-	ingressList, e := ingresses.List(context.Background(), metav1.ListOptions{})
+		NetworkingV1().
+		Ingresses(metaV1.NamespaceAll)
+	ingressList, e := ingresses.List(context.Background(), metaV1.ListOptions{})
 	if e != nil {
 		return nil, nil, fmt.Errorf("can not list ingresses: %s", e)
 	}
@@ -35,17 +34,17 @@ func (i ingressAccessor) PreFetch() ([]runtime.Object, v1.ListInterface, error) 
 }
 
 // Watch starts the watch process for ingresses.
-func (i ingressAccessor) Watch(options v1.ListOptions) (watch.Interface, error) {
+func (i ingressAccessor) Watch(options metaV1.ListOptions) (watch.Interface, error) {
 	ingresses := i.clientSet.
-		ExtensionsV1beta1().
-		Ingresses(v1.NamespaceAll)
+		NetworkingV1().
+		Ingresses(metaV1.NamespaceAll)
 
 	return ingresses.Watch(context.Background(), options)
 }
 
 // ConvertToEntry converts a k8s ingress into the entry by flatten everything.
 func (ingressAccessor) ConvertToEntry(obj runtime.Object) (*entry, error) {
-	ingress, ok := obj.(*v1beta1.Ingress)
+	ingress, ok := obj.(*networkingV1.Ingress)
 	if !ok {
 		return nil, fmt.Errorf("can not convert non ingress object into ingress")
 	}
@@ -61,6 +60,6 @@ func (ingressAccessor) ConvertToEntry(obj runtime.Object) (*entry, error) {
 
 // MatchesPreconditions checks if the given object matches preconditions for adding the entry.
 func (ingressAccessor) MatchesPreconditions(obj runtime.Object) bool {
-	_, ok := obj.(*v1beta1.Ingress)
+	_, ok := obj.(*networkingV1.Ingress)
 	return ok
 }

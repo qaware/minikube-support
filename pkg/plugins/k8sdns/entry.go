@@ -1,10 +1,10 @@
 package k8sdns
 
 import (
+	networkingV1 "k8s.io/api/networking/v1"
 	"reflect"
 
 	v1 "k8s.io/api/core/v1"
-	"k8s.io/api/extensions/v1beta1"
 )
 
 // entry is a helper structure for intern handling of updated ingresses and services.
@@ -49,7 +49,7 @@ func (e entry) getRemovedHostNames(o *entry) []string {
 }
 
 // getHostNames is a helper function to extract all host names from the given k8s ingress.
-func getHostNames(ingress *v1beta1.Ingress) []string {
+func getHostNames(ingress *networkingV1.Ingress) []string {
 	hostMap := make(map[string]bool)
 
 	for _, rule := range ingress.Spec.Rules {

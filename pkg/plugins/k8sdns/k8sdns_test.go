@@ -9,13 +9,13 @@ import (
 	v1 "k8s.io/api/core/v1"
 	v1meta "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"k8s.io/api/extensions/v1beta1"
+	networkingV1 "k8s.io/api/networking/v1"
 )
 
 func Test_k8sIngress_AddedEvent(t *testing.T) {
 	tests := []struct {
 		name         string
-		ingress      *v1beta1.Ingress
+		ingress      *networkingV1.Ingress
 		wantAddHosts []string
 		wantAddAlias []string
 		wantErr      bool
@@ -46,7 +46,7 @@ func Test_k8sIngress_UpdatedEvent(t *testing.T) {
 	tests := []struct {
 		name             string
 		currentIngresses map[string]*entry
-		ingress          *v1beta1.Ingress
+		ingress          *networkingV1.Ingress
 		wantAddHosts     []string
 		wantAddAlias     []string
 		wantRemovedHosts []string
@@ -219,7 +219,7 @@ func Test_k8sIngress_UpdatedEvent(t *testing.T) {
 func Test_k8sIngress_DeletedEvent(t *testing.T) {
 	tests := []struct {
 		name             string
-		ingress          *v1beta1.Ingress
+		ingress          *networkingV1.Ingress
 		wantRemovedHosts []string
 		wantErr          bool
 	}{
@@ -244,13 +244,13 @@ func Test_k8sIngress_DeletedEvent(t *testing.T) {
 	}
 }
 
-func createDummyIngress(name string, ns string, targetIp string, targetHost string, hosts ...string) *v1beta1.Ingress {
-	return &v1beta1.Ingress{
+func createDummyIngress(name string, ns string, targetIp string, targetHost string, hosts ...string) *networkingV1.Ingress {
+	return &networkingV1.Ingress{
 		ObjectMeta: v1meta.ObjectMeta{Name: name, Namespace: ns},
-		Spec: v1beta1.IngressSpec{
-			TLS: []v1beta1.IngressTLS{{Hosts: hosts}},
+		Spec: networkingV1.IngressSpec{
+			TLS: []networkingV1.IngressTLS{{Hosts: hosts}},
 		},
-		Status: v1beta1.IngressStatus{LoadBalancer: v1.LoadBalancerStatus{Ingress: []v1.LoadBalancerIngress{{IP: targetIp}, {Hostname: targetHost}}}},
+		Status: networkingV1.IngressStatus{LoadBalancer: v1.LoadBalancerStatus{Ingress: []v1.LoadBalancerIngress{{IP: targetIp}, {Hostname: targetHost}}}},
 	}
 }
 

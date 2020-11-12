@@ -6,7 +6,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
-	"k8s.io/api/extensions/v1beta1"
+	networkingV1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
@@ -25,32 +25,33 @@ func Test_ingressAccessor_PreFetch(t *testing.T) {
 		{
 			"ok",
 			false,
-			[]runtime.Object{&v1beta1.Ingress{
+			[]runtime.Object{&networkingV1.Ingress{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "Ingress",
-					APIVersion: "extension/v1beta1",
+					APIVersion: "networking/v1",
 				},
 				ObjectMeta: metav1.ObjectMeta{Name: "abc"},
-				Spec: v1beta1.IngressSpec{
-					Backend: &v1beta1.IngressBackend{
-						ServiceName: "dummy",
+				Spec: networkingV1.IngressSpec{
+					DefaultBackend: &networkingV1.IngressBackend{
+						Service: &networkingV1.IngressServiceBackend{Name: "dummy"},
 					},
 				},
 			}},
-			&v1beta1.IngressList{Items: []v1beta1.Ingress{{
+			&networkingV1.IngressList{Items: []networkingV1.Ingress{{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "Ingress",
-					APIVersion: "extension/v1beta1",
+					APIVersion: "networking/v1",
 				},
 				ObjectMeta: metav1.ObjectMeta{Name: "abc"},
-				Spec: v1beta1.IngressSpec{
-					Backend: &v1beta1.IngressBackend{
-						ServiceName: "dummy",
+				Spec: networkingV1.IngressSpec{
+					DefaultBackend: &networkingV1.IngressBackend{
+						Service: &networkingV1.IngressServiceBackend{Name: "dummy"},
 					},
 				},
 			}}},
 			false,
-		}, {
+		},
+		{
 			"nok",
 			true,
 			nil,
@@ -60,15 +61,15 @@ func Test_ingressAccessor_PreFetch(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cs := fake.NewSimpleClientset(&v1beta1.IngressList{Items: []v1beta1.Ingress{{
+			cs := fake.NewSimpleClientset(&networkingV1.IngressList{Items: []networkingV1.Ingress{{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "Ingress",
-					APIVersion: "extension/v1beta1",
+					APIVersion: "networking/v1",
 				},
 				ObjectMeta: metav1.ObjectMeta{Name: "abc"},
-				Spec: v1beta1.IngressSpec{
-					Backend: &v1beta1.IngressBackend{
-						ServiceName: "dummy",
+				Spec: networkingV1.IngressSpec{
+					DefaultBackend: &networkingV1.IngressBackend{
+						Service: &networkingV1.IngressServiceBackend{Name: "dummy"},
 					},
 				},
 			}}})
@@ -139,13 +140,13 @@ func Test_ingressAccessor_ConvertToEntry(t *testing.T) {
 	}{
 		{
 			"ingress full",
-			&v1beta1.Ingress{
+			&networkingV1.Ingress{
 				ObjectMeta: metav1.ObjectMeta{Name: "test", Namespace: "test-ns"},
-				Spec: v1beta1.IngressSpec{
-					Rules: []v1beta1.IngressRule{{Host: "1"}},
-					TLS:   []v1beta1.IngressTLS{{Hosts: []string{"1"}}},
+				Spec: networkingV1.IngressSpec{
+					Rules: []networkingV1.IngressRule{{Host: "1"}},
+					TLS:   []networkingV1.IngressTLS{{Hosts: []string{"1"}}},
 				},
-				Status: v1beta1.IngressStatus{LoadBalancer: v1.LoadBalancerStatus{Ingress: []v1.LoadBalancerIngress{{IP: "ip", Hostname: "host"}}}},
+				Status: networkingV1.IngressStatus{LoadBalancer: v1.LoadBalancerStatus{Ingress: []v1.LoadBalancerIngress{{IP: "ip", Hostname: "host"}}}},
 			},
 			&entry{
 				name:        "test",
@@ -185,13 +186,13 @@ func Test_ingressAccessor_MatchesPreconditions(t *testing.T) {
 	}{
 		{
 			"ingress full",
-			&v1beta1.Ingress{
+			&networkingV1.Ingress{
 				ObjectMeta: metav1.ObjectMeta{Name: "test", Namespace: "test-ns"},
-				Spec: v1beta1.IngressSpec{
-					Rules: []v1beta1.IngressRule{{Host: "1"}},
-					TLS:   []v1beta1.IngressTLS{{Hosts: []string{"1"}}},
+				Spec: networkingV1.IngressSpec{
+					Rules: []networkingV1.IngressRule{{Host: "1"}},
+					TLS:   []networkingV1.IngressTLS{{Hosts: []string{"1"}}},
 				},
-				Status: v1beta1.IngressStatus{LoadBalancer: v1.LoadBalancerStatus{Ingress: []v1.LoadBalancerIngress{{IP: "ip", Hostname: "host"}}}},
+				Status: networkingV1.IngressStatus{LoadBalancer: v1.LoadBalancerStatus{Ingress: []v1.LoadBalancerIngress{{IP: "ip", Hostname: "host"}}}},
 			},
 			true,
 		}, {
