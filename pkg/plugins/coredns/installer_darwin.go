@@ -2,12 +2,9 @@ package coredns
 
 import (
 	"fmt"
+	"github.com/qaware/minikube-support/pkg/sh"
 	"github.com/qaware/minikube-support/pkg/utils/sudos"
 	"io/ioutil"
-	"path"
-	"path/filepath"
-
-	"github.com/qaware/minikube-support/pkg/sh"
 )
 
 const launchctlConfig = "/Library/LaunchDaemons/de.chrfritz.minikube-support.coredns.plist"
@@ -64,15 +61,10 @@ func (i *installer) writeConfig() error {
     forward . /etc/resolv.conf
 }
 `
-	return ioutil.WriteFile(path.Join(i.prefix, "etc", "corefile"), []byte(config), 0644)
+	return ioutil.WriteFile(i.prefix.coreFile(), []byte(config), 0644)
 }
 
 func (i *installer) writeLaunchCtlConfig() error {
-	binary := filepath.Join(i.prefix, "bin", "coredns")
-	corefile := filepath.Join(i.prefix, "etc", "corefile")
-	pidFile := filepath.Join(i.prefix, "var", "run", "coredns.pid")
-	logFile := filepath.Join(i.prefix, "var", "log", "coredns.log")
-	errorLogFile := filepath.Join(i.prefix, "var", "log", "coredns.error.log")
 	config := `
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -82,11 +74,11 @@ func (i *installer) writeLaunchCtlConfig() error {
 		<string>de.chrfritz.minikube-support.coredns</string>
 		<key>ProgramArguments</key>
 		<array>
-			<string>` + binary + `</string>
+			<string>` + i.prefix.binary() + `</string>
 			<string>-conf</string>
-			<string>` + corefile + `</string>
+			<string>` + i.prefix.coreFile() + `</string>
 			<string>-pidfile</string>
-			<string>` + pidFile + `</string>
+			<string>` + i.prefix.pidFile() + `</string>
 		</array>
 		<key>RunAtLoad</key>
 		<true/>
@@ -95,9 +87,9 @@ func (i *installer) writeLaunchCtlConfig() error {
 		<key>UserName</key>
 		<string>root</string>
 		<key>StandardErrorPath</key>
-		<string>` + errorLogFile + `</string>
+		<string>` + i.prefix.errorLogFile() + `</string>
 		<key>StandardOutPath</key>
-		<string>` + logFile + `</string>
+		<string>` + i.prefix.logFile() + `</string>
 	</dict>
 </plist>
 `

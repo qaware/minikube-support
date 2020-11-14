@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path"
 	"runtime"
 	"strings"
 
@@ -19,7 +18,7 @@ import (
 
 type installer struct {
 	ghClient github.Client
-	prefix   string
+	prefix   prefix
 }
 
 const PluginName = "coredns"
@@ -27,7 +26,7 @@ const PluginName = "coredns"
 func NewInstaller(prefix string, ghClient github.Client) apis.InstallablePlugin {
 	return &installer{
 		ghClient: ghClient,
-		prefix:   prefix,
+		prefix:   newCoreDnsPaths(prefix),
 	}
 }
 
@@ -37,12 +36,12 @@ func (i *installer) String() string {
 
 func (i *installer) Install() {
 	var errs *multierror.Error
-	errs = multierror.Append(errs, sudos.MkdirAll(path.Join(i.prefix, "bin"), 0755))
-	errs = multierror.Append(errs, sudos.Chown(i.prefix, os.Getuid(), os.Getgid(), true))
+	errs = multierror.Append(errs, sudos.MkdirAll(i.prefix.binDir(), 0755))
+	errs = multierror.Append(errs, sudos.Chown(i.prefix.String(), os.Getuid(), os.Getgid(), true))
 
-	errs = multierror.Append(errs, os.MkdirAll(path.Join(i.prefix, "etc"), 0755))
-	errs = multierror.Append(errs, os.MkdirAll(path.Join(i.prefix, "var", "run"), 0755))
-	errs = multierror.Append(errs, os.MkdirAll(path.Join(i.prefix, "var", "log"), 0755))
+	errs = multierror.Append(errs, os.MkdirAll(i.prefix.etcDir(), 0755))
+	errs = multierror.Append(errs, os.MkdirAll(i.prefix.runDir(), 0755))
+	errs = multierror.Append(errs, os.MkdirAll(i.prefix.logDir(), 0755))
 	errs = multierror.Append(errs, i.writeConfig())
 
 	errs = multierror.Append(errs, i.downloadCoreDns())
@@ -63,7 +62,7 @@ func (i *installer) Uninstall(_ bool) {
 	var errs *multierror.Error
 
 	errs = multierror.Append(errs, i.uninstallSpecific())
-	errs = multierror.Append(errs, sudos.RemoveAll(i.prefix))
+	errs = multierror.Append(errs, sudos.RemoveAll(i.prefix.String()))
 	if errs.Len() > 0 {
 		logrus.Errorf("Unable to uninstall coredns from %s:\n  Errors: %s", i.prefix, errs)
 	}
@@ -104,7 +103,7 @@ func (i *installer) downloadCoreDns() error {
 		if header.Typeflag == tar.TypeReg {
 			name := header.Name
 
-			file, e := os.OpenFile(path.Join(i.prefix, "bin", name), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, os.FileMode(header.Mode))
+			file, e := os.OpenFile(i.prefix.binary(), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, os.FileMode(header.Mode))
 			if e != nil {
 				return fmt.Errorf("can not write file %s: %s", name, e)
 			}

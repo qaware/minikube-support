@@ -36,7 +36,7 @@ func Test_installer_Install(t *testing.T) {
 
 	i := &installer{
 		ghClient: ghClient,
-		prefix:   tmpdir,
+		prefix:   prefix(tmpdir),
 	}
 	ghClient.EXPECT().
 		GetLatestReleaseTag("coredns", "coredns").
@@ -78,7 +78,7 @@ func Test_installer_Uninstall(t *testing.T) {
 
 	i := &installer{
 		ghClient: ghClient,
-		prefix:   tmpdir,
+		prefix:   prefix(tmpdir),
 	}
 	testutils.MockInitSudo()
 	testutils.MockWithoutResponse(0, "sudo", "launchctl", "unload", launchctlConfig)

@@ -38,7 +38,7 @@ func Test_installer_downloadCoreDns(t *testing.T) {
 				assert.NoError(t, os.RemoveAll(tmpdir))
 			}()
 
-			i := &installer{ghClient: ghClient, prefix: tmpdir}
+			i := &installer{ghClient: ghClient, prefix: prefix(tmpdir)}
 
 			if !tt.versionError {
 				ghClient.EXPECT().GetLatestReleaseTag("coredns", "coredns").
