@@ -34,11 +34,11 @@ func TestRunSingleOptions_Run(t *testing.T) {
 			i := NewRunSingleOptions(tt.plugin)
 
 			go i.Run(&cobra.Command{}, []string{})
-			time.Sleep(10 * time.Millisecond)
+			time.Sleep(50 * time.Millisecond)
 			testutils.CheckLogEntry(t, hook, tt.startupPrefix)
 
 			_ = syscall.Kill(syscall.Getpid(), syscall.SIGINT)
-			time.Sleep(10 * time.Millisecond)
+			time.Sleep(50 * time.Millisecond)
 			testutils.CheckLogEntry(t, hook, tt.stopPrefix)
 		})
 	}
