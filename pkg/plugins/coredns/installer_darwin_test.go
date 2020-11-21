@@ -48,8 +48,8 @@ func Test_installer_Install(t *testing.T) {
 	mockWriteFileAsRoot(dotMinikubeResolverPath, nil)
 	testutils.MockInitSudo()
 	testutils.MockWithoutResponse(0, "sudo", "launchctl", "load", launchctlConfig)
-	testutils.MockWithoutResponse(0, "sudo", "mkdir", "-p", path.Join(tmpdir, "bin"), "-m", "777")
-	testutils.MockWithoutResponse(0, "sudo", "chown", fmt.Sprintf("%d:%d", os.Getuid(), os.Getgid()), path.Join(tmpdir, "bin"), "-R")
+	testutils.MockWithoutResponse(0, "sudo", "mkdir", "-p", "-m", "755", path.Join(tmpdir, "bin"))
+	testutils.MockWithoutResponse(0, "sudo", "chown", "-R", fmt.Sprintf("%d:%d", os.Getuid(), os.Getgid()), path.Join(tmpdir))
 	_ = os.MkdirAll(path.Join(tmpdir, "bin"), 0777)
 	i.Install()
 
