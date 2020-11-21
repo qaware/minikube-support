@@ -7,14 +7,16 @@ import (
 	"os/exec"
 	"reflect"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 
 	"github.com/qaware/minikube-support/pkg/apis"
 	"github.com/qaware/minikube-support/pkg/kubernetes/fake"
 	"github.com/qaware/minikube-support/pkg/sh"
 	"github.com/qaware/minikube-support/pkg/testutils"
-	"github.com/stretchr/testify/assert"
 )
 
 func Test_initScanner(t *testing.T) {
@@ -56,12 +58,12 @@ func Test_tunnel_Start(t *testing.T) {
 	handler := fake.NewContextHandler(nil, nil)
 	handler.MiniKube = true
 	mkt := NewTunnel(handler)
-	var count = 0
+	var count int32 = 0
 	go func() {
 		for message := range monitoringChannel {
 			assert.Equal(t, wantBoxName, message.Box)
 			assert.NotEmpty(t, message.Message)
-			count++
+			atomic.AddInt32(&count, 1)
 		}
 	}()
 	gotBoxName, err := mkt.Start(monitoringChannel)
@@ -73,7 +75,7 @@ func Test_tunnel_Start(t *testing.T) {
 	if gotBoxName != wantBoxName {
 		t.Errorf("tunnel.Start() = %v, want %v", gotBoxName, wantBoxName)
 	}
-	assert.Equal(t, 4, count)
+	assert.Equal(t, int32(4), atomic.LoadInt32(&count))
 }
 
 func Test_tunnel_Start_noMinikube(t *testing.T) {

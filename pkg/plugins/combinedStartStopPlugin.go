@@ -4,8 +4,9 @@ import (
 	"fmt"
 
 	"github.com/hashicorp/go-multierror"
-	"github.com/qaware/minikube-support/pkg/apis"
 	"github.com/sirupsen/logrus"
+
+	"github.com/qaware/minikube-support/pkg/apis"
 )
 
 // CombinedStartStopPlugin is a simple plugin that combines several plugins together using a combine function.
@@ -55,11 +56,12 @@ func (c *CombinedStartStopPlugin) Start(messageChannel chan *apis.MonitoringMess
 // Stop stops all plugins.
 func (c *CombinedStartStopPlugin) Stop() error {
 	for _, plugin := range c.plugins {
+		p := plugin
 		go func() {
-			logrus.Debugf("Terminating plugin: %s", plugin)
-			e := plugin.Stop()
+			logrus.Debugf("Terminating plugin: %s", p)
+			e := p.Stop()
 			if e != nil {
-				logrus.Warnf("Unable to terminate plugin %s: %s", plugin, e)
+				logrus.Warnf("Unable to terminate plugin %s: %s", p, e)
 			}
 		}()
 	}

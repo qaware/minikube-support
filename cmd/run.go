@@ -5,31 +5,40 @@ import (
 	"os"
 	"os/signal"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 
 	"github.com/buger/goterm"
 	"github.com/hashicorp/go-multierror"
-	"github.com/qaware/minikube-support/pkg/apis"
-	"github.com/qaware/minikube-support/pkg/sh"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+
+	"github.com/qaware/minikube-support/pkg/apis"
+	"github.com/qaware/minikube-support/pkg/sh"
 )
 
 var boxConfig = [][]string{{"k8sdns-ingress", "k8sdns-service"}, {"coredns-grpc", "minikube-tunnel"}, {"logs"}}
 
 const BORDER_STRING = "─ │ ┌ ┐ └ ┘"
 
+var terminalLock = sync.Mutex{}
 var terminalWidth = goterm.Width
 var terminalHeight = goterm.Height
-var terminalPrint = goterm.Print
+var terminalPrint = func(a ...interface{}) (int, error) {
+	terminalLock.Lock()
+	defer terminalLock.Unlock()
+	return goterm.Print(a)
+}
 
 type RunOptions struct {
-	plugins        []apis.StartStopPlugin
-	messageChannel chan *apis.MonitoringMessage
-	activePlugins  []string
-	lastMessages   map[string]*apis.MonitoringMessage
-	contextName    ContextNameSupplier
+	plugins           []apis.StartStopPlugin
+	messageChannel    chan *apis.MonitoringMessage
+	activePlugins     []string
+	activePluginsLock sync.RWMutex
+	lastMessages      map[string]*apis.MonitoringMessage
+	lastMessagesLock  sync.RWMutex
+	contextName       ContextNameSupplier
 }
 
 type ContextNameSupplier func() string
@@ -39,10 +48,12 @@ func NewRunOptions(registry apis.StartStopPluginRegistry, contextName ContextNam
 		contextName = func() string { return "no contextName supplier set" }
 	}
 	return &RunOptions{
-		messageChannel: make(chan *apis.MonitoringMessage),
-		plugins:        registry.ListPlugins(),
-		lastMessages:   map[string]*apis.MonitoringMessage{},
-		contextName:    contextName,
+		messageChannel:    make(chan *apis.MonitoringMessage),
+		plugins:           registry.ListPlugins(),
+		lastMessages:      map[string]*apis.MonitoringMessage{},
+		contextName:       contextName,
+		activePluginsLock: sync.RWMutex{},
+		lastMessagesLock:  sync.RWMutex{},
 	}
 }
 
@@ -58,20 +69,24 @@ func NewRunCommand(registry apis.StartStopPluginRegistry, contextName ContextNam
 	return command
 }
 
-func (i *RunOptions) Run(cmd *cobra.Command, args []string) {
+func (i *RunOptions) Run(_ *cobra.Command, _ []string) {
 	if e := sh.InitSudo(); e != nil {
 		logrus.Errorf("`minikube-support run` requires sudo for some plugins. Initialize sudo failed: %s", e)
 	}
 
 	go i.startPlugins()
+	terminalLock.Lock()
 	goterm.Clear()
+	terminalLock.Unlock()
 	i.handleSignals()
 
 	for message := range i.messageChannel {
 		if message == apis.TerminatingMessage {
 			return
 		}
+		i.lastMessagesLock.Lock()
 		i.lastMessages[message.Box] = message
+		i.lastMessagesLock.Unlock()
 		_ = i.renderBoxes()
 	}
 }
@@ -82,7 +97,9 @@ func (i *RunOptions) startPlugins() {
 		if err != nil {
 			logrus.Errorf("Unable to start plugin %s: %s", plugin, err)
 		} else {
+			i.activePluginsLock.Lock()
 			i.activePlugins = append(i.activePlugins, boxName)
+			i.activePluginsLock.Unlock()
 			i.messageChannel <- &apis.MonitoringMessage{Box: boxName, Message: "Starting..."}
 		}
 	}
@@ -97,11 +114,12 @@ func (i *RunOptions) handleSignals() {
 		logrus.Infof("Got signal %s. Terminating all plugins", sig)
 
 		for _, plugin := range i.plugins {
+			p := plugin
 			go func() {
-				logrus.Debugf("Terminating plugin: %s", plugin)
-				e := plugin.Stop()
+				logrus.Debugf("Terminating plugin: %s", p)
+				e := p.Stop()
 				if e != nil {
-					logrus.Warnf("Unable to terminate plugin %s: %s", plugin, e)
+					logrus.Warnf("Unable to terminate plugin %s: %s", p, e)
 				}
 			}()
 		}
@@ -113,16 +131,19 @@ func (i *RunOptions) renderBoxes() error {
 	var errors *multierror.Error
 	yOffset := 1
 	vBoxSizes := calcBoxSize(terminalHeight()-yOffset, len(boxConfig))
-
+	terminalLock.Lock()
 	goterm.MoveCursor(1, 1)
-	errors = multierror.Append(errors, printHeader(i.contextName()))
+	terminalLock.Unlock()
+	errors = multierror.Append(errors, printHeader(i.contextName(), terminalWidth()))
 
 	nextY := 1 + yOffset
 	for line, boxLineConfig := range boxConfig {
 		hBoxSizes := calcBoxSize(terminalWidth(), len(boxLineConfig))
 		nextX := 1
 		for col, boxName := range boxLineConfig {
+			i.lastMessagesLock.RLock()
 			message := i.lastMessages[boxName]
+			i.lastMessagesLock.RUnlock()
 			if message == nil {
 				continue
 			}
@@ -138,8 +159,9 @@ func (i *RunOptions) renderBoxes() error {
 		}
 		nextY += vBoxSizes[line]
 	}
-
+	terminalLock.Lock()
 	goterm.Flush()
+	terminalLock.Unlock()
 	return errors.ErrorOrNil()
 }
 
@@ -161,11 +183,11 @@ func calcBoxSize(available int, numBoxes int) []int {
 	return result
 }
 
-func printHeader(k8sContext string) error {
+func printHeader(k8sContext string, width int) error {
 	left := fmt.Sprintf("Kubernetes Kontext: %s", k8sContext)
 	right := time.Now().Format(time.UnixDate)
 
-	spaceLen := terminalWidth() - len(left) - len(right)
+	spaceLen := width - len(left) - len(right)
 	if spaceLen < 1 {
 		spaceLen = 1
 	}

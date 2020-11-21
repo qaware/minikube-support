@@ -7,21 +7,26 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"sync"
 	"syscall"
+
+	"github.com/sirupsen/logrus"
 
 	"github.com/qaware/minikube-support/pkg/apis"
 	"github.com/qaware/minikube-support/pkg/kubernetes"
 	"github.com/qaware/minikube-support/pkg/sh"
-	"github.com/sirupsen/logrus"
 )
 
 type tunnel struct {
 	command        *exec.Cmd
 	contextHandler kubernetes.ContextHandler
+	runWait        *sync.WaitGroup
 }
 
 func NewTunnel(handler kubernetes.ContextHandler) apis.StartStopPlugin {
-	return &tunnel{contextHandler: handler}
+	group := &sync.WaitGroup{}
+	group.Add(1)
+	return &tunnel{contextHandler: handler, runWait: group}
 }
 
 const tunnelBoxName = "minikube-tunnel"
@@ -55,7 +60,12 @@ func (t *tunnel) Start(monitoringChannel chan *apis.MonitoringMessage) (boxName 
 	go scanForStatusMessages(scanner, monitoringChannel)
 
 	go func() {
-		e := t.command.Run()
+		e := t.command.Start()
+		if e != nil {
+			logrus.Errorf("Can not start minikube tunnel: %s", e)
+		}
+		t.runWait.Done()
+		e = t.command.Wait()
 		if e != nil {
 			logrus.Errorf("Unexpected end of minikube tunnel: %s", e)
 		}
@@ -79,6 +89,7 @@ func scanForStatusMessages(scanner *bufio.Scanner, monitoringChannel chan *apis.
 }
 
 func (t *tunnel) Stop() error {
+	t.runWait.Wait()
 	return t.command.Process.Signal(syscall.SIGTERM)
 }
 func (t *tunnel) String() string {

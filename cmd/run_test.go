@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os/exec"
 	"reflect"
+	"sync"
 	"syscall"
 	"testing"
 	"time"
@@ -18,7 +19,9 @@ import (
 
 func TestRunOptions_Run(t *testing.T) {
 	sh.ExecCommand = testutils.FakeExecCommand
-	defer func() { sh.ExecCommand = exec.Command }()
+	defer func() {
+		sh.ExecCommand = exec.Command
+	}()
 
 	tests := []struct {
 		name          string
@@ -48,17 +51,23 @@ func TestRunOptions_Run(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			testutils.TestProcessResponses = []testutils.TestProcessResponse{{Command: "sudo", Args: []string{"echo"}, ResponseStatus: 0}}
 			options := &RunOptions{
-				plugins:        tt.plugins,
-				messageChannel: make(chan *apis.MonitoringMessage),
-				lastMessages:   map[string]*apis.MonitoringMessage{},
-				contextName:    func() string { return "" },
+				plugins:           tt.plugins,
+				messageChannel:    make(chan *apis.MonitoringMessage),
+				lastMessages:      map[string]*apis.MonitoringMessage{},
+				contextName:       func() string { return "" },
+				activePluginsLock: sync.RWMutex{},
+				lastMessagesLock:  sync.RWMutex{},
 			}
 			go options.Run(&cobra.Command{}, []string{})
 			time.Sleep(200 * time.Millisecond)
 			_ = syscall.Kill(syscall.Getpid(), syscall.SIGINT)
 
+			options.activePluginsLock.RLock()
 			assert.Equal(t, tt.activePlugins, options.activePlugins)
+			options.activePluginsLock.RUnlock()
+			options.lastMessagesLock.RLock()
 			messages := messagesValues(options.lastMessages)
+			options.lastMessagesLock.RUnlock()
 			assert.Equal(t, tt.lastMessages, messages)
 		})
 	}
@@ -93,7 +102,6 @@ func TestRunOptions_startPlugins(t *testing.T) {
 }
 
 func Test_printHeader(t *testing.T) {
-	terminalWidth = func() int { return 30 }
 	var printed string
 	terminalPrint = func(a ...interface{}) (n int, err error) {
 		printed = fmt.Sprint(a...)
@@ -108,7 +116,7 @@ func Test_printHeader(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := printHeader(tt.k8sContext); (err != nil) != tt.wantErr {
+			if err := printHeader(tt.k8sContext, 30); (err != nil) != tt.wantErr {
 				t.Errorf("printHeader() error = %v, wantErr %v", err, tt.wantErr)
 			}
 			assert.Equal(t, "Kubernetes Kontext: context "+time.Now().Format(time.UnixDate), printed)
