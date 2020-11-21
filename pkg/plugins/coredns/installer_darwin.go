@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/qaware/minikube-support/pkg/sh"
 	"github.com/qaware/minikube-support/pkg/utils/sudos"
+	"github.com/sirupsen/logrus"
 	"io/ioutil"
 )
 
@@ -16,6 +17,20 @@ func (i *installer) installSpecific() error {
 		return fmt.Errorf("can not init sudo: %s", e)
 	}
 
+	err := i.setupLaunchCtrl(e)
+	if err != nil {
+		return err
+	}
+
+	return i.writeResolverConfig()
+}
+
+// setupLaunchCtrl setups the launch daemon configuration and loads them using the macOS util launchctl.
+func (i *installer) setupLaunchCtrl(e error) error {
+	if !runAsDaemon {
+		return nil
+	}
+
 	e = i.writeLaunchCtlConfig()
 	if e != nil {
 		return fmt.Errorf("can not write launchctl config: %s", e)
@@ -24,19 +39,19 @@ func (i *installer) installSpecific() error {
 	if e != nil {
 		return fmt.Errorf("can not load coredns launch daemon: %s", e)
 	}
-
-	return i.writeResolverConfig()
+	return nil
 }
 
 func (i *installer) uninstallSpecific() error {
 	_, e := sh.RunSudoCmd("launchctl", "unload", launchctlConfig)
 	if e != nil {
-		return fmt.Errorf("can not unload coredns launch daemon: %s", e)
+		logrus.Debugf("can not unload coredns launch daemon: %s", e)
 	}
 
 	_, e = sh.RunSudoCmd("rm", launchctlConfig)
 	if e != nil {
-		return fmt.Errorf("can not remove coredns launch daemon config: %s", e)
+		logrus.Debugf("can not remove coredns launch daemon config: %s", e)
+		return nil
 	}
 
 	_, e = sh.RunSudoCmd("rm", dotMinikubeResolverPath)

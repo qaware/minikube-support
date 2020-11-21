@@ -15,12 +15,14 @@ type grpcPlugin struct {
 	server            *server
 	monitoringChannel chan *apis.MonitoringMessage
 	terminationChan   chan bool
+	runner            Runner
 }
 
 // NewGrpcPlugin initializes a new StartStopPlugin that will controls the lifecycle of the server instance.
-func NewGrpcPlugin() apis.StartStopPlugin {
+func NewGrpcPlugin(prefix string) apis.StartStopPlugin {
 	return &grpcPlugin{
 		terminationChan: make(chan bool),
+		runner:          newRunner(newCoreDnsPaths(prefix)),
 	}
 }
 
@@ -59,7 +61,10 @@ func (p *grpcPlugin) Start(monitoringChannel chan *apis.MonitoringMessage) (boxN
 
 	p.server = NewServer()
 	p.server.Start(socket)
-
+	e = p.runner.Start()
+	if e != nil {
+		return "", fmt.Errorf("can not start coredns: %s", e)
+	}
 	go utils.Ticker(p.listRRsForUI, p.terminationChan, 5*time.Second)
 
 	return GrpcPluginName, nil
@@ -86,5 +91,5 @@ func (p *grpcPlugin) listRRsForUI() {
 func (p *grpcPlugin) Stop() error {
 	p.terminationChan <- true
 	p.server.Stop()
-	return nil
+	return p.runner.Stop()
 }

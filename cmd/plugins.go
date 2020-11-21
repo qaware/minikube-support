@@ -22,6 +22,7 @@ import (
 func initPlugins(options *RootCommandOptions) {
 	var errors *multierror.Error
 	logPlugin := logs.NewLogsPlugin(logrus.StandardLogger())
+	corednsPrefix := plugins.PluginInstallPrefix + "coredns"
 	os.RegisterOsPackage()
 
 	handler := kubernetes.NewContextHandler(&options.kubeConfig, &options.contextName)
@@ -29,7 +30,7 @@ func initPlugins(options *RootCommandOptions) {
 	helmManager, e := helm.NewHelmManager(handler)
 	errors = multierror.Append(errors, e)
 
-	coreDns := coredns.NewGrpcPlugin()
+	coreDns := coredns.NewGrpcPlugin(corednsPrefix)
 	manager, e := coredns.NewManager(coreDns)
 	errors = multierror.Append(errors, e)
 
@@ -49,7 +50,7 @@ func initPlugins(options *RootCommandOptions) {
 		mkcert.CreateMkcertInstallerPlugin(),
 		ingress.NewControllerInstaller(helmManager),
 		certManager,
-		coredns.NewInstaller(plugins.PluginInstallPrefix+"coredns", ghClient),
+		coredns.NewInstaller(corednsPrefix, ghClient),
 	)
 
 	options.startStopPluginRegistry.AddPlugins(

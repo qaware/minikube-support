@@ -85,7 +85,7 @@ func StandardHelperProcess(_ *testing.T) {
 	defer os.Exit(status)
 	_, _ = fmt.Fprint(os.Stderr, response.Stderr)
 	_, _ = fmt.Fprint(os.Stdout, response.Stdout)
-	time.Sleep(response.delay)
+	time.Sleep(response.Delay)
 }
 
 func FindTestProcessResponse(responses []TestProcessResponse, cmd string, args []string) *TestProcessResponse {
@@ -111,7 +111,7 @@ type TestProcessResponse struct {
 	Stdout         string
 	Stderr         string
 	ExpectedStdin  string
-	delay          time.Duration
+	Delay          time.Duration
 	// AltResponseStatus will be returned if stdin got something else as expected
 	AltResponseStatus int
 }

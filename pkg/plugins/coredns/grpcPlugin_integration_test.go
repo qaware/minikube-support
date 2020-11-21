@@ -3,6 +3,8 @@ package coredns
 import (
 	"context"
 	"fmt"
+	"github.com/golang/mock/gomock"
+	"github.com/qaware/minikube-support/pkg/plugins/coredns/fake"
 	"reflect"
 	"testing"
 
@@ -14,6 +16,9 @@ import (
 )
 
 func TestGrpcPlugin(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
 	type host struct {
 		name   string
 		target string
@@ -39,7 +44,7 @@ func TestGrpcPlugin(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 
-			plugin, server, conn, e := initClientServer(t)
+			plugin, server, conn, e := initClientServer(t, ctrl)
 			if e != nil {
 				t.Errorf("Fail to init client and server: %s", e)
 				return
@@ -79,8 +84,15 @@ func TestGrpcPlugin(t *testing.T) {
 	}
 }
 
-func initClientServer(t *testing.T) (apis.StartStopPlugin, *server, *grpc.ClientConn, error) {
-	plugin := NewGrpcPlugin()
+func initClientServer(t *testing.T, ctrl *gomock.Controller) (apis.StartStopPlugin, *server, *grpc.ClientConn, error) {
+	mockRunner := fake.NewMockRunner(ctrl)
+	plugin := &grpcPlugin{
+		terminationChan: make(chan bool),
+		runner:          mockRunner,
+	}
+	mockRunner.EXPECT().Start()
+	mockRunner.EXPECT().Stop()
+
 	channel := make(chan *apis.MonitoringMessage, 100)
 	_, e := plugin.Start(channel)
 
