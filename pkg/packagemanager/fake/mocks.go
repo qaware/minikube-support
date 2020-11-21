@@ -5,9 +5,8 @@
 package fake
 
 import (
-	reflect "reflect"
-
 	gomock "github.com/golang/mock/gomock"
+	reflect "reflect"
 )
 
 // MockPackageManager is a mock of PackageManager interface
