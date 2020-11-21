@@ -3,11 +3,11 @@ NAME := minikube-support
 ORG := chr-fritz
 ROOT_PACKAGE := github.com/qaware/minikube-support
 #VERSION := $(shell jx-release-version)
-VERSION := 0.1.0-SNAPSHOT
+VERSION := v0.0.0-next
 
 REVISION   := $(shell git rev-parse --short HEAD 2> /dev/null  || echo 'unknown')
 BRANCH     := $(shell git rev-parse --abbrev-ref HEAD 2> /dev/null  || echo 'unknown')
-BUILD_DATE := $(shell date +%Y-%m-%dT%H:%M:%S)
+BUILD_DATE := $(shell git show -s --format=%ct)
 
 GO_VERSION=$(shell go version | sed -e 's/^[^0-9.]*\([0-9.]*\).*/\1/')
 PACKAGE_DIRS := $(shell go list ./...)
@@ -21,8 +21,7 @@ BUILDFLAGS := -ldflags \
   " -X '$(ROOT_PACKAGE)/version.Version=$(VERSION)'\
     -X '$(ROOT_PACKAGE)/version.Revision=$(REVISION)'\
     -X '$(ROOT_PACKAGE)/version.Branch=$(BRANCH)'\
-    -X '$(ROOT_PACKAGE)/version.BuildDate=$(BUILD_DATE)'\
-    -X '$(ROOT_PACKAGE)/version.GoVersion=$(GO_VERSION)'\
+    -X '$(ROOT_PACKAGE)/version.CommitDate=$(BUILD_DATE)'\
     -s -w -extldflags '-static'"
 
 .PHONY: all

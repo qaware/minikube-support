@@ -2,6 +2,8 @@ package cmd
 
 import (
 	"fmt"
+	"strconv"
+	"time"
 
 	"github.com/qaware/minikube-support/version"
 	"github.com/spf13/cobra"
@@ -24,10 +26,18 @@ func NewVersionCommand() *cobra.Command {
 }
 
 func (v *VersionOptions) run(cmd *cobra.Command, args []string) {
-	fmt.Printf("Version:\t%s@%s on %s\nBuild Date:\t%s\nGo Version:\t%s\n",
+	parsedDate, _ := strconv.ParseInt(version.CommitDate, 10, 64)
+	commitDate := time.Unix(parsedDate, 0).Format("2006-01-02 15:04:05 Z07:00")
+	fmt.Printf(`Minikube-Support Tools
+
+Version:     %s
+Commit:      %s
+Commit Date: %s
+Branch:      %s
+`,
 		version.Version,
 		version.Revision,
+		commitDate,
 		version.Branch,
-		version.BuildDate,
-		version.GoVersion)
+	)
 }
