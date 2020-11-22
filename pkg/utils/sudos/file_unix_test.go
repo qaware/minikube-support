@@ -51,7 +51,8 @@ func TestChown(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			testutils.TestProcessResponses = append(tt.responses,
+			testutils.SetTestProcessResponses(tt.responses)
+			testutils.AddTestProcessResponse(
 				testutils.TestProcessResponse{Command: "which", Args: []string{"sudo"}, ResponseStatus: 0})
 
 			if err := Chown(tt.path, tt.uid, tt.gid, tt.recursive); (err != nil) != tt.wantErr {
@@ -88,7 +89,8 @@ func TestMkdirAll(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			testutils.TestProcessResponses = append(tt.responses,
+			testutils.SetTestProcessResponses(tt.responses)
+			testutils.AddTestProcessResponse(
 				testutils.TestProcessResponse{Command: "which", Args: []string{"sudo"}, ResponseStatus: 0})
 
 			if err := MkdirAll(tt.path, tt.mod); (err != nil) != tt.wantErr {
@@ -123,7 +125,8 @@ func TestRemoveAll(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			testutils.TestProcessResponses = append(tt.responses,
+			testutils.SetTestProcessResponses(tt.responses)
+			testutils.AddTestProcessResponse(
 				testutils.TestProcessResponse{Command: "which", Args: []string{"sudo"}, ResponseStatus: 0})
 
 			if err := RemoveAll(tt.path); (err != nil) != tt.wantErr {

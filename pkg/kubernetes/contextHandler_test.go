@@ -5,10 +5,11 @@ import (
 	"os/exec"
 	"testing"
 
-	"github.com/qaware/minikube-support/pkg/sh"
-	"github.com/qaware/minikube-support/pkg/testutils"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/client-go/rest"
+
+	"github.com/qaware/minikube-support/pkg/sh"
+	"github.com/qaware/minikube-support/pkg/testutils"
 )
 
 func Test_contextHandler_GetClientSet(t *testing.T) {
@@ -190,9 +191,9 @@ func Test_contextHandler_Kubectl(t *testing.T) {
 				configFile:            &tt.configFile,
 				predefinedContextName: &tt.contextName,
 			}
-			testutils.TestProcessResponses = []testutils.TestProcessResponse{
-				{Command: "kubectl", Args: tt.expectedArgs, ResponseStatus: tt.responseStatus, Stdout: tt.response},
-			}
+			testutils.SetTestProcessResponse(testutils.TestProcessResponse{
+				Command: "kubectl", Args: tt.expectedArgs, ResponseStatus: tt.responseStatus, Stdout: tt.response},
+			)
 
 			got, err := h.Kubectl(tt.command)
 			if (err != nil) != tt.wantErr {
@@ -232,13 +233,13 @@ func Test_contextHandler_IsMinikube(t *testing.T) {
 			}()
 			_ = os.Setenv("HOME", "test-home")
 
-			testutils.TestProcessResponses = []testutils.TestProcessResponse{{
+			testutils.SetTestProcessResponse(testutils.TestProcessResponse{
 				Command:        "minikube",
 				Args:           []string{"ip"},
 				ResponseStatus: tt.responseStatus,
 				Stdout:         tt.ip,
-				//Stderr:         "error",
-			}}
+				// Stderr:         "error",
+			})
 
 			h := NewContextHandler(s(""), nil).(*contextHandler)
 			h.restConfig = tt.restConfig

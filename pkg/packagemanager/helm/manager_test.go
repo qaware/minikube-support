@@ -4,10 +4,11 @@ import (
 	"os/exec"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/qaware/minikube-support/pkg/kubernetes/fake"
 	"github.com/qaware/minikube-support/pkg/sh"
 	"github.com/qaware/minikube-support/pkg/testutils"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestNewHelmManager(t *testing.T) {
@@ -26,12 +27,12 @@ func TestNewHelmManager(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			testutils.TestProcessResponses = []testutils.TestProcessResponse{{
+			testutils.SetTestProcessResponse(testutils.TestProcessResponse{
 				Command:        "helm",
 				Args:           []string{"version", "-c", "--short"},
 				ResponseStatus: tt.status,
 				Stdout:         tt.version,
-			}}
+			})
 
 			got, err := NewHelmManager(fake.NewContextHandler(nil, nil))
 			if (err != nil) != tt.wantErr {

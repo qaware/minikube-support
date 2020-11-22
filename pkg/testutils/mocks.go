@@ -1,6 +1,6 @@
 package testutils
 
-// MockInitSudo adds the TestProcessResponse for `sh.initSudo` to `testutils.TestProcessResponses`.
+// MockInitSudo adds the TestProcessResponse for `sh.initSudo` to `testutils.testProcessResponses`.
 func MockInitSudo() {
 	MockWithoutResponse(0, "which", "sudo")
 	MockWithoutResponse(0, "sudo", "echo", "")
@@ -14,7 +14,7 @@ func MockWithoutResponse(returnStatus int, cmd string, args ...string) {
 		ResponseStatus: returnStatus,
 	}
 
-	TestProcessResponses = append(TestProcessResponses, test)
+	AddTestProcessResponse(test)
 }
 
 func MockWithStdOut(stdOut string, returnStatus int, cmd string, args ...string) {
@@ -25,5 +25,5 @@ func MockWithStdOut(stdOut string, returnStatus int, cmd string, args ...string)
 		Stdout:         stdOut,
 	}
 
-	TestProcessResponses = append(TestProcessResponses, test)
+	AddTestProcessResponse(test)
 }

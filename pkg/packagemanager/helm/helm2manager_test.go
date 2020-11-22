@@ -4,12 +4,13 @@ import (
 	"os/exec"
 	"testing"
 
-	"github.com/qaware/minikube-support/pkg/kubernetes/fake"
-	"github.com/qaware/minikube-support/pkg/sh"
-	"github.com/qaware/minikube-support/pkg/testutils"
 	"github.com/sirupsen/logrus"
 	"github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/qaware/minikube-support/pkg/kubernetes/fake"
+	"github.com/qaware/minikube-support/pkg/sh"
+	"github.com/qaware/minikube-support/pkg/testutils"
 )
 
 var global = test.NewGlobal()
@@ -36,10 +37,10 @@ func Test_helm2Manager_Init(t *testing.T) {
 				context:     fake.NewContextHandler(nil, nil),
 				initialized: tt.initialized,
 			}
-			testutils.TestProcessResponses = []testutils.TestProcessResponse{
+			testutils.SetTestProcessResponses([]testutils.TestProcessResponse{
 				{Command: "helm", Args: []string{"version", "-s"}, ResponseStatus: tt.versionStatus, Stdout: tt.versionMsg},
 				{Command: "helm", Args: []string{"init", "--wait"}, ResponseStatus: tt.initStatus},
-			}
+			})
 			if err := m.Init(); (err != nil) != tt.wantErr {
 				t.Errorf("helm2Manager.Init() error = %v, wantErr %v", err, tt.wantErr)
 			}
@@ -135,12 +136,11 @@ func Test_helm2Manager_Install(t *testing.T) {
 				initialized: tt.initialized,
 			}
 
-			testutils.TestProcessResponses = []testutils.TestProcessResponse{
-				{Command: "helm", Args: []string{"version", "-s"}, ResponseStatus: 0, Stdout: ""},
-			}
+			testutils.SetTestProcessResponse(testutils.TestProcessResponse{
+				Command: "helm", Args: []string{"version", "-s"}, ResponseStatus: 0, Stdout: ""},
+			)
 			for _, args := range tt.expectedArgs {
-				testutils.TestProcessResponses = append(testutils.TestProcessResponses,
-					testutils.TestProcessResponse{Command: "helm", Args: args, ResponseStatus: tt.responseStatus, Stdout: tt.response})
+				testutils.AddTestProcessResponse(testutils.TestProcessResponse{Command: "helm", Args: args, ResponseStatus: tt.responseStatus, Stdout: tt.response})
 			}
 
 			m.Install(tt.chart, tt.release, tt.namespace, tt.values, tt.wait)
@@ -211,10 +211,10 @@ func Test_helm2Manager_Uninstall(t *testing.T) {
 				context:     fake.NewContextHandler(nil, nil),
 				initialized: tt.initialized,
 			}
-			testutils.TestProcessResponses = []testutils.TestProcessResponse{
+			testutils.SetTestProcessResponses([]testutils.TestProcessResponse{
 				{Command: "helm", Args: tt.expectedArgs, ResponseStatus: tt.responseStatus, Stdout: tt.response},
 				{Command: "helm", Args: []string{"version", "-s"}, ResponseStatus: 0, Stdout: ""},
-			}
+			})
 			m.Uninstall(tt.release, "", tt.purge)
 			lastEntry := global.LastEntry()
 			if lastEntry.Level != tt.lastEntryLevel {
@@ -246,10 +246,10 @@ func Test_helm2Manager_AddRepository(t *testing.T) {
 				context:     fake.NewContextHandler(nil, nil),
 				initialized: tt.initialized,
 			}
-			testutils.TestProcessResponses = []testutils.TestProcessResponse{
+			testutils.SetTestProcessResponses([]testutils.TestProcessResponse{
 				{Command: "helm", Args: tt.expectedArgs, ResponseStatus: tt.responseStatus, Stdout: ""},
 				{Command: "helm", Args: []string{"version", "-s"}, ResponseStatus: 0, Stdout: ""},
-			}
+			})
 
 			if err := m.AddRepository(tt.repoName, tt.url); (err != nil) != tt.wantErr {
 				t.Errorf("AddRepository() error = %v, wantErr %v", err, tt.wantErr)
@@ -278,10 +278,10 @@ func Test_helm2Manager_UpdateRepository(t *testing.T) {
 				context:     fake.NewContextHandler(nil, nil),
 				initialized: tt.initialized,
 			}
-			testutils.TestProcessResponses = []testutils.TestProcessResponse{
+			testutils.SetTestProcessResponses([]testutils.TestProcessResponse{
 				{Command: "helm", Args: tt.expectedArgs, ResponseStatus: tt.responseStatus, Stdout: ""},
 				{Command: "helm", Args: []string{"version", "-s"}, ResponseStatus: 0, Stdout: ""},
-			}
+			})
 
 			if err := m.UpdateRepository(); (err != nil) != tt.wantErr {
 				t.Errorf("AddRepository() error = %v, wantErr %v", err, tt.wantErr)
@@ -315,13 +315,13 @@ func Test_helm2Manager_runCommand(t *testing.T) {
 			handler.ConfigFile = tt.configFile
 			handler.ContextName = tt.context
 
-			testutils.TestProcessResponses = []testutils.TestProcessResponse{
+			testutils.SetTestProcessResponses([]testutils.TestProcessResponse{
 				{Command: "helm", Args: []string{"version"}, ResponseStatus: 0, Stdout: "No context, no config"},
 				{Command: "helm", Args: []string{"version", "--kube-context", "context"}, ResponseStatus: 0, Stdout: "context, no config"},
 				{Command: "helm", Args: []string{"version", "--kubeconfig", ".kubeconfig"}, ResponseStatus: 0, Stdout: "No context, config"},
 				{Command: "helm", Args: []string{"version", "--kube-context", "context", "--kubeconfig", ".kubeconfig"}, ResponseStatus: 0, Stdout: "context, config"},
 				{Command: "helm", Args: []string{"version", "--kube-context", "invalid"}, ResponseStatus: 1, Stdout: "invalid context"},
-			}
+			})
 
 			got, err := m.runCommand("version")
 			if (err != nil) != tt.wantErr {

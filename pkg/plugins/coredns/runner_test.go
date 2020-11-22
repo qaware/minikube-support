@@ -1,14 +1,16 @@
 package coredns
 
 import (
-	"github.com/qaware/minikube-support/pkg/sh"
-	"github.com/qaware/minikube-support/pkg/testutils"
-	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
+
+	"github.com/qaware/minikube-support/pkg/sh"
+	"github.com/qaware/minikube-support/pkg/testutils"
 )
 
 func Test_runner(t *testing.T) {
@@ -29,7 +31,7 @@ func Test_runner(t *testing.T) {
 		Stderr:         "err",
 		Delay:          2 * time.Second,
 	}
-	testutils.TestProcessResponses = append(testutils.TestProcessResponses, test)
+	testutils.SetTestProcessResponse(test)
 
 	assert.NoError(t, os.MkdirAll(paths.logDir(), 0755))
 

@@ -12,9 +12,10 @@ import (
 	"github.com/qaware/minikube-support/pkg/sh"
 	"github.com/qaware/minikube-support/pkg/testutils"
 
-	"github.com/qaware/minikube-support/pkg/apis"
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/qaware/minikube-support/pkg/apis"
 )
 
 func TestRunOptions_Run(t *testing.T) {
@@ -49,7 +50,7 @@ func TestRunOptions_Run(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			testutils.TestProcessResponses = []testutils.TestProcessResponse{{Command: "sudo", Args: []string{"echo"}, ResponseStatus: 0}}
+			testutils.SetTestProcessResponse(testutils.TestProcessResponse{Command: "sudo", Args: []string{"echo"}, ResponseStatus: 0})
 			options := &RunOptions{
 				plugins:           tt.plugins,
 				messageChannel:    make(chan *apis.MonitoringMessage),

@@ -7,16 +7,33 @@ import (
 	"os"
 	"os/exec"
 	"reflect"
+	"sync"
 	"testing"
 	"time"
 
 	"github.com/qaware/minikube-support/pkg/sh"
 )
 
+type TestProcessResponse struct {
+	Command        string
+	Args           []string
+	ResponseStatus int
+	Stdout         string
+	Stderr         string
+	ExpectedStdin  string
+	Delay          time.Duration
+	// AltResponseStatus will be returned if stdin got something else as expected
+	AltResponseStatus int
+}
+
+var testProcessResponses []TestProcessResponse
+
+var responsesLock = sync.Mutex{}
+
 // StartCommandLineTest initializes everything that is needed for commandline tests.
 func StartCommandLineTest() {
 	sh.ExecCommand = FakeExecCommand
-	TestProcessResponses = []TestProcessResponse{}
+	testProcessResponses = []TestProcessResponse{}
 }
 
 // StopCommandLineTests reset the changes from StartCommandLineTest.
@@ -26,15 +43,17 @@ func StopCommandLineTest() {
 
 // This command fakes the exec command. This should be only used in Tests.
 func FakeExecCommand(command string, args ...string) *exec.Cmd {
+	responsesLock.Lock()
+	defer responsesLock.Unlock()
 	cs := []string{"-test.run=TestHelperProcess", "--", command}
 	cs = append(cs, args...)
 	cmd := exec.Command(os.Args[0], cs...)
 	cmd.Env = []string{"GO_WANT_HELPER_PROCESS=1"}
 
-	if len(TestProcessResponses) > 0 {
+	if len(testProcessResponses) > 0 {
 		var buf bytes.Buffer
 		encoder := json.NewEncoder(&buf)
-		_ = encoder.Encode(TestProcessResponses)
+		_ = encoder.Encode(testProcessResponses)
 		cmd.Env = append(cmd.Env, "RESPONSE="+buf.String())
 	}
 	return cmd
@@ -104,16 +123,23 @@ func FindTestProcessResponse(responses []TestProcessResponse, cmd string, args [
 	}
 }
 
-type TestProcessResponse struct {
-	Command        string
-	Args           []string
-	ResponseStatus int
-	Stdout         string
-	Stderr         string
-	ExpectedStdin  string
-	Delay          time.Duration
-	// AltResponseStatus will be returned if stdin got something else as expected
-	AltResponseStatus int
+func SetTestProcessResponse(response TestProcessResponse) {
+	SetTestProcessResponses([]TestProcessResponse{response})
+}
+func SetTestProcessResponses(responses []TestProcessResponse) {
+	responsesLock.Lock()
+	testProcessResponses = responses
+	responsesLock.Unlock()
 }
 
-var TestProcessResponses []TestProcessResponse
+func AddTestProcessResponse(response TestProcessResponse) {
+	responsesLock.Lock()
+	testProcessResponses = append(testProcessResponses, response)
+	responsesLock.Unlock()
+}
+
+func ClearTestProcessResponse() {
+	responsesLock.Lock()
+	testProcessResponses = []TestProcessResponse{}
+	responsesLock.Unlock()
+}

@@ -13,10 +13,11 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/kballard/go-shellquote"
+	"github.com/stretchr/testify/assert"
+
 	"github.com/qaware/minikube-support/pkg/github/fake"
 	"github.com/qaware/minikube-support/pkg/sh"
 	"github.com/qaware/minikube-support/pkg/testutils"
-	"github.com/stretchr/testify/assert"
 )
 
 func Test_installer_Install(t *testing.T) {
@@ -157,5 +158,5 @@ func mockWriteFileAsRoot(path string, content []byte) {
 		test.ExpectedStdin = string(content)
 	}
 
-	testutils.TestProcessResponses = append(testutils.TestProcessResponses, test)
+	testutils.AddTestProcessResponse(test)
 }

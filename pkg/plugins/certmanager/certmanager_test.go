@@ -7,14 +7,6 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/magiconair/properties/assert"
-	"github.com/qaware/minikube-support/pkg/github"
-	ghClientFake "github.com/qaware/minikube-support/pkg/github/fake"
-	"github.com/qaware/minikube-support/pkg/kubernetes"
-	"github.com/qaware/minikube-support/pkg/kubernetes/fake"
-	"github.com/qaware/minikube-support/pkg/packagemanager/helm"
-	helmFake "github.com/qaware/minikube-support/pkg/packagemanager/helm/fake"
-	"github.com/qaware/minikube-support/pkg/sh"
-	"github.com/qaware/minikube-support/pkg/testutils"
 	"github.com/sirupsen/logrus"
 	"github.com/sirupsen/logrus/hooks/test"
 	assert2 "github.com/stretchr/testify/assert"
@@ -25,6 +17,15 @@ import (
 	k8sFake "k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/kubernetes/scheme"
 	testing2 "k8s.io/client-go/testing"
+
+	"github.com/qaware/minikube-support/pkg/github"
+	ghClientFake "github.com/qaware/minikube-support/pkg/github/fake"
+	"github.com/qaware/minikube-support/pkg/kubernetes"
+	"github.com/qaware/minikube-support/pkg/kubernetes/fake"
+	"github.com/qaware/minikube-support/pkg/packagemanager/helm"
+	helmFake "github.com/qaware/minikube-support/pkg/packagemanager/helm/fake"
+	"github.com/qaware/minikube-support/pkg/sh"
+	"github.com/qaware/minikube-support/pkg/testutils"
 )
 
 func TestNewCertManager(t *testing.T) {
@@ -113,9 +114,9 @@ func Test_certManager_Update(t *testing.T) {
 			helmManager := helmFake.NewMockManager(ctrl)
 			ghClient := ghClientFake.NewMockClient(ctrl)
 			handler := fake.NewContextHandler(k8sFake.NewSimpleClientset(), dynamicFake.NewSimpleDynamicClient(scheme.Scheme))
-			testutils.TestProcessResponses = []testutils.TestProcessResponse{
-				{Command: "mkcert", Args: []string{"-CAROOT"}, ResponseStatus: 0, Stdout: "fixtures/"},
-			}
+			testutils.SetTestProcessResponse(testutils.TestProcessResponse{
+				Command: "mkcert", Args: []string{"-CAROOT"}, ResponseStatus: 0, Stdout: "fixtures/"},
+			)
 
 			m := &certManager{
 				manager:        helmManager,
@@ -299,9 +300,9 @@ func Test_certManager_applyCertSecret(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.mkcertRoot != "" {
-				testutils.TestProcessResponses = []testutils.TestProcessResponse{{Command: "mkcert", Args: []string{"-CAROOT"}, ResponseStatus: 0, Stdout: tt.mkcertRoot}}
+				testutils.SetTestProcessResponse(testutils.TestProcessResponse{Command: "mkcert", Args: []string{"-CAROOT"}, ResponseStatus: 0, Stdout: tt.mkcertRoot})
 			} else {
-				testutils.TestProcessResponses = []testutils.TestProcessResponse{{Command: "mkcert", Args: []string{"-CAROOT"}, ResponseStatus: 1}}
+				testutils.SetTestProcessResponse(testutils.TestProcessResponse{Command: "mkcert", Args: []string{"-CAROOT"}, ResponseStatus: 1})
 			}
 
 			var fakeClientSet *k8sFake.Clientset
