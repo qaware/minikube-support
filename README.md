@@ -1,5 +1,7 @@
 # Minikube Support Tools
 
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fqaware%2Fminikube-support.svg?type=small)](https://app.fossa.com/projects/git%2Bgithub.com%2Fqaware%2Fminikube-support?ref=badge_small)
+
 The minikube-support tools combines some external and kubernetes internal tools to provide a better interaction between 
 minikube and the developers local os.
 The main entry point to run everything on the current minikube instance, simply run `minikube-support run`.
