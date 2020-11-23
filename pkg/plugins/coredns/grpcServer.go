@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"sync"
 	"time"
 
 	"github.com/miekg/dns"
@@ -15,14 +16,16 @@ import (
 // server is a small grpc service that answers to dns queries over grpc from CoreDNS.
 // Please refer to the CoreDNS GRPC Plugin how to configure it to use this as backend.
 type server struct {
-	entries map[dns.Type]map[dns.Name][]dns.RR
-	server  *grpc.Server
+	entries     map[dns.Type]map[dns.Name][]dns.RR
+	entriesLock sync.RWMutex
+	server      *grpc.Server
 }
 
 // NewServer initializes the grpc core dns service.
 func NewServer() *server {
 	return &server{
-		entries: make(map[dns.Type]map[dns.Name][]dns.RR),
+		entries:     make(map[dns.Type]map[dns.Name][]dns.RR),
+		entriesLock: sync.RWMutex{},
 	}
 }
 
@@ -176,6 +179,9 @@ func (srv *server) AddCNAME(name string, target string) error {
 // addRR adds the given resource record to the internal database.
 // It will not overwrite any existing resource records if there is already one with the same name and type.
 func (srv *server) addRR(entry dns.RR) {
+	srv.entriesLock.Lock()
+	defer srv.entriesLock.Unlock()
+
 	name := dns.Name(entry.Header().Name)
 	dnsType := dns.Type(entry.Header().Rrtype)
 	if _, ok := srv.entries[dnsType]; !ok {
@@ -188,6 +194,9 @@ func (srv *server) addRR(entry dns.RR) {
 // GetResourceRecord tries to find a resource record with the given name and type.
 // It will return an error if no records are found.
 func (srv *server) GetResourceRecord(name dns.Name, dnsType dns.Type) ([]dns.RR, error) {
+	srv.entriesLock.RLock()
+	defer srv.entriesLock.RUnlock()
+
 	typeRRs, ok := srv.entries[dnsType]
 	if !ok {
 		return nil, fmt.Errorf("no resource records of type %s", dnsType)
@@ -202,6 +211,9 @@ func (srv *server) GetResourceRecord(name dns.Name, dnsType dns.Type) ([]dns.RR,
 
 // RemoveResourceRecord deletes the resource record identified by the name and type from the internal database.
 func (srv *server) RemoveResourceRecord(name string, dnsType dns.Type) {
+	srv.entriesLock.Lock()
+	defer srv.entriesLock.Unlock()
+
 	normalizedName := dns.Name(normalizeName(name))
 	records := srv.entries[dnsType]
 	delete(records, normalizedName)
@@ -213,6 +225,9 @@ func (srv *server) RemoveResourceRecord(name string, dnsType dns.Type) {
 // ListRRs returns a list of all currently stored resource records.
 // The returned list can be empty if no records are stored.
 func (srv *server) ListRRs() []dns.RR {
+	srv.entriesLock.RLock()
+	defer srv.entriesLock.RUnlock()
+
 	var rrs []dns.RR
 
 	for _, typeRRs := range srv.entries {
