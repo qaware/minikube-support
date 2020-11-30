@@ -3,8 +3,7 @@ module github.com/qaware/minikube-support
 go 1.14
 
 require (
-	github.com/armon/consul-api v0.0.0-20180202201655-eb2c6b5be1b6 // indirect
-	github.com/buger/goterm v0.0.0-20200322175922-2f3e71b85129
+	github.com/awesome-gocui/gocui v0.6.1-0.20200808231733-d0eae9ef0497
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
 	github.com/golang/mock v1.4.3
 	github.com/golang/protobuf v1.4.3
@@ -18,8 +17,6 @@ require (
 	github.com/spf13/cobra v1.1.1
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.6.1
-	github.com/ugorji/go v1.1.4 // indirect
-	github.com/xordataexchange/crypt v0.0.3-0.20170626215501-b2862e3d0a77 // indirect
 	golang.org/x/net v0.0.0-20201110031124-69a78807bb2b // indirect
 	golang.org/x/sys v0.0.0-20201119102817-f84b799fce68 // indirect
 	golang.org/x/text v0.3.4 // indirect
@@ -31,3 +28,5 @@ require (
 )
 
 replace github.com/golang/glog => github.com/kubermatic/glog-logrus v0.0.0-20180829085450-3fa5b9870d1d
+
+replace github.com/awesome-gocui/termbox-go => github.com/nsf/termbox-go v0.0.0-20201124104050-ed494de23a00
