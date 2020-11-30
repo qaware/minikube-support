@@ -88,15 +88,10 @@ func (m *certManager) Update() {
 	}
 }
 
-func (m *certManager) Uninstall(purge bool) {
+func (m *certManager) Uninstall(_ bool) {
 	var err *multierror.Error
-	client, e := m.contextHandler.GetDynamicClient()
-	if e != nil {
-		logrus.Errorf("unable to get dynamic client: %s", e)
-		return
-	}
 
-	m.manager.Uninstall(releaseName, m.namespace, purge)
+	m.manager.Uninstall(releaseName, m.namespace, true)
 
 	clientSet, e := m.contextHandler.GetClientSet()
 	if e != nil {
@@ -107,10 +102,6 @@ func (m *certManager) Uninstall(purge bool) {
 	e = clientSet.
 		CoreV1().
 		Secrets(m.namespace).
-		Delete(m.ctx, issuerName, metav1.DeleteOptions{})
-	err = multierror.Append(err, e)
-
-	e = client.Resource(groupVersion.WithResource("clusterissuers")).
 		Delete(m.ctx, issuerName, metav1.DeleteOptions{})
 	err = multierror.Append(err, e)
 

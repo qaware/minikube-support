@@ -122,6 +122,9 @@ func Test_certManager_Update(t *testing.T) {
 				Install("jetstack/cert-manager", releaseName, "mks", gomock.Any(), true).
 				MinTimes(0).
 				MaxTimes(1)
+			helmManager.EXPECT().
+				GetVersion().
+				Return("3")
 
 			m.Update()
 
@@ -137,15 +140,12 @@ func Test_certManager_Uninstall(t *testing.T) {
 	logrus.SetLevel(logrus.DebugLevel)
 	tests := []struct {
 		name                   string
-		purge                  bool
 		handler                *fake.ContextHandler
 		expectHelmUninstall    bool
 		expectDeleteSecret     bool
-		expectDeleteIssuer     bool
 		expectedLogEntryPrefix string
 	}{
 		{"ok",
-			true,
 			fake.NewContextHandler(k8sFake.NewSimpleClientset(&corev1.Secret{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "Secret",
@@ -156,60 +156,16 @@ func Test_certManager_Uninstall(t *testing.T) {
 					Name:      issuerName,
 				}}), dynamicFake.NewSimpleDynamicClient(scheme.Scheme, &unstructured.Unstructured{
 				Object: map[string]interface{}{"apiVersion": "cert-manager.io/v1", "kind": "ClusterIssuer", "metadata": map[string]interface{}{"name": issuerName}}})),
-			true,
-			true,
-			true,
-			"CertManager plugin successfully uninstalled.",
-		},
-		{"ok no purge",
-			false,
-			fake.NewContextHandler(k8sFake.NewSimpleClientset(&corev1.Secret{
-				TypeMeta: metav1.TypeMeta{
-					Kind:       "Secret",
-					APIVersion: "v1",
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Namespace: "mks",
-					Name:      issuerName,
-				}}), dynamicFake.NewSimpleDynamicClient(scheme.Scheme, &unstructured.Unstructured{
-				Object: map[string]interface{}{"apiVersion": "cert-manager.io/v1", "kind": "ClusterIssuer", "metadata": map[string]interface{}{"name": issuerName}}})),
-			true,
 			true,
 			true,
 			"CertManager plugin successfully uninstalled.",
 		},
 		{"no secret",
-			false,
 			fake.NewContextHandler(k8sFake.NewSimpleClientset(), dynamicFake.NewSimpleDynamicClient(scheme.Scheme, &unstructured.Unstructured{
 				Object: map[string]interface{}{"apiVersion": "cert-manager.io/v1", "kind": "ClusterIssuer", "metadata": map[string]interface{}{"name": issuerName}}})),
 			true,
 			true,
-			true,
 			"Unable to uninstall the certManager plugin: 1 error occurred:\n\t* secrets \"ca-issuer\" not found",
-		},
-		{"no issuer",
-			false,
-			fake.NewContextHandler(k8sFake.NewSimpleClientset(&corev1.Secret{
-				TypeMeta: metav1.TypeMeta{
-					Kind:       "Secret",
-					APIVersion: "v1",
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Namespace: "mks",
-					Name:      issuerName,
-				}}), dynamicFake.NewSimpleDynamicClient(scheme.Scheme)),
-			true,
-			true,
-			true,
-			"Unable to uninstall the certManager plugin: 1 error occurred:\n\t* clusterissuers.cert-manager.io \"ca-issuer\" not found",
-		},
-		{"no dynamic client",
-			false,
-			fake.NewContextHandler(k8sFake.NewSimpleClientset(), nil),
-			false,
-			false,
-			false,
-			"unable to get dynamic client: no dynamic client",
 		},
 	}
 	for _, tt := range tests {
@@ -220,13 +176,10 @@ func Test_certManager_Uninstall(t *testing.T) {
 			manager := helmFake.NewMockManager(ctrl)
 			m := NewCertManager(manager, tt.handler, github.NewClient())
 			if tt.expectHelmUninstall {
-				manager.EXPECT().Uninstall(releaseName, "mks", tt.purge)
+				manager.EXPECT().Uninstall(releaseName, "mks", true)
 			}
-			m.Uninstall(tt.purge)
+			m.Uninstall(true)
 
-			if tt.expectDeleteIssuer {
-				verifyActionResource(t, tt.handler.DynamicClient.Actions(), 0, "delete", "clusterissuers")
-			}
 			if tt.expectDeleteSecret {
 				verifyActionResource(t, tt.handler.ClientSet.Actions(), 0, "delete", "secrets")
 			}

@@ -1,9 +1,10 @@
 package ingress
 
 import (
+	"github.com/sirupsen/logrus"
+
 	"github.com/qaware/minikube-support/pkg/apis"
 	"github.com/qaware/minikube-support/pkg/packagemanager/helm"
-	"github.com/sirupsen/logrus"
 )
 
 type controllerInstaller struct {
@@ -44,8 +45,8 @@ func (i *controllerInstaller) Update() {
 	i.manager.Install("ingress-nginx/ingress-nginx", i.releaseName, i.namespace, i.values, false)
 }
 
-func (i *controllerInstaller) Uninstall(purge bool) {
-	i.manager.Uninstall(i.releaseName, i.namespace, purge)
+func (i *controllerInstaller) Uninstall(_ bool) {
+	i.manager.Uninstall(i.releaseName, i.namespace, true)
 }
 
 func (*controllerInstaller) Phase() apis.Phase {
