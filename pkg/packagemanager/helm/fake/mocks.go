@@ -97,3 +97,17 @@ func (mr *MockManagerMockRecorder) Uninstall(release, namespace, purge interface
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Uninstall", reflect.TypeOf((*MockManager)(nil).Uninstall), release, namespace, purge)
 }
+
+// GetVersion mocks base method
+func (m *MockManager) GetVersion() string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetVersion")
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// GetVersion indicates an expected call of GetVersion
+func (mr *MockManagerMockRecorder) GetVersion() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVersion", reflect.TypeOf((*MockManager)(nil).GetVersion))
+}

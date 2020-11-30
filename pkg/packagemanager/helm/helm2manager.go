@@ -6,10 +6,11 @@ import (
 	"sync"
 
 	"github.com/kballard/go-shellquote"
+	"github.com/sirupsen/logrus"
+
 	"github.com/qaware/minikube-support/pkg/kubernetes"
 	"github.com/qaware/minikube-support/pkg/sh"
 	"github.com/qaware/minikube-support/pkg/utils"
-	"github.com/sirupsen/logrus"
 )
 
 type helm2Manager struct {
@@ -134,6 +135,10 @@ func (m *helm2Manager) UpdateRepository() error {
 		return e
 	}
 	return nil
+}
+
+func (m *helm2Manager) GetVersion() string {
+	return "2"
 }
 
 func (m *helm2Manager) runCommand(command string, args ...string) (string, error) {

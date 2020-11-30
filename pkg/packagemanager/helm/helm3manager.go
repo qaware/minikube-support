@@ -6,13 +6,14 @@ import (
 	"os"
 
 	"github.com/kballard/go-shellquote"
-	"github.com/qaware/minikube-support/pkg/kubernetes"
-	"github.com/qaware/minikube-support/pkg/sh"
-	"github.com/qaware/minikube-support/pkg/utils"
 	"github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/qaware/minikube-support/pkg/kubernetes"
+	"github.com/qaware/minikube-support/pkg/sh"
+	"github.com/qaware/minikube-support/pkg/utils"
 )
 
 type helm3Manager struct {
@@ -100,6 +101,10 @@ func (h *helm3Manager) Uninstall(release string, namespace string, purge bool) {
 	}
 	logrus.Infof("Helm release %s successfully deleted.", release)
 	logrus.Debug(response)
+}
+
+func (h *helm3Manager) GetVersion() string {
+	return "3"
 }
 
 func (h *helm3Manager) runCommand(command string, args ...string) (string, error) {

@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
+
 	"github.com/qaware/minikube-support/pkg/kubernetes"
 	"github.com/qaware/minikube-support/pkg/sh"
 )
@@ -16,6 +17,7 @@ type Manager interface {
 	UpdateRepository() error
 	Install(chart string, release string, namespace string, values map[string]interface{}, wait bool)
 	Uninstall(release string, namespace string, purge bool)
+	GetVersion() string
 }
 
 func NewHelmManager(context kubernetes.ContextHandler) (Manager, error) {

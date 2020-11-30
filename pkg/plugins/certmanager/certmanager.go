@@ -61,6 +61,11 @@ func (m *certManager) Install() {
 }
 
 func (m *certManager) Update() {
+	if m.manager.GetVersion() == "2" {
+		logrus.Warn("Can not install or update cert manager with helm 2")
+		return
+	}
+
 	if e := m.manager.UpdateRepository(); e != nil {
 		logrus.Errorf("Unable to update helm repositories %s", e)
 		return
