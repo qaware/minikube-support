@@ -9,23 +9,23 @@ import (
 	"time"
 
 	"github.com/hashicorp/go-multierror"
-	"github.com/qaware/minikube-support/pkg/apis"
-	"github.com/qaware/minikube-support/pkg/github"
-	"github.com/qaware/minikube-support/pkg/kubernetes"
-	"github.com/qaware/minikube-support/pkg/packagemanager/helm"
-	"github.com/qaware/minikube-support/pkg/sh"
 	"github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	"github.com/qaware/minikube-support/pkg/apis"
+	"github.com/qaware/minikube-support/pkg/github"
+	"github.com/qaware/minikube-support/pkg/kubernetes"
+	"github.com/qaware/minikube-support/pkg/packagemanager/helm"
+	"github.com/qaware/minikube-support/pkg/sh"
 )
 
 type certManager struct {
 	manager        helm.Manager
 	contextHandler kubernetes.ContextHandler
-	ghClient       github.Client
 	namespace      string
 	values         map[string]interface{}
 	ctx            context.Context
@@ -42,7 +42,6 @@ func NewCertManager(manager helm.Manager, handler kubernetes.ContextHandler, ghC
 	return &certManager{
 		manager:        manager,
 		contextHandler: handler,
-		ghClient:       ghClient,
 		values:         map[string]interface{}{},
 		namespace:      "mks",
 		ctx:            context.Background(),
@@ -62,20 +61,6 @@ func (m *certManager) Install() {
 }
 
 func (m *certManager) Update() {
-	version, e := m.ghClient.GetLatestReleaseTag("jetstack", "cert-manager")
-	if e != nil {
-		logrus.Errorf("Unable to detect latest certmanager version: %s", e)
-		return
-	}
-
-	downloadUrl := "https://github.com/jetstack/cert-manager/releases/download/" + version + "/cert-manager.crds.yaml"
-
-	response, e := m.contextHandler.Kubectl("apply", "-f", downloadUrl)
-	if e != nil {
-		logrus.Errorf("Unable to install the certmanager crds: %s", response)
-		return
-	}
-
 	if e := m.manager.UpdateRepository(); e != nil {
 		logrus.Errorf("Unable to update helm repositories %s", e)
 		return
@@ -84,6 +69,7 @@ func (m *certManager) Update() {
 	m.values["ingressShim.defaultIssuerName"] = issuerName
 	m.values["ingressShim.defaultIssuerKind"] = "ClusterIssuer"
 	m.values["ingressShim.defaultIssuerGroup"] = "cert-manager.io"
+	m.values["installCRDs"] = "true"
 
 	m.manager.Install("jetstack/cert-manager", releaseName, m.namespace, m.values, true)
 

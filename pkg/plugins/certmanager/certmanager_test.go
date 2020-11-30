@@ -19,7 +19,6 @@ import (
 	testing2 "k8s.io/client-go/testing"
 
 	"github.com/qaware/minikube-support/pkg/github"
-	ghClientFake "github.com/qaware/minikube-support/pkg/github/fake"
 	"github.com/qaware/minikube-support/pkg/kubernetes"
 	"github.com/qaware/minikube-support/pkg/kubernetes/fake"
 	"github.com/qaware/minikube-support/pkg/packagemanager/helm"
@@ -59,26 +58,18 @@ func Test_certManager_Install(t *testing.T) {
 		lastLogEntry       string
 	}{
 		{"addRepoError", errors.New("failed to add repo"), nil, "Unable to add jetstack repository"},
-		{"can't get latest version", nil, errors.New("can't get latest version"), "Unable to detect latest certmanager version"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 			helmManager := helmFake.NewMockManager(ctrl)
-			ghClient := ghClientFake.NewMockClient(ctrl)
 			m := &certManager{
-				manager:  helmManager,
-				ghClient: ghClient,
+				manager: helmManager,
 			}
 			helmManager.EXPECT().
 				AddRepository("jetstack", "https://charts.jetstack.io").
 				Return(tt.addRepoError)
-			ghClient.EXPECT().
-				GetLatestReleaseTag(gomock.Any(), gomock.Any()).
-				Return("", tt.latestVersionError).
-				MinTimes(0).
-				MaxTimes(1)
 			m.Install()
 
 			testutils.CheckLogEntry(t, hook, tt.lastLogEntry)
@@ -102,8 +93,6 @@ func Test_certManager_Update(t *testing.T) {
 		expectedLogEntryPrefix string
 	}{
 		{"ok", "1.0", nil, 0, nil, "CertSecret 'ca-issuer' successfully added"},
-		{"failed to fetch version", "", errors.New("no version"), 0, nil, "Unable to detect latest certmanager version"},
-		{"failed to apply crds", "1.0", nil, 1, nil, "Unable to install the certmanager crds"},
 		{"failed update repos", "1.0", nil, 0, errors.New("no repo update"), "Unable to update helm repositories"},
 	}
 	for _, tt := range tests {
@@ -112,7 +101,6 @@ func Test_certManager_Update(t *testing.T) {
 			defer ctrl.Finish()
 
 			helmManager := helmFake.NewMockManager(ctrl)
-			ghClient := ghClientFake.NewMockClient(ctrl)
 			handler := fake.NewContextHandler(k8sFake.NewSimpleClientset(), dynamicFake.NewSimpleDynamicClient(scheme.Scheme))
 			testutils.SetTestProcessResponse(testutils.TestProcessResponse{
 				Command: "mkcert", Args: []string{"-CAROOT"}, ResponseStatus: 0, Stdout: "fixtures/"},
@@ -121,16 +109,10 @@ func Test_certManager_Update(t *testing.T) {
 			m := &certManager{
 				manager:        helmManager,
 				contextHandler: handler,
-				ghClient:       ghClient,
 				namespace:      "mks",
 				values:         map[string]interface{}{},
 			}
 
-			ghClient.EXPECT().
-				GetLatestReleaseTag("jetstack", "cert-manager").
-				Return(tt.latestVersion, tt.latestVersionError)
-
-			handler.MockKubectl("apply", []string{"-f", "https://github.com/jetstack/cert-manager/releases/download/" + tt.latestVersion + "/cert-manager.crds.yaml"}, "", tt.kApplyStatus)
 			helmManager.EXPECT().
 				UpdateRepository().
 				Return(tt.repoUpdateError).
