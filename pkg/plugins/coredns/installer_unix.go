@@ -2,6 +2,8 @@
 
 package coredns
 
+import "io/ioutil"
+
 func (i *installer) installSpecific() error {
 	// nothing to do at the moment
 	return nil
