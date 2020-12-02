@@ -2,7 +2,6 @@ SHELL = /usr/bin/env bash -o pipefail -o errexit -o nounset
 NAME := minikube-support
 ORG := chr-fritz
 ROOT_PACKAGE := github.com/qaware/minikube-support
-#VERSION := $(shell jx-release-version)
 VERSION := v0.0.0-next
 
 REVISION   := $(shell git rev-parse --short HEAD 2> /dev/null  || echo 'unknown')
@@ -29,10 +28,7 @@ all: lint test $(GOOS)-build
 	@echo "SUCCESS"
 
 .PHONY: ci
-ci: ci-check ci-build
-
-.PHONY: ci-build
-ci-build: test $(GOOS)-build
+ci: ci-check
 
 .PHONY: ci-check
 ci-check: lint tidy generate imports vet
@@ -73,13 +69,6 @@ windows-build: pb
 test: generate pb
 	mkdir -p $(REPORTS_DIR)
 	go test -race $(PACKAGE_DIRS) -coverprofile=$(REPORTS_DIR)/coverage.out -v $(PACKAGE_DIRS) | tee >(go tool test2json > $(REPORTS_DIR)/tests.json)
-
-.PHONY: release
-release: clean test cross
-	mkdir -p release
-	cp $(BUILD_DIR)/$(NAME)-* release
-	gh-release checksums sha256
-	gh-release create $(ORG)/$(NAME) $(VERSION) master v$(VERSION)
 
 .PHONY: cross
 cross: darwin-build linux-build windows-build
