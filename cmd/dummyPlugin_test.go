@@ -16,6 +16,7 @@ type DummyPlugin struct {
 	uninstallRun bool
 	purge        bool
 	phase        apis.Phase
+	started      chan bool
 }
 
 func (p *DummyPlugin) Install() {
@@ -39,9 +40,16 @@ func (p *DummyPlugin) String() string {
 }
 
 func (p *DummyPlugin) Start(m chan *apis.MonitoringMessage) (boxName string, err error) {
+	defer func() {
+		if p.started != nil {
+			p.started <- true
+		}
+	}()
+
 	if p.failStart {
 		return "", fmt.Errorf("fail")
 	}
+	m <- &apis.MonitoringMessage{Box: p.String(), Message: "Starting..."}
 	if p.run != nil {
 		go p.run(m)
 	}
