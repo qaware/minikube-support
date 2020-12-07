@@ -68,6 +68,11 @@ windows-build: pb
 .PHONY: test
 test: generate pb
 	mkdir -p $(REPORTS_DIR)
+	go test $(PACKAGE_DIRS) -coverprofile=$(REPORTS_DIR)/coverage.out -v $(PACKAGE_DIRS) | tee >(go tool test2json > $(REPORTS_DIR)/tests.json)
+
+.PHONY: test-race
+test-race: generate pb
+	mkdir -p $(REPORTS_DIR)
 	go test -race $(PACKAGE_DIRS) -coverprofile=$(REPORTS_DIR)/coverage.out -v $(PACKAGE_DIRS) | tee >(go tool test2json > $(REPORTS_DIR)/tests.json)
 
 .PHONY: cross
