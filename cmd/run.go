@@ -20,6 +20,7 @@ import (
 )
 
 var boxConfig = [][]string{{"k8sdns-ingress", "k8sdns-service"}, {"coredns-grpc", "minikube-tunnel"}, {"logs"}}
+var newGui = gocui.NewGui
 
 type RunOptions struct {
 	plugins          []apis.StartStopPlugin
@@ -64,8 +65,7 @@ func (i *RunOptions) Run(_ *cobra.Command, _ []string) {
 
 	go i.startPlugins()
 	i.handleSignals()
-
-	gui, e := gocui.NewGui(gocui.Output256, true)
+	gui, e := newGui(gocui.Output256, true)
 	if e != nil {
 		logrus.Errorf("Can not start gui: %s", e)
 		return
@@ -77,10 +77,8 @@ func (i *RunOptions) Run(_ *cobra.Command, _ []string) {
 		logrus.Errorf("Can not register keybindings: %s", e)
 		return
 	}
-
 	go i.receiveMessages()
 	i.header()
-
 	if err := gui.MainLoop(); err != nil && !gocui.IsQuit(err) {
 		logrus.Error(err)
 	}
