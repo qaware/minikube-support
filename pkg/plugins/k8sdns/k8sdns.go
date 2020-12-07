@@ -2,16 +2,18 @@ package k8sdns
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/hashicorp/go-multierror"
-	"github.com/qaware/minikube-support/pkg/apis"
-	"github.com/qaware/minikube-support/pkg/kubernetes"
-	"github.com/qaware/minikube-support/pkg/plugins/coredns"
-	"github.com/qaware/minikube-support/pkg/utils"
 	"github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
-	"strings"
+
+	"github.com/qaware/minikube-support/pkg/apis"
+	"github.com/qaware/minikube-support/pkg/kubernetes"
+	"github.com/qaware/minikube-support/pkg/plugins/coredns"
+	"github.com/qaware/minikube-support/pkg/utils"
 )
 
 type k8sDns struct {
@@ -113,7 +115,9 @@ func (k8s *k8sDns) Start(messageChannel chan *apis.MonitoringMessage) (string, e
 // Stop stopps the plugin.
 // It will shutdown the ingress watcher.
 func (k8s *k8sDns) Stop() error {
-	k8s.watch.Stop()
+	if k8s.watch != nil {
+		k8s.watch.Stop()
+	}
 	return nil
 }
 

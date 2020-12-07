@@ -65,7 +65,9 @@ func (h *Watcher) Start() {
 
 // Stop ends the watcher loop.
 func (h *Watcher) Stop() {
-	h.watch.Stop()
+	if h.watch != nil {
+		h.watch.Stop()
+	}
 }
 
 func (h *Watcher) run() {
