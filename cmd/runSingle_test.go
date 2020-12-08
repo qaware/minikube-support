@@ -27,7 +27,7 @@ func TestRunSingleOptions_Run(t *testing.T) {
 		{
 			"ok",
 			&DummyPlugin{
-				started: make(chan bool, 1),
+				started: make(chan bool),
 				run: func(messages chan *apis.MonitoringMessage) {
 					messages <- &apis.MonitoringMessage{Box: "", Message: "message"}
 				},
@@ -39,7 +39,7 @@ func TestRunSingleOptions_Run(t *testing.T) {
 			"fail start",
 			&DummyPlugin{
 				failStart: true,
-				started:   make(chan bool, 1),
+				started:   make(chan bool),
 			},
 			"Can not start plugin dummy: fail",
 			"Can not start plugin dummy: fail",
@@ -48,7 +48,7 @@ func TestRunSingleOptions_Run(t *testing.T) {
 			"fail stop",
 			&DummyPlugin{
 				failStop: true,
-				started:  make(chan bool, 1),
+				started:  make(chan bool),
 				run:      func(messages chan *apis.MonitoringMessage) {},
 			},
 			"New dummy status:\nStarting...",
