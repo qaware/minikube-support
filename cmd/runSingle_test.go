@@ -3,7 +3,6 @@ package cmd
 import (
 	"syscall"
 	"testing"
-	"time"
 
 	"github.com/sirupsen/logrus"
 	"github.com/sirupsen/logrus/hooks/test"
@@ -33,7 +32,7 @@ func TestRunSingleOptions_Run(t *testing.T) {
 				},
 			},
 			"New dummy status:\nmessage",
-			"Received signal ",
+			"Received signal interrupt terminating plugin: dummy",
 		},
 		{
 			"fail start",
@@ -52,7 +51,7 @@ func TestRunSingleOptions_Run(t *testing.T) {
 				run:      func(messages chan *apis.MonitoringMessage) {},
 			},
 			"New dummy status:\nStarting...",
-			"Unable to terminate plugin dummy:",
+			"Unable to terminate plugin dummy: fail",
 		},
 	}
 	for _, tt := range tests {
@@ -66,12 +65,12 @@ func TestRunSingleOptions_Run(t *testing.T) {
 				terminated <- true
 			}()
 			<-tt.plugin.started
-			time.Sleep(50 * time.Millisecond)
-			testutils.CheckLogEntry(t, hook, tt.startupPrefix)
 
 			_ = syscall.Kill(syscall.Getpid(), syscall.SIGINT)
 			<-terminated
-			testutils.CheckLogEntry(t, hook, tt.stopPrefix)
+
+			testutils.CheckLogEntries(t, hook, tt.startupPrefix)
+			testutils.CheckLogEntries(t, hook, tt.stopPrefix)
 		})
 	}
 }

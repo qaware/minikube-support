@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"fmt"
 	"os/exec"
 	"reflect"
 	"sync"
@@ -54,7 +53,7 @@ func TestRunOptions_Run(t *testing.T) {
 			[]apis.MonitoringMessage{{Box: "dummy1", Message: "Starting..."}},
 		},
 		{
-			"one start fails",
+			"one stop fails",
 			[]apis.StartStopPlugin{
 				&DummyPlugin{failStop: true},
 			},
@@ -64,7 +63,10 @@ func TestRunOptions_Run(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			testutils.SetTestProcessResponse(testutils.TestProcessResponse{Command: "sudo", Args: []string{"echo"}, ResponseStatus: 0})
+			testutils.SetTestProcessResponses([]testutils.TestProcessResponse{
+				{Command: "sudo", Args: []string{"echo", ""}, ResponseStatus: 0},
+				{Command: "which", Args: []string{"sudo"}, ResponseStatus: 0},
+			})
 			startedChannel, cntPlugins := injectStartedChannel(tt.plugins)
 			options := &RunOptions{
 				plugins:          tt.plugins,
@@ -201,10 +203,8 @@ func injectStartedChannel(plugins []apis.StartStopPlugin) (chan bool, int) {
 // waitForStarted is a small helper which waits until the same number of messages on the channel were received as the
 // defined in countPlugins. It is built to work together with the injectStartChannel() function
 func waitForStarted(startedChannel chan bool, countPlugins int) {
-	fmt.Println("wait for ", countPlugins, "plugins")
 	for range startedChannel {
 		countPlugins--
-		fmt.Println("plugin started reaming", countPlugins)
 		if countPlugins == 0 {
 			return
 		}
