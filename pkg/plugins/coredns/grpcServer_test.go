@@ -191,10 +191,10 @@ func TestServer_RemoveResourceRecord(t *testing.T) {
 				assert.NoError(t, srv.AddA("domain.", net.ParseIP("127.0.0.2")))
 				assert.NoError(t, srv.AddAAAA("domain.", net.ParseIP("::2")))
 			}
-			t.Logf("Found resource records: %s", srv.entries[tt.dnsType])
+
 			srv.RemoveResourceRecord(tt.domain, tt.dnsType)
 			rrs, ok := srv.entries[tt.dnsType]
-			t.Logf("Found resource records after deletenein: %s", rrs)
+
 			if ok != tt.hasType {
 				t.Errorf("Wrong removal of type array: want %v, done %v", tt.hasType, ok)
 				return
