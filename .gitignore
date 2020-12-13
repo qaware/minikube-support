@@ -6,3 +6,4 @@ pb/*.go
 *.log
 tmp/
 reports/
+dist/
