@@ -2,6 +2,7 @@ package k8sdns
 
 import (
 	"fmt"
+	"reflect"
 	"strings"
 
 	"github.com/hashicorp/go-multierror"
@@ -129,7 +130,12 @@ func (k8s *k8sDns) PreWatch(options metav1.ListOptions) (watch.Interface, error)
 // backend if they point to a target.
 func (k8s *k8sDns) AddedEvent(obj runtime.Object) error {
 	if !k8s.accessor.MatchesPreconditions(obj) {
-		logrus.Debugf("%s don't matches the preconditions. Will not add the entry.", obj.GetObjectKind().GroupVersionKind().String())
+		object, ok := obj.(metav1.Object)
+		if ok {
+			logrus.Debugf("%s %s/%s don't matches the preconditions. Will not add the dns entry.", reflect.TypeOf(object).Elem().Name(), object.GetNamespace(), object.GetName())
+		} else {
+			logrus.Debugf("%s don't matches the preconditions. Will not add the dns entry.", obj.GetObjectKind().GroupVersionKind().String())
+		}
 		return nil
 	}
 
