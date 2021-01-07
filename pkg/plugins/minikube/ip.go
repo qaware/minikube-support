@@ -2,17 +2,20 @@ package minikube
 
 import (
 	"strings"
+	"sync"
 	"time"
+
+	"github.com/sirupsen/logrus"
 
 	"github.com/qaware/minikube-support/pkg/apis"
 	"github.com/qaware/minikube-support/pkg/kubernetes"
 	"github.com/qaware/minikube-support/pkg/plugins/coredns"
 	"github.com/qaware/minikube-support/pkg/sh"
-	"github.com/sirupsen/logrus"
 )
 
 // ip is a simple plugin which adds a new resource entry for "vm.minikube." to the minikube ip address.
 type ip struct {
+	mutex             sync.Mutex
 	addIpTimer        *time.Timer
 	dnsBackendManager coredns.Manager
 	contextHandler    kubernetes.ContextHandler
@@ -22,7 +25,7 @@ const ipPluginName = "minikube-ip"
 
 // NewIpPlugin initializes the minikube ip address plugin.
 func NewIpPlugin(manager coredns.Manager, handler kubernetes.ContextHandler) apis.StartStopPlugin {
-	return &ip{dnsBackendManager: manager, contextHandler: handler}
+	return &ip{dnsBackendManager: manager, contextHandler: handler, mutex: sync.Mutex{}}
 }
 
 func (i *ip) String() string {
@@ -30,6 +33,8 @@ func (i *ip) String() string {
 }
 
 func (i *ip) Start(chan *apis.MonitoringMessage) (boxName string, err error) {
+	i.mutex.Lock()
+	defer i.mutex.Unlock()
 	i.addIpTimer = time.AfterFunc(10*time.Second, i.addVmIp)
 	return ipPluginName, nil
 }
@@ -39,6 +44,8 @@ func (*ip) IsSingleRunnable() bool {
 }
 
 func (i *ip) Stop() error {
+	i.mutex.Lock()
+	defer i.mutex.Unlock()
 	i.addIpTimer.Stop()
 	return nil
 }

@@ -32,7 +32,7 @@ func TestNewWatcher(t *testing.T) {
 			fake.NewMockWatchHandler(ctrl),
 			&metav1.ListOptions{},
 			"1",
-			&Watcher{"1", &metav1.ListOptions{}, fake.NewMockWatchHandler(ctrl), nil},
+			&Watcher{"1", &metav1.ListOptions{}, fake.NewMockWatchHandler(ctrl), nil, sync.Mutex{}},
 			false,
 		},
 		{
@@ -40,7 +40,7 @@ func TestNewWatcher(t *testing.T) {
 			fake.NewMockWatchHandler(ctrl),
 			nil,
 			"1",
-			&Watcher{"1", &metav1.ListOptions{}, fake.NewMockWatchHandler(ctrl), nil},
+			&Watcher{"1", &metav1.ListOptions{}, fake.NewMockWatchHandler(ctrl), nil, sync.Mutex{}},
 			false,
 		},
 		{

@@ -4,6 +4,7 @@ package kubernetes
 
 import (
 	"errors"
+	"sync"
 
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -20,6 +21,7 @@ type Watcher struct {
 	options         *metav1.ListOptions
 	handler         WatchHandler
 	watch           watch.Interface
+	mutex           sync.Mutex
 }
 
 // WatchHandler is the interface that must be implemented by the application code
@@ -55,6 +57,7 @@ func NewWatcher(handler WatchHandler, options *metav1.ListOptions, resourceVersi
 		ResourceVersion: resourceVersion,
 		options:         options,
 		handler:         handler,
+		mutex:           sync.Mutex{},
 	}, nil
 }
 
@@ -65,6 +68,8 @@ func (h *Watcher) Start() {
 
 // Stop ends the watcher loop.
 func (h *Watcher) Stop() {
+	h.mutex.Lock()
+	defer h.mutex.Unlock()
 	if h.watch != nil {
 		h.watch.Stop()
 	}
@@ -78,15 +83,18 @@ func (h *Watcher) run() {
 }
 
 func (h *Watcher) watcher() bool {
+	h.mutex.Lock()
 	options := h.options.DeepCopy()
 	options.ResourceVersion = h.ResourceVersion
 
 	w, e := h.handler.PreWatch(*options)
 	if e != nil {
 		logrus.Errorf("Can not start watch: %s", e)
+		h.mutex.Unlock()
 		return false
 	}
 	h.watch = w
+	h.mutex.Unlock()
 	accessor := meta.NewAccessor()
 
 	for event := range w.ResultChan() {

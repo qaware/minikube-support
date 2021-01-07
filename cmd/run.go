@@ -119,15 +119,20 @@ func (i *RunOptions) receiveMessages() {
 		i.lastMessages[message.Box] = message
 		i.lastMessagesLock.Unlock()
 
-		i.gui.UpdateAsync(func(gui *gocui.Gui) error {
-			view, e := gui.View(message.Box)
-			if e != nil {
-				return e
-			}
-			view.Clear()
-			view.WriteString(padLeft(message.Message, 1))
-			return nil
-		})
+		i.gui.UpdateAsync(updateBox(message))
+	}
+}
+
+func updateBox(message *apis.MonitoringMessage) func(gui *gocui.Gui) error {
+	msg := apis.CloneMonitoringMessage(message)
+	return func(gui *gocui.Gui) error {
+		view, e := gui.View(msg.Box)
+		if e != nil {
+			return e
+		}
+		view.Clear()
+		view.WriteString(padLeft(msg.Message, 1))
+		return nil
 	}
 }
 

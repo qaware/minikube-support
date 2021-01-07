@@ -6,12 +6,13 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/qaware/minikube-support/pkg/sh"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/homedir"
+
+	"github.com/qaware/minikube-support/pkg/sh"
 )
 
 // ContextHandler is a small interface to encapsulate everything related with
@@ -43,6 +44,7 @@ type contextHandler struct {
 	configFile            *string
 	contextName           string
 	predefinedContextName *string
+	contextNameMutex      sync.RWMutex
 	clientConfig          clientcmd.ClientConfig
 	restConfig            *rest.Config
 	minikube              *bool
@@ -50,7 +52,7 @@ type contextHandler struct {
 
 // NewContextHandler creates a new ContextHandler instance for the given config file and context name.
 func NewContextHandler(configFile *string, contextName *string) ContextHandler {
-	return &contextHandler{configFile: configFile, predefinedContextName: contextName, clientSetMutex: sync.Mutex{}}
+	return &contextHandler{configFile: configFile, predefinedContextName: contextName, clientSetMutex: sync.Mutex{}, contextNameMutex: sync.RWMutex{}}
 }
 
 func (h *contextHandler) GetClientSet() (kubernetes.Interface, error) {
@@ -89,6 +91,8 @@ func (h *contextHandler) GetConfigFile() string {
 }
 
 func (h *contextHandler) GetContextName() string {
+	h.contextNameMutex.RLock()
+	defer h.contextNameMutex.RUnlock()
 	return h.contextName
 }
 
@@ -204,6 +208,8 @@ func (h *contextHandler) loadConfig(kubeconfigPath string) (*rest.Config, error)
 }
 
 func (h *contextHandler) findUsedContextName() error {
+	h.contextNameMutex.Lock()
+	defer h.contextNameMutex.Unlock()
 	if h.predefinedContextName != nil && *h.predefinedContextName != "" {
 		h.contextName = *h.predefinedContextName
 		return nil

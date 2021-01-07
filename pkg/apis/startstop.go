@@ -37,6 +37,14 @@ type MonitoringMessage struct {
 	Message string
 }
 
+// CloneMonitoringMessage creates a copy of the given MonitoringMessage.
+func CloneMonitoringMessage(message *MonitoringMessage) MonitoringMessage {
+	return MonitoringMessage{
+		Box:     message.Box,
+		Message: message.Message,
+	}
+}
+
 // The terminating message. If this message will be send, the run command will shutdown all other start stop plugins and ends.
 var TerminatingMessage = &MonitoringMessage{
 	Box:     "terminating",
