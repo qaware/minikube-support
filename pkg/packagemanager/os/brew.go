@@ -7,9 +7,10 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
+
 	"github.com/qaware/minikube-support/pkg/packagemanager"
 	"github.com/qaware/minikube-support/pkg/sh"
-	"github.com/sirupsen/logrus"
 )
 
 func init() {
@@ -29,7 +30,7 @@ func (b *brewPackageManager) Install(pkg string) error {
 }
 
 func (b *brewPackageManager) IsInstalled(pkg string) (bool, error) {
-	response, e := sh.RunCmd("brew", "list")
+	response, e := sh.RunCmd("brew", "list", "--formula")
 	if e != nil {
 		return false, errors.Wrapf(e, "can not check if %s is installed with brew", pkg)
 	}

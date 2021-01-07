@@ -124,7 +124,7 @@ func Test_brewPackageManager_IsInstalled(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			testutils.StartCommandLineTest()
 			defer testutils.StopCommandLineTest()
-			testutils.MockWithStdOut("mkcert\nnss\n", 0, "brew", "list")
+			testutils.MockWithStdOut("mkcert\nnss\n", 0, "brew", "list", "--formula")
 
 			b := &brewPackageManager{}
 			got, err := b.IsInstalled(tt.pkg)
