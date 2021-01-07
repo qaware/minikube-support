@@ -3,19 +3,22 @@ package plugins
 import (
 	"fmt"
 
-	"github.com/qaware/minikube-support/pkg/apis"
 	"github.com/sirupsen/logrus"
+
+	"github.com/qaware/minikube-support/pkg/apis"
 )
 
 // The plugin registry.
 type startStopPluginRegistry struct {
-	plugins map[string]apis.StartStopPlugin
+	plugins     map[string]apis.StartStopPlugin
+	pluginsList []apis.StartStopPlugin
 }
 
 // Initializes a new plugin registry.
 func NewStartStopPluginRegistry() apis.StartStopPluginRegistry {
 	return &startStopPluginRegistry{
-		plugins: map[string]apis.StartStopPlugin{},
+		plugins:     map[string]apis.StartStopPlugin{},
+		pluginsList: []apis.StartStopPlugin{},
 	}
 }
 
@@ -39,12 +42,13 @@ func (r *startStopPluginRegistry) AddPlugin(plugin apis.StartStopPlugin) {
 	}
 
 	r.plugins[plugin.String()] = plugin
+	r.pluginsList = append(r.pluginsList, plugin)
 }
 
 // ListPlugins returns a list with all registered installable plugins.
 func (r *startStopPluginRegistry) ListPlugins() []apis.StartStopPlugin {
 	var values []apis.StartStopPlugin
-	for _, v := range r.plugins {
+	for _, v := range r.pluginsList {
 		values = append(values, v)
 	}
 	return values

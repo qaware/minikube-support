@@ -4,6 +4,8 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/qaware/minikube-support/pkg/apis"
 )
 
@@ -70,6 +72,36 @@ func Test_startStopPluginRegistry_FindPlugin(t *testing.T) {
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("startStopPluginRegistry.FindPlugin() = %v, want %v", got, tt.want)
 			}
+		})
+	}
+}
+
+func Test_startStopPluginRegistry_ListPlugins(t *testing.T) {
+	tests := []struct {
+		name    string
+		plugins []apis.StartStopPlugin
+		want    []apis.StartStopPlugin
+	}{
+		{
+			"single",
+			[]apis.StartStopPlugin{&DummyPlugin{name: "dummy1"}},
+			[]apis.StartStopPlugin{&DummyPlugin{name: "dummy1"}},
+		},
+		{
+			"double",
+			[]apis.StartStopPlugin{&DummyPlugin{name: "dummy1"}, &DummyPlugin{name: "dummy2"}},
+			[]apis.StartStopPlugin{&DummyPlugin{name: "dummy1"}, &DummyPlugin{name: "dummy2"}},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := NewStartStopPluginRegistry()
+			for _, p := range tt.plugins {
+				r.AddPlugin(p)
+			}
+
+			got := r.ListPlugins()
+			assert.Equal(t, tt.want, got)
 		})
 	}
 }
