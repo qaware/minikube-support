@@ -3,9 +3,11 @@ package cmd
 import (
 	"syscall"
 	"testing"
+	"time"
 
 	"github.com/sirupsen/logrus"
 	"github.com/sirupsen/logrus/hooks/test"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/qaware/minikube-support/pkg/testutils"
 
@@ -67,10 +69,14 @@ func TestRunSingleOptions_Run(t *testing.T) {
 			<-tt.plugin.started
 
 			_ = syscall.Kill(syscall.Getpid(), syscall.SIGINT)
-			<-terminated
+			select {
+			case <-terminated:
+				testutils.CheckLogEntries(t, hook, tt.startupPrefix)
+				testutils.CheckLogEntries(t, hook, tt.stopPrefix)
 
-			testutils.CheckLogEntries(t, hook, tt.startupPrefix)
-			testutils.CheckLogEntries(t, hook, tt.stopPrefix)
+			case <-time.After(1 * time.Second):
+				assert.Fail(t, "terminated message not received")
+			}
 		})
 	}
 }

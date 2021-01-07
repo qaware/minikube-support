@@ -83,11 +83,16 @@ func TestRunOptions_Run(t *testing.T) {
 			waitForStarted(startedChannel, cntPlugins)
 			_ = syscall.Kill(syscall.Getpid(), syscall.SIGINT)
 
-			<-terminated
-			options.lastMessagesLock.RLock()
-			messages := messagesValues(options.lastMessages)
-			options.lastMessagesLock.RUnlock()
-			assert.Equal(t, tt.lastMessages, messages)
+			select {
+			case <-terminated:
+				options.lastMessagesLock.RLock()
+				messages := messagesValues(options.lastMessages)
+				options.lastMessagesLock.RUnlock()
+				assert.Equal(t, tt.lastMessages, messages)
+
+			case <-time.After(1 * time.Second):
+				assert.Fail(t, "terminated message not received")
+			}
 		})
 	}
 }
