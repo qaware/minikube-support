@@ -125,10 +125,15 @@ func (i *RunOptions) receiveMessages() {
 				return e
 			}
 			view.Clear()
-			view.WriteString(message.Message)
+			view.WriteString(padLeft(message.Message, 1))
 			return nil
 		})
 	}
+}
+
+func padLeft(message string, spaces uint8) string {
+	padding := strings.Repeat(" ", int(spaces))
+	return strings.ReplaceAll(padding+message, "\n", "\n"+padding)
 }
 
 func (i *RunOptions) handleSignals() {
