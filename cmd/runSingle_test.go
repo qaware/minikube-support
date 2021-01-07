@@ -68,7 +68,9 @@ func TestRunSingleOptions_Run(t *testing.T) {
 			}()
 			<-tt.plugin.started
 
-			_ = syscall.Kill(syscall.Getpid(), syscall.SIGINT)
+			// let the application run a while
+			time.Sleep(500 * time.Millisecond)
+			assert.NoError(t, syscall.Kill(syscall.Getpid(), syscall.SIGINT))
 			select {
 			case <-terminated:
 				testutils.CheckLogEntries(t, hook, tt.startupPrefix)
