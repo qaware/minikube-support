@@ -44,7 +44,7 @@ func Test_grpcPlugin_listRRsForUI(t *testing.T) {
 	go p.listRRsForUI()
 	msg := <-p.monitoringChannel
 	assert.Equal(t, GrpcPluginName, msg.Box)
-	assert.Equal(t, "Name       |TTL |Typ |RR   |Value\nlocalhost. |10  |IN  |A    |127.0.0.1\nlocalhost. |10  |IN  |AAAA |::1\n", msg.Message)
+	assert.Equal(t, "Name       | TTL | Type | RR   | Value\nlocalhost. | 10  | IN   | A    | 127.0.0.1\nlocalhost. | 10  | IN   | AAAA | ::1\n", msg.Message)
 }
 
 type testPlugin struct{}

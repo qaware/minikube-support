@@ -3,6 +3,7 @@ package coredns
 import (
 	"fmt"
 	"net"
+	"strings"
 	"time"
 
 	"github.com/qaware/minikube-support/pkg/apis"
@@ -76,10 +77,10 @@ func (p *grpcPlugin) listRRsForUI() {
 	rrs := p.server.ListRRs()
 	rrStrings := make([]string, len(rrs))
 	for i, v := range rrs {
-		rrStrings[i] = v.String() + "\n"
+		rrStrings[i] = strings.ReplaceAll(v.String(), "\t", "\t ") + "\n"
 	}
 
-	table, e := utils.FormatAsTable(rrStrings, "Name\tTTL\tTyp\tRR\tValue\n")
+	table, e := utils.FormatAsTable(rrStrings, "Name\t TTL\t Type\t RR\t Value\n")
 	if e != nil {
 		return
 	}
