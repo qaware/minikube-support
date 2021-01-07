@@ -15,14 +15,25 @@ import (
 
 func Test_serviceAccessor_PreFetch(t *testing.T) {
 	tests := []struct {
-		name       string
-		shouldFail bool
-		want       []runtime.Object
-		want1      metav1.ListInterface
-		wantErr    bool
+		name              string
+		clientSetResponse []v1.Service
+		shouldFail        bool
+		want              []runtime.Object
+		want1             metav1.ListInterface
+		wantErr           bool
 	}{
 		{
 			"ok",
+			[]v1.Service{{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "Service",
+					APIVersion: "extension/v1",
+				},
+				ObjectMeta: metav1.ObjectMeta{Name: "abc"},
+				Spec: v1.ServiceSpec{
+					Type: "ClusterIP",
+				},
+			}},
 			false,
 			[]runtime.Object{&v1.Service{
 				TypeMeta: metav1.TypeMeta{
@@ -45,17 +56,10 @@ func Test_serviceAccessor_PreFetch(t *testing.T) {
 				},
 			}}},
 			false,
-		}, {
-			"nok",
-			true,
-			nil,
-			nil,
-			true,
 		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			cs := fake.NewSimpleClientset(&v1.ServiceList{Items: []v1.Service{{
+		{
+			"ok multiple services",
+			[]v1.Service{{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "Service",
 					APIVersion: "extension/v1",
@@ -64,7 +68,69 @@ func Test_serviceAccessor_PreFetch(t *testing.T) {
 				Spec: v1.ServiceSpec{
 					Type: "ClusterIP",
 				},
-			}}})
+			}, {
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "Service",
+					APIVersion: "extension/v1",
+				},
+				ObjectMeta: metav1.ObjectMeta{Name: "def"},
+				Spec: v1.ServiceSpec{
+					Type: "ClusterIP",
+				},
+			}},
+			false,
+			[]runtime.Object{&v1.Service{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "Service",
+					APIVersion: "extension/v1",
+				},
+				ObjectMeta: metav1.ObjectMeta{Name: "abc"},
+				Spec: v1.ServiceSpec{
+					Type: "ClusterIP",
+				},
+			}, &v1.Service{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "Service",
+					APIVersion: "extension/v1",
+				},
+				ObjectMeta: metav1.ObjectMeta{Name: "def"},
+				Spec: v1.ServiceSpec{
+					Type: "ClusterIP",
+				},
+			}},
+			&v1.ServiceList{Items: []v1.Service{{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "Service",
+					APIVersion: "extension/v1",
+				},
+				ObjectMeta: metav1.ObjectMeta{Name: "abc"},
+				Spec: v1.ServiceSpec{
+					Type: "ClusterIP",
+				},
+			}, {
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "Service",
+					APIVersion: "extension/v1",
+				},
+				ObjectMeta: metav1.ObjectMeta{Name: "def"},
+				Spec: v1.ServiceSpec{
+					Type: "ClusterIP",
+				},
+			}}},
+			false,
+		},
+		{
+			"nok",
+			[]v1.Service{},
+			true,
+			nil,
+			nil,
+			true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cs := fake.NewSimpleClientset(&v1.ServiceList{Items: tt.clientSetResponse})
 
 			i := serviceAccessor{
 				clientSet: cs,

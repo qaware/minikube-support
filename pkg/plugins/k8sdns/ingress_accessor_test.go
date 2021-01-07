@@ -16,14 +16,27 @@ import (
 
 func Test_ingressAccessor_PreFetch(t *testing.T) {
 	tests := []struct {
-		name       string
-		shouldFail bool
-		want       []runtime.Object
-		want1      metav1.ListInterface
-		wantErr    bool
+		name              string
+		clientSetResponse []networkingV1.Ingress
+		shouldFail        bool
+		want              []runtime.Object
+		want1             metav1.ListInterface
+		wantErr           bool
 	}{
 		{
 			"ok",
+			[]networkingV1.Ingress{{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "Ingress",
+					APIVersion: "networking/v1",
+				},
+				ObjectMeta: metav1.ObjectMeta{Name: "abc"},
+				Spec: networkingV1.IngressSpec{
+					DefaultBackend: &networkingV1.IngressBackend{
+						Service: &networkingV1.IngressServiceBackend{Name: "dummy"},
+					},
+				},
+			}},
 			false,
 			[]runtime.Object{&networkingV1.Ingress{
 				TypeMeta: metav1.TypeMeta{
@@ -52,16 +65,8 @@ func Test_ingressAccessor_PreFetch(t *testing.T) {
 			false,
 		},
 		{
-			"nok",
-			true,
-			nil,
-			nil,
-			true,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			cs := fake.NewSimpleClientset(&networkingV1.IngressList{Items: []networkingV1.Ingress{{
+			"ok multiple",
+			[]networkingV1.Ingress{{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "Ingress",
 					APIVersion: "networking/v1",
@@ -72,8 +77,80 @@ func Test_ingressAccessor_PreFetch(t *testing.T) {
 						Service: &networkingV1.IngressServiceBackend{Name: "dummy"},
 					},
 				},
-			}}})
-
+			},
+				{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "Ingress",
+						APIVersion: "networking/v1",
+					},
+					ObjectMeta: metav1.ObjectMeta{Name: "def"},
+					Spec: networkingV1.IngressSpec{
+						DefaultBackend: &networkingV1.IngressBackend{
+							Service: &networkingV1.IngressServiceBackend{Name: "dummy2"},
+						},
+					},
+				}},
+			false,
+			[]runtime.Object{&networkingV1.Ingress{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "Ingress",
+					APIVersion: "networking/v1",
+				},
+				ObjectMeta: metav1.ObjectMeta{Name: "abc"},
+				Spec: networkingV1.IngressSpec{
+					DefaultBackend: &networkingV1.IngressBackend{
+						Service: &networkingV1.IngressServiceBackend{Name: "dummy"},
+					},
+				},
+			}, &networkingV1.Ingress{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "Ingress",
+					APIVersion: "networking/v1",
+				},
+				ObjectMeta: metav1.ObjectMeta{Name: "def"},
+				Spec: networkingV1.IngressSpec{
+					DefaultBackend: &networkingV1.IngressBackend{
+						Service: &networkingV1.IngressServiceBackend{Name: "dummy2"},
+					},
+				},
+			}},
+			&networkingV1.IngressList{Items: []networkingV1.Ingress{{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "Ingress",
+					APIVersion: "networking/v1",
+				},
+				ObjectMeta: metav1.ObjectMeta{Name: "abc"},
+				Spec: networkingV1.IngressSpec{
+					DefaultBackend: &networkingV1.IngressBackend{
+						Service: &networkingV1.IngressServiceBackend{Name: "dummy"},
+					},
+				},
+			}, {
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "Ingress",
+					APIVersion: "networking/v1",
+				},
+				ObjectMeta: metav1.ObjectMeta{Name: "def"},
+				Spec: networkingV1.IngressSpec{
+					DefaultBackend: &networkingV1.IngressBackend{
+						Service: &networkingV1.IngressServiceBackend{Name: "dummy2"},
+					},
+				},
+			}}},
+			false,
+		},
+		{
+			"nok",
+			[]networkingV1.Ingress{},
+			true,
+			nil,
+			nil,
+			true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cs := fake.NewSimpleClientset(&networkingV1.IngressList{Items: tt.clientSetResponse})
 			i := ingressAccessor{
 				clientSet: cs,
 			}

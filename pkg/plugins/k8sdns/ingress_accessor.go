@@ -27,7 +27,8 @@ func (i ingressAccessor) PreFetch() ([]runtime.Object, metaV1.ListInterface, err
 	}
 	var items []runtime.Object
 	for _, ingress := range ingressList.Items {
-		items = append(items, &ingress)
+		ing := ingress
+		items = append(items, &ing)
 	}
 
 	return items, ingressList, nil

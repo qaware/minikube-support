@@ -27,7 +27,8 @@ func (s serviceAccessor) PreFetch() ([]runtime.Object, metav1.ListInterface, err
 	}
 	var items []runtime.Object
 	for _, service := range serviceList.Items {
-		items = append(items, &service)
+		srv := service
+		items = append(items, &srv)
 	}
 
 	return items, serviceList, nil
