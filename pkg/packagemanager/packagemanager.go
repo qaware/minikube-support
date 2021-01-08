@@ -101,3 +101,13 @@ func findOsPackageManager() {
 	}
 	panic("Can not find any system package manager. Please refer the documentation how to install one for your operating system.")
 }
+
+// SelfInstalledUsingPackageManager checks if the minikube-support tools were
+// installed using the same PackageManager returned by GetPackageManager().
+func SelfInstalledUsingPackageManager() bool {
+	installed, err := GetPackageManager().IsInstalled("minikube-support")
+	if err != nil {
+		panic("Can not check if the minikube-support command was installed using the os pacakge manager.")
+	}
+	return installed
+}

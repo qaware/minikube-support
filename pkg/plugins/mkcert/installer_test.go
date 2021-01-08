@@ -1,12 +1,14 @@
 package mkcert
 
 import (
-	"fmt"
 	"os"
 	"os/exec"
 	"testing"
 
+	"github.com/golang/mock/gomock"
+
 	"github.com/qaware/minikube-support/pkg/packagemanager"
+	"github.com/qaware/minikube-support/pkg/packagemanager/fake"
 	"github.com/qaware/minikube-support/pkg/sh"
 	"github.com/qaware/minikube-support/pkg/testutils"
 )
@@ -14,15 +16,52 @@ import (
 func Test_mkCertInstaller_Install(t *testing.T) {
 	sh.ExecCommand = testutils.FakeExecCommand
 	defer func() { sh.ExecCommand = exec.Command }()
-	packagemanager.SetOsPackageManager(&testPkgMgr{})
-	i := &mkCertInstaller{}
-	i.Install()
+	tests := []struct {
+		name           string
+		pkgMgrMinikube bool
+		pkgMgrMkcert   bool
+		wantInstall    bool
+		wantUpdate     bool
+	}{
+		{"do-nothing->mks installed by pkg mgr", true, true, false, false},
+		{"install", false, false, true, false},
+		{"update", false, true, false, true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			manager := fake.NewMockPackageManager(ctrl)
+			packagemanager.SetOsPackageManager(manager)
+			manager.EXPECT().IsInstalled("minikube-support").Times(1).Return(tt.pkgMgrMinikube, nil)
+			manager.EXPECT().IsInstalled("mkcert").AnyTimes().Return(tt.pkgMgrMkcert, nil)
+			manager.EXPECT().IsInstalled("nss").AnyTimes().Return(tt.pkgMgrMkcert, nil)
+
+			if tt.wantInstall {
+				manager.EXPECT().Install("nss").Times(1)
+				manager.EXPECT().Install("mkcert").Times(1)
+			}
+			if tt.wantUpdate {
+				manager.EXPECT().Update("nss").Times(1)
+				manager.EXPECT().Update("mkcert").Times(1)
+			}
+
+			i := &mkCertInstaller{}
+			i.Install()
+		})
+	}
 }
 
 func Test_mkCertInstaller_Update(t *testing.T) {
 	sh.ExecCommand = testutils.FakeExecCommand
 	defer func() { sh.ExecCommand = exec.Command }()
-	packagemanager.SetOsPackageManager(&testPkgMgr{})
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	manager := fake.NewMockPackageManager(ctrl)
+	packagemanager.SetOsPackageManager(manager)
+
 	i := &mkCertInstaller{}
 	i.Update()
 }
@@ -30,16 +69,30 @@ func Test_mkCertInstaller_Update(t *testing.T) {
 func Test_mkCertInstaller_Uninstall(t *testing.T) {
 	sh.ExecCommand = testutils.FakeExecCommand
 	defer func() { sh.ExecCommand = exec.Command }()
-	packagemanager.SetOsPackageManager(&testPkgMgr{})
 	tests := []struct {
-		name  string
-		purge bool
+		name           string
+		pkgMgrMinikube bool
+		purge          bool
+		wantUninstall  bool
 	}{
-		{"no purge", false},
-		{"purge", true},
+		{"no purge", true, false, false},
+		{"purge,managed-mks", true, true, false},
+		{"purge", false, true, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+			manager := fake.NewMockPackageManager(ctrl)
+			packagemanager.SetOsPackageManager(manager)
+			manager.EXPECT().IsInstalled("minikube-support").AnyTimes().Return(tt.pkgMgrMinikube, nil)
+			manager.EXPECT().IsInstalled("mkcert").AnyTimes().Return(true, nil)
+
+			if tt.wantUninstall {
+				manager.EXPECT().Uninstall("nss").Times(1)
+				manager.EXPECT().Uninstall("mkcert").Times(1)
+			}
+
 			i := &mkCertInstaller{}
 			i.Uninstall(tt.purge)
 		})
@@ -64,38 +117,4 @@ func TestHelperProcess(*testing.T) {
 			os.Exit(1)
 		}
 	}
-}
-
-type testPkgMgr struct{}
-
-func (tt *testPkgMgr) String() string {
-	return "testPkgMgr"
-}
-
-func (tt *testPkgMgr) Install(pkg string) error {
-	if pkg != "mkcert" && pkg != "nss" {
-		return fmt.Errorf("pkg is not mkcert and not nss")
-	}
-	return nil
-}
-
-func (tt *testPkgMgr) Update(pkg string) error {
-	if pkg != "mkcert" && pkg != "nss" {
-		return fmt.Errorf("pkg is not mkcert and not nss")
-	}
-	return nil
-}
-
-func (tt *testPkgMgr) Uninstall(pkg string) error {
-	if pkg != "mkcert" && pkg != "nss" {
-		return fmt.Errorf("pkg is not mkcert and not nss")
-	}
-	return nil
-}
-
-func (tt *testPkgMgr) IsInstalled(pkg string) (bool, error) {
-	if pkg != "mkcert" && pkg != "nss" {
-		return true, nil
-	}
-	return false, nil
 }

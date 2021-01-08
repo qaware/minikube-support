@@ -3,10 +3,11 @@ package mkcert
 import (
 	"os"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/qaware/minikube-support/pkg/apis"
 	"github.com/qaware/minikube-support/pkg/packagemanager"
 	"github.com/qaware/minikube-support/pkg/sh"
-	"github.com/sirupsen/logrus"
 )
 
 type mkCertInstaller struct {
@@ -21,16 +22,17 @@ func (*mkCertInstaller) String() string {
 }
 
 func (i *mkCertInstaller) Install() {
-	e := packagemanager.InstallOrUpdate("mkcert")
-	if e != nil {
-		logrus.Errorf("can not install mkcert: %s", e)
-		return
+	if !packagemanager.SelfInstalledUsingPackageManager() {
+		e := packagemanager.InstallOrUpdate("mkcert")
+		if e != nil {
+			logrus.Errorf("can not install mkcert: %s", e)
+			return
+		}
+		e = packagemanager.InstallOrUpdate("nss")
+		if e != nil {
+			logrus.Errorf("can not install nss: %s", e)
+		}
 	}
-	e = packagemanager.InstallOrUpdate("nss")
-	if e != nil {
-		logrus.Errorf("can not install nss: %s", e)
-	}
-
 	i.Update()
 }
 
@@ -55,7 +57,7 @@ func (i *mkCertInstaller) Uninstall(purge bool) {
 	}
 	logrus.Infof("Root CA successfully removed from browsers.\n%s", string(output))
 
-	if purge {
+	if purge && !packagemanager.SelfInstalledUsingPackageManager() {
 		manager := packagemanager.GetPackageManager()
 		e := manager.Uninstall("mkcert")
 		if e != nil {
