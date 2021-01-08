@@ -40,7 +40,7 @@ requests to loadbalancer services.
 ## Installing your deployments
 
 Now you can install your own deployments including ingresses and
-loadbalanced services. We provide a small demo deployment which shows
+load balanced services. We provide a small demo deployment which shows
 everything provided by the Minikube-Support Tools. You can install it by
 simply running `kubectl apply -f docs/test/`.
 
