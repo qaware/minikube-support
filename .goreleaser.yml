@@ -66,6 +66,7 @@ brews:
     dependencies:
       - name: mkcert
       - name: minikube
+      - name: helm
     test: |
       system "#{bin}/minikube-support --version"
 
