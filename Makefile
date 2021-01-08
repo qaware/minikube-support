@@ -113,3 +113,9 @@ buildDeps:
 	go install -i github.com/golangci/golangci-lint/cmd/golangci-lint
 	go install -i golang.org/x/tools/cmd/goimports
 	$(MAKE) -C pb buildDeps
+
+.PHONY: completions
+completions:
+	rm -rf completions
+	mkdir completions
+	for sh in bash zsh; do go run main.go completion "$$sh" >"completions/minikube-support.$$sh"; done

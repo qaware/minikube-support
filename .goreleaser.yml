@@ -7,6 +7,7 @@ before:
     - go mod download
     # you may remove this if you don't need go generate
     - go generate ./...
+    - make completions
 builds:
   - binary: minikube-support
     id: minikube-support
@@ -52,6 +53,11 @@ builds:
 #    hooks:
 #      post: gon gon.hcl
 archives:
+  - files:
+      - README.md
+      - LICENSE
+      - completions/*
+      - docs/**
 checksum:
   name_template: 'checksums.txt'
   algorithm: sha512
