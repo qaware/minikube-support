@@ -16,8 +16,11 @@ Just download the
 unpack it and place it anywhere in our `PATH` for example in
 `/usr/local/bin`.
 
-Currently, there is no package for the regular package mangers like
-brew.
+Alternative you can install it using brew tap:
+
+```shell script
+brew install qaware/minikube-support/minikube-support  
+```
 
 ## Setup your minikube cluster
 

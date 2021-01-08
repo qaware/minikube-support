@@ -28,7 +28,6 @@ builds:
       - arm64
     goarm:
       - 6
-      - 7
     flags:
       - -trimpath
     mod_timestamp: '{{ .CommitTimestamp }}'
@@ -52,6 +51,29 @@ builds:
     mod_timestamp: '{{ .CommitTimestamp }}'
 #    hooks:
 #      post: gon gon.hcl
+brews:
+  - goarm: 6
+    tap:
+      owner: qaware
+      name: homebrew-minikube-support
+    commit_author:
+      name: goreleaserbot
+      email: goreleaser@qaware.de
+    folder: Formula
+    homepage: "https://github.com/qaware/minikube-support"
+    description: "The minikube support tools provides a better integration into your local operating system. "
+    license: "MIT"
+    dependencies:
+      - name: mkcert
+      - name: minikube
+    test: |
+      system "#{bin}/minikube-support --version"
+
+    install: |
+      bin.install "minikube-support"
+      bash_completion.install "completions/minikube-support.bash" => "minikube-support"
+      zsh_completion.install "completions/minikube-support.zsh" => "_minikube-support"
+
 archives:
   - files:
       - README.md

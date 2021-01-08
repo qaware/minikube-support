@@ -30,6 +30,7 @@ configures and provides the following:
 - [Quickstart](#quickstart)
 - [Installing](#installing)
   - [Requirements](#requirements)
+  - [Homebrew Tap](#homebrew-tap)
   - [Building from Source](#building-from-source)
   - [Using prebuilt images](#using-prebuilt-images)
   - [Configuration](#configuration)
@@ -40,14 +41,20 @@ configures and provides the following:
 
 ## Quickstart
 
-1. Install `minikube`
-2. Download the latest release and place it somewhere into your `$PATH`.
-3. Start your cluster `minikube start`
-4. Install internal and external components with `minikube-support
+1. Install `minikube`:
+   - Download the latest release and place it somewhere into your
+     `$PATH`.
+   - Or using Brew:
+
+     ```shell script
+     brew install qaware/minikube-support/minikube-support  
+     ```
+2. Start your cluster `minikube start`
+3. Install internal and external components with `minikube-support
    install -l`
    - If you don't want to install the external components (mkcert,
      CoreDNS) just run `minikube-support install`.
-5. Run the dashboard: `minikube-support run`
+4. Run the dashboard: `minikube-support run`
    ![Dashboard after start of `minikube-support run`](docs/run.png)
 
 For more information about using please take a look into the
@@ -66,6 +73,12 @@ Currently, the following package managers are supported:
 
 - [**HomeBrew**](https://brew.sh/) (macOS and Linux using
   [Linuxbrew](https://docs.brew.sh/Homebrew-on-Linux))
+
+### Homebrew Tap
+
+```shell script
+brew install qaware/minikube-support/minikube-support
+```
 
 ### Building from Source
 
