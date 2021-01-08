@@ -75,7 +75,7 @@ func Test_tunnel_Start(t *testing.T) {
 	if gotBoxName != wantBoxName {
 		t.Errorf("tunnel.Start() = %v, want %v", gotBoxName, wantBoxName)
 	}
-	assert.Equal(t, int32(4), atomic.LoadInt32(&count))
+	assert.Equal(t, int32(5), atomic.LoadInt32(&count))
 }
 
 func Test_tunnel_Start_noMinikube(t *testing.T) {
@@ -99,7 +99,7 @@ func Test_tunnel_Start_noMinikube(t *testing.T) {
 	assert.Equal(t, "", gotBoxName)
 	assert.NoError(t, err)
 	time.Sleep(100 * time.Millisecond)
-	assert.Equal(t, 0, count)
+	assert.Equal(t, 1, count)
 }
 
 func Test_tunnel_Stop(t *testing.T) {

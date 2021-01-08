@@ -37,6 +37,7 @@ func (*tunnel) IsSingleRunnable() bool {
 
 func (t *tunnel) Start(monitoringChannel chan *apis.MonitoringMessage) (boxName string, err error) {
 	e := sh.InitSudo()
+	monitoringChannel <- &apis.MonitoringMessage{Box: tunnelBoxName, Message: "Starting minikube tunnel"}
 	if e != nil {
 		return "", fmt.Errorf("unable to enter sudo mode for minikube tunnel: %e", e)
 	}
