@@ -66,7 +66,7 @@ func (p *grpcPlugin) Start(monitoringChannel chan *apis.MonitoringMessage) (boxN
 	if e != nil {
 		return "", fmt.Errorf("can not start coredns: %s", e)
 	}
-	go utils.Ticker(p.listRRsForUI, p.terminationChan, 5*time.Second)
+	go utils.Ticker(p.listRRsForUI, p.terminationChan, 2500*time.Millisecond)
 
 	return GrpcPluginName, nil
 }
