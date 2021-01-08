@@ -1,7 +1,7 @@
 # Minikube Support Tools
 
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fqaware%2Fminikube-support.svg?type=small)](https://app.fossa.com/projects/git%2Bgithub.com%2Fqaware%2Fminikube-support?ref=badge_small)
-![Go-Build](https://github.com/qaware/minikube-support/workflows/Go-Build/badge.svg?branch=master)
+[![Go-Build](https://github.com/qaware/minikube-support/workflows/Go-Build/badge.svg?branch=master)](https://github.com/qaware/minikube-support/actions?query=workflow%3AGo-Build)
 
 The minikube-support tools are intended to automate and simplifies
 common tasks which you need to do every time you set up a new minikube
