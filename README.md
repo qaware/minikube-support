@@ -32,6 +32,7 @@ configures and provides the following:
   - [Requirements](#requirements)
   - [Building from Source](#building-from-source)
   - [Using prebuilt images](#using-prebuilt-images)
+  - [Configuration](#configuration)
 - [Contributing](#contributing)
 - [License](#license)
 - [Maintainer](#maintainer)
@@ -61,7 +62,7 @@ The `minikube-support`-Tools requires a supported and preinstalled
 package manager on the system. This allows the tools to install the
 additional helper tools directly using the system's package manger.
 
-Currently the following package managers are supported:
+Currently, the following package managers are supported:
 
 - [**HomeBrew**](https://brew.sh/) (macOS and Linux using
   [Linuxbrew](https://docs.brew.sh/Homebrew-on-Linux))
@@ -82,6 +83,36 @@ Take a look under
 download the prebuilt image for your operating system. To use it just
 place the `minikube-support` binary into your `$PATH`. For example into
 `/usr/local/bin`.
+
+### Configuration
+
+The `minikube-support` tools do not have own configuration properties,
+but requires to configure the dns resolver of the local os. For macOS
+the minikube-support tools will do this automatically. Just ensure that
+all your Ingresses uses the top level domain `.minikube`.
+
+For Windows and Linux systems there are no known interfaces or
+configuration properties to configure conditional forwarding for DNS
+requests to `.minikube` programmatically. In this case you have to
+configure your DNS resolving by your own.
+
+#### macOS: Add additional TLD
+
+It is possible to add additional top level domains to serve them using your minikube cluster. The following shows how to add the domain `mk.local` to serve them using minikube-support tools.
+
+1. Create a file `mk.local` under `/etc/resolver` with the following content:
+   ```
+   nameserver ::1
+   ```
+2. Adjust the CoreDNS configuration in `/opt/mks/coredns/etc/corefile` and after `grpc minikube 127.0.0.1:8053` the following line:
+   ```
+       grpc mk.local 127.0.0.1:8053
+   ```
+3. Restart CoreDNS with the following command:
+   ```shell script
+   launchctl unload /Library/LaunchDaemons/de.chrfritz.minikube-support.coredns.plist
+   launchctl load /Library/LaunchDaemons/de.chrfritz.minikube-support.coredns.plist
+   ```
 
 ## Contributing
 
