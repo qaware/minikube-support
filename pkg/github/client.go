@@ -8,6 +8,8 @@ import (
 	"io"
 	"net/http"
 	"time"
+
+	"github.com/sirupsen/logrus"
 )
 
 // Client is a small client to access some features of the GitHub API.
@@ -70,6 +72,7 @@ func (c *client) GetLatestReleaseTag(org string, repository string) (string, err
 }
 
 func (c *client) DownloadReleaseAsset(org string, repository string, tag string, assetName string) (io.ReadCloser, error) {
+	logrus.Debugf("Download %s from %s/%s at tag %s", assetName, org, repository, tag)
 	resp, e := c.client.Get(fmt.Sprintf("%s/%s/%s/releases/download/%s/%s", c.host, org, repository, tag, assetName))
 	if e != nil {
 		return nil, fmt.Errorf("can not download asset %s for %s/%s of release %s: %s", assetName, org, repository, tag, e)
