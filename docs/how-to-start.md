@@ -45,7 +45,7 @@ requests to loadbalancer services.
 Now you can install your own deployments including ingresses and
 load balanced services. We provide a small demo deployment which shows
 everything provided by the Minikube-Support Tools. You can install it by
-simply running `kubectl apply -f docs/test/`.
+simply running `kubectl apply -f https://raw.githubusercontent.com/qaware/minikube-support/master/docs/demo-deployment.yaml`.
 
 When opening <https://test.minikube> you should see the Nginx
 welcome-page, and you should not be requested to verify any TLS
