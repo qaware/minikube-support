@@ -16,6 +16,8 @@ import (
 	"github.com/qaware/minikube-support/pkg/utils"
 )
 
+const namespaceArgument = "--namespace"
+
 type helm3Manager struct {
 	context kubernetes.ContextHandler
 }
@@ -57,7 +59,7 @@ func (h *helm3Manager) Install(chart string, release string, namespace string, v
 
 	var args = []string{
 		"--install", "--force",
-		"--namespace", namespace,
+		namespaceArgument, namespace,
 		release, chart,
 	}
 	if wait {
@@ -90,9 +92,9 @@ func (h *helm3Manager) Uninstall(release string, namespace string, purge bool) {
 	var response string
 
 	if purge {
-		response, e = h.runCommand("uninstall", "--namespace", namespace, release)
+		response, e = h.runCommand("uninstall", namespaceArgument, namespace, release)
 	} else {
-		response, e = h.runCommand("uninstall", "--namespace", namespace, "--keep-history", release)
+		response, e = h.runCommand("uninstall", namespaceArgument, namespace, "--keep-history", release)
 	}
 
 	if e != nil {

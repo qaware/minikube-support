@@ -10,10 +10,11 @@ import (
 	"strings"
 
 	"github.com/hashicorp/go-multierror"
+	"github.com/sirupsen/logrus"
+
 	"github.com/qaware/minikube-support/pkg/apis"
 	"github.com/qaware/minikube-support/pkg/github"
 	"github.com/qaware/minikube-support/pkg/utils/sudos"
-	"github.com/sirupsen/logrus"
 )
 
 type installer struct {
@@ -100,18 +101,19 @@ func (i *installer) downloadCoreDns() error {
 			return fmt.Errorf("unable to extract next file from tar: %s", e)
 		}
 
-		if header.Typeflag == tar.TypeReg {
-			name := header.Name
+		if header.Typeflag != tar.TypeReg {
+			continue
+		}
 
-			file, e := os.OpenFile(i.prefix.binary(), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, os.FileMode(header.Mode))
-			if e != nil {
-				return fmt.Errorf("can not write file %s: %s", name, e)
-			}
+		name := header.Name
+		file, e := os.OpenFile(i.prefix.binary(), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, os.FileMode(header.Mode))
+		if e != nil {
+			return fmt.Errorf("can not write file %s: %s", name, e)
+		}
 
-			_, e = io.Copy(file, tarReader)
-			if e != nil {
-				return fmt.Errorf("can not write file (%s) content: %s", name, e)
-			}
+		_, e = io.Copy(file, tarReader)
+		if e != nil {
+			return fmt.Errorf("can not write file (%s) content: %s", name, e)
 		}
 	}
 	return nil

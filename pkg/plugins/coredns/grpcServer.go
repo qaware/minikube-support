@@ -8,9 +8,10 @@ import (
 	"time"
 
 	"github.com/miekg/dns"
-	"github.com/qaware/minikube-support/pb"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
+
+	"github.com/qaware/minikube-support/pb"
 )
 
 // server is a small grpc service that answers to dns queries over grpc from CoreDNS.
@@ -105,8 +106,8 @@ func (srv *server) AddA(name string, ipv4 net.IP) error {
 		return fmt.Errorf("given ip address is nil")
 	}
 
-	if _, ok := dns.IsDomainName(name); !ok {
-		return fmt.Errorf("%s is not a valid domain name", name)
+	if err := validateDomainName(name); err != nil {
+		return err
 	}
 
 	if !IsIPv4(ipv4) {
@@ -132,8 +133,8 @@ func (srv *server) AddAAAA(name string, ipv6 net.IP) error {
 		return fmt.Errorf("given ip address is nil")
 	}
 
-	if _, ok := dns.IsDomainName(name); !ok {
-		return fmt.Errorf("%s is not a valid domain name", name)
+	if err := validateDomainName(name); err != nil {
+		return err
 	}
 
 	if !IsIPv6(ipv6) {
@@ -155,8 +156,8 @@ func (srv *server) AddAAAA(name string, ipv6 net.IP) error {
 // AddCNAME adds a new CNAME resource record for the given domain to the internal database.
 // It will not overwrite any existing resource records if there is already one with the same name and type.
 func (srv *server) AddCNAME(name string, target string) error {
-	if _, ok := dns.IsDomainName(name); !ok {
-		return fmt.Errorf("%s is not a valid domain name", name)
+	if err := validateDomainName(name); err != nil {
+		return err
 	}
 
 	if !dns.IsFqdn(target) {
@@ -256,4 +257,12 @@ func normalizeName(name string) string {
 	} else {
 		return name + "."
 	}
+}
+
+// validateDomainName check if the given name is valid domain name. If it is valid it returns nil. Otherwise an error.
+func validateDomainName(domain string) error {
+	if _, ok := dns.IsDomainName(domain); !ok {
+		return fmt.Errorf("%s is not a valid domain name", domain)
+	}
+	return nil
 }

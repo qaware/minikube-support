@@ -4,12 +4,14 @@ package sudos
 
 import (
 	"fmt"
-	"github.com/kballard/go-shellquote"
-	"github.com/sirupsen/logrus"
 	"os"
 	"strconv"
 
+	"github.com/kballard/go-shellquote"
+	"github.com/sirupsen/logrus"
+
 	"github.com/pkg/errors"
+
 	"github.com/qaware/minikube-support/pkg/sh"
 )
 
@@ -56,23 +58,24 @@ func WriteFileAsRoot(path string, content []byte) error {
 	}()
 
 	writer, e := command.StdinPipe()
+	const writeError = "write content into %s failed: %s"
 	if e != nil {
-		return fmt.Errorf("write content into %s failed: %s", path, e)
+		return fmt.Errorf(writeError, path, e)
 	}
 
 	_, e = writer.Write(content)
 	if e != nil {
-		return fmt.Errorf("write content into %s failed: %s", path, e)
+		return fmt.Errorf(writeError, path, e)
 	}
 
 	e = command.Start()
 	if e != nil {
-		return fmt.Errorf("write content into %s failed: %s", path, e)
+		return fmt.Errorf(writeError, path, e)
 	}
 
 	e = writer.Close()
 	if e != nil {
-		return fmt.Errorf("write content into %s failed: %s", path, e)
+		return fmt.Errorf(writeError, path, e)
 	}
 	return nil
 }
