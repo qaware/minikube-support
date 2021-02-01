@@ -3,9 +3,10 @@
 package coredns
 
 import (
-	"github.com/qaware/minikube-support/pkg/testutils"
 	"os"
 	"strings"
+
+	"github.com/qaware/minikube-support/pkg/testutils"
 )
 
 func testHook() {

@@ -3,16 +3,18 @@ package coredns
 import (
 	"context"
 	"fmt"
-	"github.com/golang/mock/gomock"
-	"github.com/qaware/minikube-support/pkg/plugins/coredns/fake"
 	"reflect"
 	"testing"
 
+	"github.com/golang/mock/gomock"
+
 	"github.com/miekg/dns"
-	"github.com/qaware/minikube-support/pb"
-	"github.com/qaware/minikube-support/pkg/apis"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
+
+	"github.com/qaware/minikube-support/pb"
+	"github.com/qaware/minikube-support/pkg/apis"
+	"github.com/qaware/minikube-support/pkg/plugins/coredns/fake"
 )
 
 func TestGrpcPlugin(t *testing.T) {

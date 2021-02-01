@@ -1,8 +1,9 @@
 package k8sdns
 
 import (
-	networkingV1 "k8s.io/api/networking/v1"
 	"reflect"
+
+	networkingV1 "k8s.io/api/networking/v1"
 
 	v1 "k8s.io/api/core/v1"
 )

@@ -5,11 +5,12 @@
 package fake
 
 import (
+	reflect "reflect"
+
 	gomock "github.com/golang/mock/gomock"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	watch "k8s.io/apimachinery/pkg/watch"
-	reflect "reflect"
 )
 
 // MockWatchHandler is a mock of WatchHandler interface

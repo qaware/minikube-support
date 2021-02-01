@@ -1,9 +1,10 @@
 package coredns
 
 import (
-	"github.com/qaware/minikube-support/pkg/testutils"
 	"os"
 	"testing"
+
+	"github.com/qaware/minikube-support/pkg/testutils"
 )
 
 func TestHelperProcess(t *testing.T) {

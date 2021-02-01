@@ -4,10 +4,11 @@ package coredns
 
 import (
 	"fmt"
-	"github.com/qaware/minikube-support/pkg/sh"
 	"os"
 	"os/exec"
 	"syscall"
+
+	"github.com/qaware/minikube-support/pkg/sh"
 )
 
 // Runner defines the interface for running the coreDns server in non daemon mode.

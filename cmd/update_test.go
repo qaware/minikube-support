@@ -1,11 +1,12 @@
 package cmd
 
 import (
-	"github.com/qaware/minikube-support/pkg/apis"
 	"testing"
 
-	"github.com/qaware/minikube-support/pkg/plugins"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/qaware/minikube-support/pkg/apis"
+	"github.com/qaware/minikube-support/pkg/plugins"
 
 	"github.com/spf13/cobra"
 )

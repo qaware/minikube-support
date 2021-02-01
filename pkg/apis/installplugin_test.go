@@ -1,8 +1,9 @@
 package apis
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestIsLocalPlugin(t *testing.T) {
@@ -42,7 +43,7 @@ func (d DummyPlugin) Update() {
 	panic("implement me")
 }
 
-func (d DummyPlugin) Uninstall(purge bool) {
+func (d DummyPlugin) Uninstall(_ bool) {
 	panic("implement me")
 }
 
