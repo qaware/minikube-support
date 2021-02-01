@@ -47,10 +47,7 @@ func (r *startStopPluginRegistry) AddPlugin(plugin apis.StartStopPlugin) {
 
 // ListPlugins returns a list with all registered installable plugins.
 func (r *startStopPluginRegistry) ListPlugins() []apis.StartStopPlugin {
-	var values []apis.StartStopPlugin
-	for _, v := range r.pluginsList {
-		values = append(values, v)
-	}
+	values := append([]apis.StartStopPlugin{}, r.pluginsList...)
 	return values
 }
 

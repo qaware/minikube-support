@@ -6,9 +6,10 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/qaware/minikube-support/pkg/apis"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+
+	"github.com/qaware/minikube-support/pkg/apis"
 )
 
 // RunSingleOptions contains all options and information that are needed to run a single plugin from the command line.
@@ -37,8 +38,8 @@ func NewRunSingleCommand(plugin apis.StartStopPlugin) *cobra.Command {
 }
 
 // Run starts the plugin and waits for new status messages.
-func (i *RunSingleOptions) Run(cmd *cobra.Command, args []string) {
-	signalsChannel := make(chan os.Signal)
+func (i *RunSingleOptions) Run(_ *cobra.Command, _ []string) {
+	signalsChannel := make(chan os.Signal, 1)
 	signal.Notify(signalsChannel, syscall.SIGINT, syscall.SIGTERM)
 	startError := make(chan error)
 

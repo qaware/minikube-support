@@ -2,10 +2,12 @@ package coredns
 
 import (
 	"fmt"
+	"io/ioutil"
+
+	"github.com/sirupsen/logrus"
+
 	"github.com/qaware/minikube-support/pkg/sh"
 	"github.com/qaware/minikube-support/pkg/utils/sudos"
-	"github.com/sirupsen/logrus"
-	"io/ioutil"
 )
 
 const launchctlConfig = "/Library/LaunchDaemons/de.chrfritz.minikube-support.coredns.plist"
@@ -17,7 +19,7 @@ func (i *installer) installSpecific() error {
 		return fmt.Errorf("can not init sudo: %s", e)
 	}
 
-	err := i.setupLaunchCtrl(e)
+	err := i.setupLaunchCtrl()
 	if err != nil {
 		return err
 	}
@@ -26,12 +28,12 @@ func (i *installer) installSpecific() error {
 }
 
 // setupLaunchCtrl setups the launch daemon configuration and loads them using the macOS util launchctl.
-func (i *installer) setupLaunchCtrl(e error) error {
+func (i *installer) setupLaunchCtrl() error {
 	if !runAsDaemon {
 		return nil
 	}
 
-	e = i.writeLaunchCtlConfig()
+	e := i.writeLaunchCtlConfig()
 	if e != nil {
 		return fmt.Errorf("can not write launchctl config: %s", e)
 	}

@@ -3,10 +3,11 @@ package utils
 import (
 	"bytes"
 	"fmt"
-	"github.com/hashicorp/go-multierror"
 	"io"
 	"sort"
 	"text/tabwriter"
+
+	"github.com/hashicorp/go-multierror"
 )
 
 // WriteSorted writes all elements from entries sorted into the given writer.
@@ -26,7 +27,7 @@ func FormatAsTable(entries []string, header string) (string, error) {
 	buffer := new(bytes.Buffer)
 
 	writer := tabwriter.NewWriter(buffer, 0, 0, 1, ' ', tabwriter.Debug)
-	_, e := fmt.Fprintf(writer, header)
+	_, e := fmt.Fprint(writer, header)
 
 	errors = multierror.Append(errors, e)
 

@@ -142,7 +142,7 @@ func padLeft(message string, spaces uint8) string {
 }
 
 func (i *RunOptions) handleSignals() {
-	signalsChannel := make(chan os.Signal)
+	signalsChannel := make(chan os.Signal, 1)
 	signal.Notify(signalsChannel, syscall.SIGINT, syscall.SIGTERM)
 
 	go func() {
