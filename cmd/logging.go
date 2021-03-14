@@ -8,6 +8,6 @@ import (
 
 func init() {
 	glog.V(0)
-	loggerConfig := logging.InitFlags(rootCmd.PersistentFlags())
+	loggerConfig := logging.InitFlags(rootCmd.PersistentFlags(), rootCmd)
 	cobra.OnInitialize(loggerConfig.Initialize)
 }
