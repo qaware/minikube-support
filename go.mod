@@ -6,8 +6,7 @@ require (
 	github.com/awesome-gocui/gocui v0.6.1-0.20200808231733-d0eae9ef0497
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
 	github.com/golang/mock v1.6.0
-	github.com/golang/protobuf v1.4.3
-	github.com/google/go-cmp v0.5.3 // indirect
+	github.com/golang/protobuf v1.5.2
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51
 	github.com/magiconair/properties v1.8.1
