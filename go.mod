@@ -10,7 +10,7 @@ require (
 	github.com/google/go-cmp v0.5.3 // indirect
 	github.com/hashicorp/go-multierror v1.1.0
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51
-	github.com/magiconair/properties v1.8.1
+	github.com/magiconair/properties v1.8.5
 	github.com/miekg/dns v1.1.29
 	github.com/onsi/ginkgo v1.14.1 // indirect
 	github.com/onsi/gomega v1.10.2 // indirect
