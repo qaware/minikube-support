@@ -20,6 +20,6 @@ jobs:
           make buildDeps generate
 
       - name: Run Tests
-      run: |
-        export PATH=$GOPATH/bin:$HOME/go/bin:$PATH
-        timeout 10m make test
+        run: |
+          export PATH=$GOPATH/bin:$HOME/go/bin:$PATH
+          timeout 10m make test
