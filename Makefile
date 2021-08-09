@@ -109,9 +109,9 @@ clean:
 buildDeps:
 	go get -u google.golang.org/grpc
 	go get -u github.com/golang/protobuf/protoc-gen-go
-	go install -i github.com/golang/mock/mockgen
-	go install -i github.com/golangci/golangci-lint/cmd/golangci-lint
-	go install -i golang.org/x/tools/cmd/goimports
+	go get github.com/golang/mock/mockgen
+	go get github.com/golangci/golangci-lint/cmd/golangci-lint
+	go get golang.org/x/tools/cmd/goimports
 	$(MAKE) -C pb buildDeps
 
 .PHONY: completions
