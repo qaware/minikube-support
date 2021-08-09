@@ -8,16 +8,20 @@ require (
 	github.com/golang/mock v1.6.0
 	github.com/golang/protobuf v1.5.2
 	github.com/hashicorp/go-multierror v1.1.1
+	github.com/imdario/mergo v0.3.8 // indirect
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51
 	github.com/magiconair/properties v1.8.5
 	github.com/miekg/dns v1.1.43
-	github.com/onsi/ginkgo v1.14.1 // indirect
-	github.com/onsi/gomega v1.10.2 // indirect
+	github.com/onsi/ginkgo v1.16.1 // indirect
+	github.com/onsi/gomega v1.11.0 // indirect
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/cobra v1.2.1
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.7.0
+	golang.org/x/net v0.0.0-20210805182204-aaa1db679c0d // indirect
+	golang.org/x/sys v0.0.0-20210809203939-894668206c86 // indirect
+	google.golang.org/genproto v0.0.0-20210809142519-0135a39c2737 // indirect
 	google.golang.org/grpc v1.39.1
 	k8s.io/api v0.22.0
 	k8s.io/apimachinery v0.22.0
