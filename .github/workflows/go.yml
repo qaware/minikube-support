@@ -5,11 +5,11 @@ jobs:
     name: Build
     runs-on: ubuntu-18.04
     steps:
-        -   name: Set up Go 1.16
-            uses: actions/setup-go@v1
-            with:
-                go-version: 1.16
-            id: go
+      - name: Set up Go 1.16
+        uses: actions/setup-go@v1
+        with:
+          go-version: 1.16
+        id: go
 
       - name: Check out code into the Go module directory
         uses: actions/checkout@v1
@@ -20,6 +20,6 @@ jobs:
           make buildDeps generate
 
       - name: Run Tests
-        run: |
-          export PATH=$GOPATH/bin:$HOME/go/bin:$PATH
-          timeout 10m make test
+      run: |
+        export PATH=$GOPATH/bin:$HOME/go/bin:$PATH
+        timeout 10m make test
