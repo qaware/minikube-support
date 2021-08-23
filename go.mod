@@ -23,8 +23,8 @@ require (
 	golang.org/x/sys v0.0.0-20210809203939-894668206c86 // indirect
 	google.golang.org/genproto v0.0.0-20210809142519-0135a39c2737 // indirect
 	google.golang.org/grpc v1.40.0
-	k8s.io/api v0.22.0
-	k8s.io/apimachinery v0.22.0
+	k8s.io/api v0.22.1
+	k8s.io/apimachinery v0.22.1
 	k8s.io/client-go v0.22.0
 )
 
