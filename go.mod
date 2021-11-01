@@ -23,9 +23,9 @@ require (
 	golang.org/x/sys v0.0.0-20210809203939-894668206c86 // indirect
 	google.golang.org/genproto v0.0.0-20210809142519-0135a39c2737 // indirect
 	google.golang.org/grpc v1.41.0
-	k8s.io/api v0.22.2
-	k8s.io/apimachinery v0.22.2
-	k8s.io/client-go v0.22.2
+	k8s.io/api v0.22.3
+	k8s.io/apimachinery v0.22.3
+	k8s.io/client-go v0.22.3
 )
 
 replace github.com/golang/glog => github.com/kubermatic/glog-logrus v0.0.0-20180829085450-3fa5b9870d1d
