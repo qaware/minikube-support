@@ -107,11 +107,12 @@ clean:
 
 .PHONY: buildDeps
 buildDeps:
+	go mod download
 	go get -u google.golang.org/grpc
 	go get -u github.com/golang/protobuf/protoc-gen-go
-	go get github.com/golang/mock/mockgen
-	go get github.com/golangci/golangci-lint/cmd/golangci-lint
-	go get golang.org/x/tools/cmd/goimports
+	go install github.com/golang/mock/mockgen@latest
+	go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+	go install golang.org/x/tools/cmd/goimports@latest
 	$(MAKE) -C pb buildDeps
 
 .PHONY: completions
