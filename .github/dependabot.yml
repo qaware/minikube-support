@@ -13,3 +13,8 @@ updates:
     ignore:
       - dependency-name: "k8s.io/apimachinery"
       - dependency-name: "k8s.io/api"
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
