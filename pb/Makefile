@@ -3,7 +3,7 @@
 # The generate dns.pb.go is checked into git, so for normal builds we don't need
 # to run this generation step.
 
-PROTOC_VERSION:=3.9.1
+PROTOC_VERSION:=22.0
 OS            :=
 ARCH          :=
 ifeq ($(OS),Windows_NT)
