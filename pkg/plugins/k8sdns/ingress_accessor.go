@@ -54,8 +54,8 @@ func (ingressAccessor) ConvertToEntry(obj runtime.Object) (*entry, error) {
 		namespace:   ingress.Namespace,
 		typ:         "Ingress",
 		hostNames:   getHostNames(ingress),
-		targetIps:   getLoadBalancerIps(ingress.Status.LoadBalancer),
-		targetHosts: getLoadBalancerHostNames(ingress.Status.LoadBalancer),
+		targetIps:   getIngressLoadBalancerIps(ingress.Status.LoadBalancer),
+		targetHosts: getIngressLoadBalancerHostNames(ingress.Status.LoadBalancer),
 	}, nil
 }
 
@@ -63,4 +63,26 @@ func (ingressAccessor) ConvertToEntry(obj runtime.Object) (*entry, error) {
 func (ingressAccessor) MatchesPreconditions(obj runtime.Object) bool {
 	_, ok := obj.(*networkingV1.Ingress)
 	return ok
+}
+
+// getLoadBalancerIps is a helper function to extract all target ip addresses from the given k8s ingress.
+func getIngressLoadBalancerIps(status networkingV1.IngressLoadBalancerStatus) []string {
+	var result []string
+	for _, i := range status.Ingress {
+		if i.IP != "" {
+			result = append(result, i.IP)
+		}
+	}
+	return result
+}
+
+// getLoadBalancerHostNames is a helper function to extract all target host names from the given k8s ingress.
+func getIngressLoadBalancerHostNames(status networkingV1.IngressLoadBalancerStatus) []string {
+	var result []string
+	for _, i := range status.Ingress {
+		if i.Hostname != "" {
+			result = append(result, i.Hostname)
+		}
+	}
+	return result
 }

@@ -223,7 +223,7 @@ func Test_ingressAccessor_ConvertToEntry(t *testing.T) {
 					Rules: []networkingV1.IngressRule{{Host: "1"}},
 					TLS:   []networkingV1.IngressTLS{{Hosts: []string{"1"}}},
 				},
-				Status: networkingV1.IngressStatus{LoadBalancer: v1.LoadBalancerStatus{Ingress: []v1.LoadBalancerIngress{{IP: "ip", Hostname: "host"}}}},
+				Status: networkingV1.IngressStatus{LoadBalancer: networkingV1.IngressLoadBalancerStatus{Ingress: []networkingV1.IngressLoadBalancerIngress{{IP: "ip", Hostname: "host"}}}},
 			},
 			&entry{
 				name:        "test",
@@ -269,7 +269,7 @@ func Test_ingressAccessor_MatchesPreconditions(t *testing.T) {
 					Rules: []networkingV1.IngressRule{{Host: "1"}},
 					TLS:   []networkingV1.IngressTLS{{Hosts: []string{"1"}}},
 				},
-				Status: networkingV1.IngressStatus{LoadBalancer: v1.LoadBalancerStatus{Ingress: []v1.LoadBalancerIngress{{IP: "ip", Hostname: "host"}}}},
+				Status: networkingV1.IngressStatus{LoadBalancer: networkingV1.IngressLoadBalancerStatus{Ingress: []networkingV1.IngressLoadBalancerIngress{{IP: "ip", Hostname: "host"}}}},
 			},
 			true,
 		}, {

@@ -6,7 +6,6 @@ import (
 
 	"github.com/qaware/minikube-support/pkg/apis"
 	"github.com/stretchr/testify/assert"
-	v1 "k8s.io/api/core/v1"
 	v1meta "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	networkingV1 "k8s.io/api/networking/v1"
@@ -250,7 +249,7 @@ func createDummyIngress(name string, ns string, targetIp string, targetHost stri
 		Spec: networkingV1.IngressSpec{
 			TLS: []networkingV1.IngressTLS{{Hosts: hosts}},
 		},
-		Status: networkingV1.IngressStatus{LoadBalancer: v1.LoadBalancerStatus{Ingress: []v1.LoadBalancerIngress{{IP: targetIp}, {Hostname: targetHost}}}},
+		Status: networkingV1.IngressStatus{LoadBalancer: networkingV1.IngressLoadBalancerStatus{Ingress: []networkingV1.IngressLoadBalancerIngress{{IP: targetIp}, {Hostname: targetHost}}}},
 	}
 }
 
