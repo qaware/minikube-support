@@ -22,7 +22,7 @@ import (
 func TestRunOptions_Run(t *testing.T) {
 	sh.ExecCommand = testutils.FakeExecCommand
 	newGui = func(mode gocui.OutputMode, supportOverlaps bool) (*gocui.Gui, error) {
-		return &gocui.Gui{}, nil
+		return gocui.NewGui(gocui.OutputSimulator, supportOverlaps)
 	}
 	defer func() {
 		sh.ExecCommand = exec.Command
