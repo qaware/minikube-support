@@ -9,7 +9,7 @@ require (
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51
 	github.com/magiconair/properties v1.8.7
-	github.com/miekg/dns v1.1.54
+	github.com/miekg/dns v1.1.55
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.7.0
