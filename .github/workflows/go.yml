@@ -12,7 +12,6 @@ jobs:
         uses: actions/setup-go@v4
         with:
           go-version-file: go.mod
-        id: go
 
       - name: Install buildDeps and generate sources
         run: |
@@ -21,5 +20,5 @@ jobs:
 
       - name: Run Tests
         run: |
-          export PATH=$GOPATH/bin:$HOME/go/bin:$PATH
+          export PATH=$HOME/go/bin:$PATH:$GOPATH/bin
           timeout 10m make test
