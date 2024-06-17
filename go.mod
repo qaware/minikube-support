@@ -1,7 +1,7 @@
 module github.com/qaware/minikube-support
 
 go 1.21.0
-toolchain go1.22.2
+toolchain go1.22.4
 
 require (
 	github.com/awesome-gocui/gocui v1.1.0
@@ -13,7 +13,7 @@ require (
 	github.com/miekg/dns v1.1.59
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.9.3
-	github.com/spf13/cobra v1.8.0
+	github.com/spf13/cobra v1.8.1
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.9.0
 	google.golang.org/grpc v1.64.0
