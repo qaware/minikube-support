@@ -1,7 +1,7 @@
 module github.com/qaware/minikube-support
 
 go 1.21.0
-toolchain go1.23.5
+toolchain go1.24.1
 
 require (
 	github.com/awesome-gocui/gocui v1.1.0
@@ -18,9 +18,9 @@ require (
 	github.com/stretchr/testify v1.10.0
 	google.golang.org/grpc v1.71.0
 	google.golang.org/protobuf v1.36.5
-	k8s.io/api v0.32.2
-	k8s.io/apimachinery v0.32.2
-	k8s.io/client-go v0.32.2
+	k8s.io/api v0.32.3
+	k8s.io/apimachinery v0.32.3
+	k8s.io/client-go v0.32.3
 )
 
 require (
