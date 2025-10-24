@@ -7,10 +7,10 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
-
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/qaware/minikube-support/pb"
 	"github.com/qaware/minikube-support/pkg/apis"
@@ -108,7 +108,7 @@ func initClientServer(t *testing.T, ctrl *gomock.Controller) (apis.StartStopPlug
 	}
 
 	// run client
-	conn, err := grpc.Dial("localhost:8053", grpc.WithInsecure())
+	conn, err := grpc.NewClient("localhost:8053", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		t.Fatalf("did not connect: %v", err)
 	}

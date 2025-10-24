@@ -3,7 +3,7 @@ package certmanager
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path"
 	"strings"
 	"time"
@@ -38,7 +38,7 @@ const releaseName = "cert-manager"
 var groupVersion = schema.GroupVersion{Group: "cert-manager.io", Version: "v1"}
 var helmInstallWaitPeriod = 20 * time.Second
 
-func NewCertManager(manager helm.Manager, handler kubernetes.ContextHandler, ghClient github.Client) apis.InstallablePlugin {
+func NewCertManager(manager helm.Manager, handler kubernetes.ContextHandler, _ github.Client) apis.InstallablePlugin {
 	return &certManager{
 		manager:        manager,
 		contextHandler: handler,
@@ -123,11 +123,11 @@ func (m *certManager) applyCertSecret() error {
 	}
 	caRoot = strings.Trim(caRoot, "\r\n \t")
 
-	crt, e := ioutil.ReadFile(path.Join(caRoot, "rootCA.pem"))
+	crt, e := os.ReadFile(path.Join(caRoot, "rootCA.pem"))
 	if e != nil {
 		return fmt.Errorf("unable to read the mkcert RootCA certificate: %s", e)
 	}
-	key, e := ioutil.ReadFile(path.Join(caRoot, "rootCA-key.pem"))
+	key, e := os.ReadFile(path.Join(caRoot, "rootCA-key.pem"))
 	if e != nil {
 		return fmt.Errorf("unable to read the mkcert RootCA key: %s", e)
 	}

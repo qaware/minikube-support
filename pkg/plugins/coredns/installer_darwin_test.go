@@ -1,10 +1,10 @@
+//go:build darwin
 // +build darwin
 
 package coredns
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path"
@@ -24,7 +24,7 @@ func Test_installer_Install(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	sh.ExecCommand = testutils.FakeExecCommand
 	ghClient := fake.NewMockClient(ctrl)
-	tmpdir, e := ioutil.TempDir(os.TempDir(), "coredns_test")
+	tmpdir, e := os.MkdirTemp(os.TempDir(), "coredns_test")
 	assetName := fmt.Sprintf("coredns_1.0.0_%s_%s.tgz", runtime.GOOS, runtime.GOARCH)
 
 	defer func() {
@@ -67,7 +67,7 @@ func Test_installer_Uninstall(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	sh.ExecCommand = testutils.FakeExecCommand
 	ghClient := fake.NewMockClient(ctrl)
-	tmpdir, e := ioutil.TempDir(os.TempDir(), "coredns_test")
+	tmpdir, e := os.MkdirTemp(os.TempDir(), "core")
 
 	defer func() {
 		defer ctrl.Finish()

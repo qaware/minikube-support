@@ -2,7 +2,7 @@ package coredns
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 
 	"github.com/sirupsen/logrus"
 
@@ -68,7 +68,7 @@ func (i *installer) writeConfig() error {
 . {
     reload
     health :8054
-    bind 127.0.0.1 
+    bind 127.0.0.1
     bind ::1
     log
 
@@ -78,7 +78,7 @@ func (i *installer) writeConfig() error {
     forward . /etc/resolv.conf
 }
 `
-	return ioutil.WriteFile(i.prefix.coreFile(), []byte(config), 0644)
+	return os.WriteFile(i.prefix.coreFile(), []byte(config), 0644)
 }
 
 func (i *installer) writeLaunchCtlConfig() error {

@@ -20,8 +20,8 @@ type Runner interface {
 }
 
 type runner struct {
-	prefix prefix
-	*os.Process
+	prefix  prefix
+	process *os.Process
 }
 
 type noOpRunner struct{}
@@ -43,7 +43,7 @@ func (r runner) Start() error {
 		"-pidfile", r.prefix.pidFile(),
 	)
 	e := r.run(cmd)
-	r.Process = cmd.Process
+	r.process = cmd.Process //nolint:all
 	return e
 }
 
@@ -66,10 +66,10 @@ func (r runner) run(cmd *exec.Cmd) error {
 }
 
 func (r runner) Stop() error {
-	if r.Process == nil {
+	if r.process == nil {
 		return nil
 	}
-	return r.Process.Signal(syscall.SIGTERM)
+	return r.process.Signal(syscall.SIGTERM)
 }
 
 func (n noOpRunner) Start() error {

@@ -1,7 +1,6 @@
 package coredns
 
 import (
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"testing"
@@ -15,7 +14,7 @@ import (
 
 func Test_runner(t *testing.T) {
 	sh.ExecCommand = testutils.FakeExecCommand
-	tmpdir, e := ioutil.TempDir(os.TempDir(), "coredns_test")
+	tmpdir, e := os.MkdirTemp(os.TempDir(), "coredns_test")
 
 	defer func() {
 		assert.NoError(t, os.RemoveAll(tmpdir))

@@ -2,7 +2,6 @@ package coredns
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 	"runtime"
@@ -30,7 +29,7 @@ func Test_installer_downloadCoreDns(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			ghClient := fake.NewMockClient(ctrl)
-			tmpdir, e := ioutil.TempDir(os.TempDir(), "coredns_test")
+			tmpdir, e := os.MkdirTemp(os.TempDir(), "coredns_test")
 			assetName := fmt.Sprintf("coredns_1.0.0_%s_%s.tgz", runtime.GOOS, runtime.GOARCH)
 			assert.NoError(t, e)
 			defer func() {

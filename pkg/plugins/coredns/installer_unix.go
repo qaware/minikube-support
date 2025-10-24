@@ -1,8 +1,9 @@
+//go:build aix || dragonfly || freebsd || (js && wasm) || linux || nacl || netbsd || openbsd || solaris
 // +build aix dragonfly freebsd js,wasm linux nacl netbsd openbsd solaris
 
 package coredns
 
-import "io/ioutil"
+import "os"
 
 func (i *installer) installSpecific() error {
 	// nothing to do at the moment
@@ -17,7 +18,7 @@ func (i *installer) writeConfig() error {
 . {
     reload
     health :8054
-    bind 127.0.0.1 
+    bind 127.0.0.1
     bind ::1
     log
 
@@ -27,5 +28,5 @@ func (i *installer) writeConfig() error {
     forward . /etc/resolv.conf
 }
 `
-	return ioutil.WriteFile(i.prefix.coreFile(), []byte(config), 0644)
+	return os.WriteFile(i.prefix.coreFile(), []byte(config), 0644)
 }

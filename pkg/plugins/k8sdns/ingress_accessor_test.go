@@ -150,11 +150,12 @@ func Test_ingressAccessor_PreFetch(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cs := fake.NewSimpleClientset(&networkingV1.IngressList{Items: tt.clientSetResponse})
+			cs := fake.NewClientset(&networkingV1.IngressList{Items: tt.clientSetResponse})
 			i := ingressAccessor{
 				clientSet: cs,
 			}
 
+			//nolint:all
 			cs.Fake.PrependReactor("*", "*", func(action testing2.Action) (handled bool, ret runtime.Object, err error) {
 				if tt.shouldFail {
 					return true, nil, errors.New("dummy error")
@@ -184,11 +185,13 @@ func Test_ingressAccessor_Watch(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cs := fake.NewSimpleClientset()
+			cs := fake.NewClientset()
 
 			i := ingressAccessor{
 				clientSet: cs,
 			}
+
+			//nolint:all
 			cs.Fake.PrependWatchReactor("*", func(action testing2.Action) (handled bool, ret watch.Interface, err error) {
 				if tt.shouldFail {
 					return true, nil, errors.New("dummy error")

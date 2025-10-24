@@ -2,7 +2,6 @@ package minikube
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"reflect"
@@ -135,7 +134,7 @@ func TestHelperProcess(*testing.T) {
 			cmd, _ := args[0], args[1:]
 			switch cmd {
 			case "tunnel":
-				bytes, _ := ioutil.ReadFile("minikube-tunnel.txt")
+				bytes, _ := os.ReadFile("minikube-tunnel.txt")
 				_, _ = fmt.Fprint(os.Stdout, string(bytes))
 				time.Sleep(1 * time.Second)
 				_, _ = fmt.Fprint(os.Stdout, string(bytes))

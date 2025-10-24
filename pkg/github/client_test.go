@@ -1,9 +1,9 @@
 package github
 
 import (
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 
@@ -27,7 +27,7 @@ func Test_client_GetLatestReleaseTag(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			testServer := httptest.NewServer(http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 				res.WriteHeader(tt.responseStatus)
-				content, e := ioutil.ReadFile("fixtures/" + tt.responseContent)
+				content, e := os.ReadFile("fixtures/" + tt.responseContent)
 				assert.NoError(t, e)
 				_, e = res.Write(content)
 				assert.NoError(t, e)
@@ -102,11 +102,12 @@ func Test_client_Authentication(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			testServer := httptest.NewServer(http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 				authHeader := req.Header.Get("Authorization")
-				if authHeader == "token test" {
+				switch authHeader {
+				case "token test":
 					res.WriteHeader(204)
-				} else if authHeader == "" {
+				case "":
 					res.WriteHeader(404)
-				} else {
+				default:
 					res.WriteHeader(401)
 				}
 			}))

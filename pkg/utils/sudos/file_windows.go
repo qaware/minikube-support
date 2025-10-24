@@ -1,7 +1,6 @@
 package sudos
 
 import (
-	"io/ioutil"
 	"os"
 )
 
@@ -21,5 +20,5 @@ func RemoveAll(path string) error {
 }
 
 func WriteFileAsRoot(path string, content []byte) error {
-	return ioutil.WriteFile(path, content, os.FileMode(0644))
+	return os.WriteFile(path, content, os.FileMode(0644))
 }
