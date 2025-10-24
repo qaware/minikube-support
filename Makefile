@@ -31,7 +31,7 @@ all: lint test $(GOOS)-build
 ci: ci-check
 
 .PHONY: ci-check
-ci-check: lint tidy generate imports vet
+ci-check: tidy generate imports vet
 	git diff --exit-code
 
 check: fmt test
