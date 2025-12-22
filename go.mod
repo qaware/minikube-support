@@ -18,9 +18,9 @@ require (
 	golang.org/x/text v0.32.0
 	google.golang.org/grpc v1.77.0
 	google.golang.org/protobuf v1.36.11
-	k8s.io/api v0.34.3
-	k8s.io/apimachinery v0.34.3
-	k8s.io/client-go v0.34.3
+	k8s.io/api v0.35.0
+	k8s.io/apimachinery v0.35.0
+	k8s.io/client-go v0.35.0
 )
 
 require (
@@ -46,7 +46,6 @@ require (
 	github.com/go-openapi/swag/stringutils v0.25.3 // indirect
 	github.com/go-openapi/swag/typeutils v0.25.3 // indirect
 	github.com/go-openapi/swag/yamlutils v0.25.3 // indirect
-	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/google/gnostic-models v0.7.1 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
