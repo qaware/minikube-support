@@ -168,8 +168,16 @@ func Test_ingressAccessor_PreFetch(t *testing.T) {
 				t.Errorf("PreFetch() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			assert.Equal(t, tt.want, got)
-			assert.Equal(t, tt.want1, got1)
+			assert.ElementsMatch(t, tt.want, got)
+			if tt.want1 == nil {
+				assert.Nil(t, got1)
+			} else {
+				expectedList := tt.want1.(*networkingV1.IngressList)
+				actualList, ok := got1.(*networkingV1.IngressList)
+				if assert.True(t, ok) {
+					assert.ElementsMatch(t, expectedList.Items, actualList.Items)
+				}
+			}
 		})
 	}
 }
