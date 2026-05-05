@@ -208,9 +208,12 @@ func injectStartedChannel(plugins []apis.StartStopPlugin) (chan bool, int) {
 // waitForStarted is a small helper which waits until the same number of messages on the channel were received as the
 // defined in countPlugins. It is built to work together with the injectStartChannel() function
 func waitForStarted(startedChannel chan bool, countPlugins int) {
-	for range startedChannel {
-		countPlugins--
-		if countPlugins == 0 {
+	deadline := time.After(2 * time.Second)
+	for countPlugins > 0 {
+		select {
+		case <-startedChannel:
+			countPlugins--
+		case <-deadline:
 			return
 		}
 	}
