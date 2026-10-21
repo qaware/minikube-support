@@ -1,6 +1,6 @@
 module github.com/qaware/minikube-support
 
-go 1.27.0
+go 1.27.3
 
 require (
 	github.com/awesome-gocui/gocui v1.1.0
