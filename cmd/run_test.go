@@ -20,6 +20,9 @@ import (
 )
 
 func TestRunOptions_Run(t *testing.T) {
+	if raceEnabled {
+		t.Skip("gocui keeps its screen in an unsynchronised global that the previous GUI's poll goroutine still reads")
+	}
 	sh.ExecCommand = testutils.FakeExecCommand
 	newGui = func(mode gocui.OutputMode, supportOverlaps bool) (*gocui.Gui, error) {
 		return gocui.NewGui(gocui.OutputSimulator, supportOverlaps)

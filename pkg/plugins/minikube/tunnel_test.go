@@ -66,7 +66,6 @@ func Test_tunnel_Start(t *testing.T) {
 		}
 	}()
 	gotBoxName, err := mkt.Start(monitoringChannel)
-	time.Sleep(2 * time.Second)
 	if (err != nil) != false {
 		t.Errorf("tunnel.Start() error = %v, wantErr %v", err, false)
 		return
@@ -74,7 +73,7 @@ func Test_tunnel_Start(t *testing.T) {
 	if gotBoxName != wantBoxName {
 		t.Errorf("tunnel.Start() = %v, want %v", gotBoxName, wantBoxName)
 	}
-	assert.Equal(t, int32(5), atomic.LoadInt32(&count))
+	assert.Eventually(t, func() bool { return atomic.LoadInt32(&count) == 5 }, 10*time.Second, 50*time.Millisecond)
 }
 
 func Test_tunnel_Start_noMinikube(t *testing.T) {
@@ -86,19 +85,19 @@ func Test_tunnel_Start_noMinikube(t *testing.T) {
 	handler := fake.NewContextHandler(nil, nil)
 	handler.MiniKube = false
 	mkt := NewTunnel(handler)
-	var count = 0
+	var count int32 = 0
 	go func() {
 		for message := range monitoringChannel {
 			assert.Equal(t, wantBoxName, message.Box)
 			assert.NotEmpty(t, message.Message)
-			count++
+			atomic.AddInt32(&count, 1)
 		}
 	}()
 	gotBoxName, err := mkt.Start(monitoringChannel)
 	assert.Equal(t, "", gotBoxName)
 	assert.NoError(t, err)
 	time.Sleep(100 * time.Millisecond)
-	assert.Equal(t, 1, count)
+	assert.Equal(t, int32(1), atomic.LoadInt32(&count))
 }
 
 func Test_tunnel_Stop(t *testing.T) {
