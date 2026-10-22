@@ -93,7 +93,7 @@ lint:
 	# GOGC default is 100, but we need more aggressive GC to not consume too much memory
 	# might not be necessary in future versions of golangci-lint
 	# https://github.com/golangci/golangci-lint/issues/483
-	GOGC=20 golangci-lint run --disable=typecheck --deadline=5m --out-format checkstyle > $(REPORTS_DIR)/lint.xml || true
+	GOGC=20 golangci-lint run --timeout=5m --output.checkstyle.path=$(REPORTS_DIR)/lint.xml || true
 
 .PHONY: generate
 generate:
