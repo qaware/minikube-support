@@ -110,7 +110,7 @@ buildDeps:
 	go mod download
 	go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
 	go install github.com/golang/mock/mockgen@latest
-	go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+	go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest
 	go install golang.org/x/tools/cmd/goimports@latest
 	$(MAKE) -C pb buildDeps
 
