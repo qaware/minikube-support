@@ -1,9 +1,17 @@
 name: Go-Build
-on: [ push ]
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+permissions:
+  contents: read
+
 jobs:
   build:
     name: Build
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
       - name: Check out code into the Go module directory
         uses: actions/checkout@v7.0.1
@@ -18,18 +26,30 @@ jobs:
           export PATH=$HOME/go/bin:$PATH
           make buildDeps generate
 
+      # An out-of-date go.mod/go.sum must fail the PR rather than be silently
+      # repaired in the runner.
+      - name: Verify go.mod/go.sum are tidy
+        run: |
+          go mod tidy
+          git diff --exit-code go.mod go.sum
+
       - name: Run Tests
         run: |
           export PATH=$HOME/go/bin:$PATH:$GOPATH/bin
           timeout 10m make test
 
+      - name: Test with race detector
+        run: |
+          export PATH=$HOME/go/bin:$PATH:$GOPATH/bin
+          timeout 10m make test-race
+
   golangci:
     name: lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v5.0.1
-      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v6.2.0
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-go@v7.0.0
         with:
           go-version-file: go.mod
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a # v9.3.0
+        uses: golangci/golangci-lint-action@v9.3.0
