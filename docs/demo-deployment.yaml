@@ -14,8 +14,14 @@ spec:
       labels:
         app: demo
     spec:
+      automountServiceAccountToken: false
       containers:
         - name: demo
+          resources:
+            requests:
+              memory: 32Mi
+            limits:
+              memory: 64Mi
           ports:
             - containerPort: 80
               name: http
