@@ -73,12 +73,14 @@ homebrew_casks:
       zsh: completions/minikube-support.zsh
       fish: completions/minikube-support.fish
     # The binaries are not notarized, so Gatekeeper would refuse to start them.
-    hooks:
-      post:
-        install: |
-          if OS.mac? && system_command("/usr/bin/xattr", args: ["-h"]).exit_status.zero?
-            system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/minikube-support"]
-          end
+    # hooks.post.install_steps needs GoReleaser v2.19; the quoted token keeps
+    # Homebrew's {{staged_path}} away from GoReleaser's own templating.
+    custom_block: |
+      postflight_steps do
+        on_macos do
+          run "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "{{ "{{staged_path}}" }}/minikube-support"], must_succeed: false
+        end
+      end
 
 archives:
   - files:
