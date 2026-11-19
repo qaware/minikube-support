@@ -15,11 +15,11 @@ ifeq ($(OS),Windows_NT)
 		ARCH=32
 	endif
 else
-	UNAME_P := $(shell uname -p)
-	ifeq ($(UNAME_P),x86_64)
+	UNAME_M := $(shell uname -m)
+	ifeq ($(UNAME_M),x86_64)
 		ARCH=x86_64
 	endif
-	ifneq ($(filter %86,$(UNAME_P)),)
+	ifneq ($(filter %86,$(UNAME_M)),)
 		ARCH=x86_32
 	endif
 
